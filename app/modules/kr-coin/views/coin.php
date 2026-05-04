@@ -102,6 +102,8 @@ try {
 } catch (Exception $e) {
 }
 
+$showChangeNowCoinWidget = $App->_changeNowWidgetEnabled('coin');
+
 ?>
 
 <section class="kr-coin-inf">
@@ -138,8 +140,8 @@ try {
       </div>
     <?php endif; ?>
   </header>
-  <section>
-    <div style="<?php echo (is_null($availableTrading) ? 'width:100%;' : (is_null($OrderBook) ? 'width:85%;' : '')); ?>">
+  <section class="<?php echo ($showChangeNowCoinWidget ? 'kr-coin-with-changenow '.(is_null($availableTrading) ? 'kr-coin-with-changenow-only' : '') : ''); ?>">
+    <div style="<?php echo ($showChangeNowCoinWidget ? (is_null($availableTrading) ? 'width:70%;' : 'width:55%;') : (is_null($availableTrading) ? 'width:100%;' : (is_null($OrderBook) ? 'width:85%;' : ''))); ?>">
       <div class="kr-dash-pan-cry kr-dash-pan-cry-vsbl" style="width:100%;" id="<?php echo $GraphContainer; ?>" graph-id="<?php echo $GraphContainer; ?>" type-graph="candlestick" container="<?php echo $GraphContainer; ?>" currency="<?php echo $CryptoApi->_getCurrency(); ?>" market="<?php echo strtoupper($Coin->_getMarket()); ?>" symbol="<?php echo $Coin->_getSymbol(); ?>">
 
       </div>
@@ -177,6 +179,11 @@ try {
       </section>
     <?php endif; ?>
     </div>
+    <?php if($showChangeNowCoinWidget): ?>
+      <section class="kr-changenow-coin-placement">
+        <?php echo ChangeNowWidget::_renderFromApp($App, 'coin'); ?>
+      </section>
+    <?php endif; ?>
     <?php if(!is_null($availableTrading)): ?>
     <section>
       <?php if(!is_null($OrderBook)): ?>
