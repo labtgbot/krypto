@@ -6,6 +6,8 @@
 
     var actionUrl = $shell.attr('data-action-url');
     var statusToken = $shell.attr('data-status-token');
+    var userLogged = $shell.attr('data-user-logged') === '1';
+    var signupAllowed = $shell.attr('data-signup-allowed') === '1';
     var $form = $shell.find('.kr-public-swap-form');
     var $message = $shell.find('.kr-public-swap-message');
     var $quotePanel = $shell.find('.kr-public-quote-panel');
@@ -129,7 +131,9 @@
     $shell.on('click', '.kr-public-create-account, .kr-public-auth-jump', function(e){
       var $accountAccess = $('#kr-account-access');
       if($accountAccess.length === 0) return;
+      if($(this).hasClass('kr-public-create-account') && (!signupAllowed || userLogged)) return;
       e.preventDefault();
+      $('body').addClass('kr-public-account-access-visible');
       if(typeof showLoginView === 'function' && $(this).hasClass('kr-public-create-account')) showLoginView('signup');
       $('html, body').animate({scrollTop: $accountAccess.offset().top - 20}, 220);
     });
@@ -287,7 +291,7 @@
       if(lookupToken && availableActions.refund === true) actions += '<button type="button" class="kr-public-refund-swap">Request refund</button>';
       if(lookupToken && availableActions.continue === true) actions += '<button type="button" class="kr-public-continue-swap">Continue swap</button>';
       if(statusUrl) actions += '<a href="' + escapeHtml(statusUrl) + '">Status link</a>';
-      if($('#kr-account-access').length > 0) actions += '<button type="button" class="kr-public-create-account">Create account</button>';
+      if(signupAllowed && !userLogged && $('#kr-account-access').length > 0) actions += '<button type="button" class="kr-public-create-account">Create account</button>';
       if(supportEmail) actions += '<a href="mailto:' + escapeHtml(supportEmail) + '">Support</a>';
       actions += '</div>';
 

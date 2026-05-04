@@ -82,7 +82,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/widget.css?v=<?php echo App::_getVersion(); ?>">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/public-swap.css?v=<?php echo App::_getVersion(); ?>">
   </head>
-  <body class="kr-login kr-public-swap-enabled <?php if($UserLogged) echo 'kr-public-swap-authenticated '; ?><?php if(isset($_GET['a'])) echo 'kr-ac-'.htmlspecialchars($_GET['a']); ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.htmlspecialchars($_GET['token']).'"'; ?>>
+  <body class="kr-login kr-public-swap-enabled <?php if($UserLogged) echo 'kr-public-swap-authenticated '; ?><?php if(isset($_GET['a'])) echo 'kr-public-account-access-visible kr-ac-'.htmlspecialchars($_GET['a']); ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.htmlspecialchars($_GET['token']).'"'; ?>>
 
     <section class="kr-page-view">
       <section>
