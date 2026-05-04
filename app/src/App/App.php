@@ -127,7 +127,7 @@ class App extends MySQL {
       foreach ($moduleObject->_loadControllers() as $controlers) {
         // Require controllers class
         if($controlers == "error_log") continue;
-        require_once $moduleObject->_getModulePath().'/src/'.$controlers;
+        require $moduleObject->_getModulePath().'/src/'.$controlers;
       }
     }
 
@@ -193,6 +193,36 @@ class App extends MySQL {
   }
 
   /**
+   * Get ChangeNOW settings merged with module defaults.
+   * @return Array ChangeNOW admin settings
+   */
+  public function _getChangeNowSettings(){
+    if(!class_exists('ChangeNowSettings')) return [];
+
+    $settings = ChangeNowSettings::_defaults();
+    foreach ($settings as $key => $default) {
+      $value = $this->_getSettingsAttribute($key);
+      if(!is_null($value)) $settings[$key] = $value;
+    }
+
+    return ChangeNowSettings::_sanitizeSettings($settings);
+  }
+
+  /**
+   * Save ChangeNOW admin settings from an admin panel POST payload.
+   * @param Array $post Posted admin settings
+   */
+  public function _saveChangeNowSettings($post){
+    if(!class_exists('ChangeNowSettings')) throw new Exception("ChangeNOW settings helper is not loaded.", 1);
+
+    foreach (ChangeNowSettings::_adminPostToSettings($post) as $key => $value) {
+      $this->_saveSettingsAttribute($key, $value, in_array($key, ChangeNowSettings::_encryptedKeys(), true));
+    }
+
+    return true;
+  }
+
+  /**
    * Get sanitized ChangeNOW widget settings.
    * @return Array
    */
@@ -234,6 +264,109 @@ class App extends MySQL {
     $config = $this->_getChangeNowWidgetConfig();
     if(is_null($placement)) return array_key_exists('enabled', $config) && $config['enabled'] == '1';
     return ChangeNowWidget::_isEnabledForPlacement($config, $placement);
+  }
+
+  public function _changeNowProviderEnabled(){
+    if(is_null($this->_getSettingsAttribute('changenow_provider_enabled'))) return false;
+    return $this->_getSettingsAttribute('changenow_provider_enabled') == 1;
+  }
+
+  public function _legacyExchangeConnectionsEnabled(){
+    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return false;
+    return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
+  }
+
+  public function _changeNowLegacyDisabledMode(){
+    return $this->_changeNowProviderEnabled() && !$this->_legacyExchangeConnectionsEnabled();
+  }
+
+  private function _getChangeNowSetting($key){
+    $settings = $this->_getChangeNowSettings();
+    return (array_key_exists($key, $settings) ? $settings[$key] : '');
+  }
+
+  public function _getChangeNowPublicApiKey(){ return $this->_getChangeNowSetting('changenow_public_api_key'); }
+
+  public function _getChangeNowPrivateApiKey(){ return $this->_getChangeNowSetting('changenow_private_api_key'); }
+
+  public function _getChangeNowCallbackSecret(){ return $this->_getChangeNowSetting('changenow_callback_secret'); }
+
+  public function _getChangeNowReferralLinkId(){ return $this->_getChangeNowSetting('changenow_referral_link_id'); }
+
+  public function _getChangeNowWidgetLinkId(){ return $this->_getChangeNowSetting('changenow_widget_link_id'); }
+
+  public function _getChangeNowEnabledFlows(){
+    $flows = $this->_getChangeNowSetting('changenow_enabled_flows');
+    if(class_exists('ChangeNowSettings')) return ChangeNowSettings::_enabledFlowsToArray($flows);
+
+    $result = [];
+    foreach (explode(',', $flows) as $flow) {
+      $flow = trim($flow);
+      if(in_array($flow, ['standard', 'fixed-rate'], true) && !in_array($flow, $result, true)) $result[] = $flow;
+    }
+
+    if(count($result) == 0) $result[] = 'standard';
+    return $result;
+  }
+
+  public function _changeNowFlowEnabled($flow){
+    return in_array($flow, $this->_getChangeNowEnabledFlows(), true);
+  }
+
+  public function _getChangeNowDefaultFlow(){ return $this->_getChangeNowSetting('changenow_default_flow'); }
+
+  public function _getChangeNowDefaultFromAsset(){ return $this->_getChangeNowSetting('changenow_default_from_asset'); }
+
+  public function _getChangeNowDefaultFromNetwork(){ return $this->_getChangeNowSetting('changenow_default_from_network'); }
+
+  public function _getChangeNowDefaultToAsset(){ return $this->_getChangeNowSetting('changenow_default_to_asset'); }
+
+  public function _getChangeNowDefaultToNetwork(){ return $this->_getChangeNowSetting('changenow_default_to_network'); }
+
+  public function _getChangeNowSupportEmail(){
+    $supportEmail = $this->_getChangeNowSetting('changenow_support_email');
+    if(strlen($supportEmail) > 0) return $supportEmail;
+    return $this->_getSupportEmail();
+  }
+
+  public function _getChangeNowRateLimitPerSecond(){
+    $rateLimit = intval($this->_getChangeNowSetting('changenow_rate_limit_per_second'));
+    return ($rateLimit > 0 ? $rateLimit : 30);
+  }
+
+  public function _getChangeNowRateLimitPerMinute(){
+    $rateLimit = intval($this->_getChangeNowSetting('changenow_rate_limit_per_minute'));
+    return ($rateLimit > 0 ? $rateLimit : 1800);
+  }
+
+  public function _getChangeNowQuoteCacheTtl(){
+    $ttl = intval($this->_getChangeNowSetting('changenow_quote_cache_ttl'));
+    return ($ttl > 0 ? $ttl : 30);
+  }
+
+  public function _getChangeNowMissingRequiredSettings(){
+    if(!$this->_changeNowProviderEnabled()) return [];
+
+    $missing = [];
+    if(strlen($this->_getChangeNowPublicApiKey()) == 0) $missing[] = 'public API key';
+    if(count($this->_getChangeNowEnabledFlows()) == 0) $missing[] = 'enabled swap flow';
+    if(strlen($this->_getChangeNowDefaultFromAsset()) == 0) $missing[] = 'default source asset';
+    if(strlen($this->_getChangeNowDefaultFromNetwork()) == 0) $missing[] = 'default source network';
+    if(strlen($this->_getChangeNowDefaultToAsset()) == 0) $missing[] = 'default destination asset';
+    if(strlen($this->_getChangeNowDefaultToNetwork()) == 0) $missing[] = 'default destination network';
+
+    return $missing;
+  }
+
+  public function _validateChangeNowLiveSwapSettings(){
+    if(!$this->_changeNowProviderEnabled()) throw new Exception('ChangeNOW provider is disabled. Enable and configure ChangeNOW before creating live swaps.', 1);
+
+    $missing = $this->_getChangeNowMissingRequiredSettings();
+    if(count($missing) > 0){
+      throw new Exception('ChangeNOW cannot create live swaps until these settings are configured: '.join(', ', $missing).'.', 1);
+    }
+
+    return true;
   }
 
   /**
@@ -672,7 +805,7 @@ class App extends MySQL {
   }
 
   public function _referalEnabled(){
-    return intval($this->_getSettingsAttribute('referal_enable')) == 1 && ($this->_hiddenThirdpartyActive() || $this->_changeNowProviderEnabled());
+    return intval($this->_getSettingsAttribute('referal_enable')) == 1 && $this->_hiddenThirdpartyActive();
   }
 
   public function _getReferalWinAmount(){
@@ -799,138 +932,6 @@ class App extends MySQL {
 
   public function _hiddenThirdpartyActive(){
     return $this->_getSettingsAttribute('hidden_third_trading') == 1;
-  }
-
-  public function _changeNowProviderEnabled(){
-    if(is_null($this->_getSettingsAttribute('changenow_provider_enabled'))) return false;
-    return $this->_getSettingsAttribute('changenow_provider_enabled') == 1;
-  }
-
-  public function _legacyExchangeConnectionsEnabled(){
-    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return false;
-    return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
-  }
-
-  public function _changeNowLegacyDisabledMode(){
-    return $this->_changeNowProviderEnabled() && !$this->_legacyExchangeConnectionsEnabled();
-  }
-
-  private function _getChangeNowSettingDefault($key){
-    if(class_exists('ChangeNowSettings')){
-      $defaults = ChangeNowSettings::_defaults();
-      if(array_key_exists($key, $defaults)) return $defaults[$key];
-    }
-
-    $defaults = [
-      'changenow_provider_enabled' => '0',
-      'changenow_public_api_key' => '',
-      'changenow_private_api_key' => '',
-      'changenow_callback_secret' => '',
-      'changenow_referral_link_id' => '',
-      'changenow_widget_link_id' => '',
-      'changenow_enabled_flows' => 'standard,fixed-rate',
-      'changenow_default_flow' => 'standard',
-      'changenow_default_from_asset' => 'btc',
-      'changenow_default_from_network' => 'btc',
-      'changenow_default_to_asset' => 'eth',
-      'changenow_default_to_network' => 'eth',
-      'changenow_support_email' => '',
-      'changenow_rate_limit_per_second' => '30',
-      'changenow_rate_limit_per_minute' => '1800',
-      'changenow_quote_cache_ttl' => '30'
-    ];
-
-    return (array_key_exists($key, $defaults) ? $defaults[$key] : '');
-  }
-
-  private function _getChangeNowSetting($key){
-    $value = $this->_getSettingsAttribute($key);
-    if(is_null($value)) return $this->_getChangeNowSettingDefault($key);
-    return $value;
-  }
-
-  public function _getChangeNowPublicApiKey(){ return $this->_getChangeNowSetting('changenow_public_api_key'); }
-
-  public function _getChangeNowPrivateApiKey(){ return $this->_getChangeNowSetting('changenow_private_api_key'); }
-
-  public function _getChangeNowCallbackSecret(){ return $this->_getChangeNowSetting('changenow_callback_secret'); }
-
-  public function _getChangeNowReferralLinkId(){ return $this->_getChangeNowSetting('changenow_referral_link_id'); }
-
-  public function _getChangeNowWidgetLinkId(){ return $this->_getChangeNowSetting('changenow_widget_link_id'); }
-
-  public function _getChangeNowEnabledFlows(){
-    $flows = $this->_getChangeNowSetting('changenow_enabled_flows');
-    if(class_exists('ChangeNowSettings')) return ChangeNowSettings::_enabledFlowsToArray($flows);
-
-    $result = [];
-    foreach (explode(',', $flows) as $flow) {
-      $flow = trim($flow);
-      if(in_array($flow, ['standard', 'fixed-rate'], true) && !in_array($flow, $result, true)) $result[] = $flow;
-    }
-
-    if(count($result) == 0) $result[] = 'standard';
-    return $result;
-  }
-
-  public function _changeNowFlowEnabled($flow){
-    return in_array($flow, $this->_getChangeNowEnabledFlows(), true);
-  }
-
-  public function _getChangeNowDefaultFlow(){ return $this->_getChangeNowSetting('changenow_default_flow'); }
-
-  public function _getChangeNowDefaultFromAsset(){ return $this->_getChangeNowSetting('changenow_default_from_asset'); }
-
-  public function _getChangeNowDefaultFromNetwork(){ return $this->_getChangeNowSetting('changenow_default_from_network'); }
-
-  public function _getChangeNowDefaultToAsset(){ return $this->_getChangeNowSetting('changenow_default_to_asset'); }
-
-  public function _getChangeNowDefaultToNetwork(){ return $this->_getChangeNowSetting('changenow_default_to_network'); }
-
-  public function _getChangeNowSupportEmail(){
-    $supportEmail = $this->_getChangeNowSetting('changenow_support_email');
-    if(strlen($supportEmail) > 0) return $supportEmail;
-    return $this->_getSupportEmail();
-  }
-
-  public function _getChangeNowRateLimitPerSecond(){
-    $rateLimit = intval($this->_getChangeNowSetting('changenow_rate_limit_per_second'));
-    return ($rateLimit > 0 ? $rateLimit : 30);
-  }
-
-  public function _getChangeNowRateLimitPerMinute(){
-    $rateLimit = intval($this->_getChangeNowSetting('changenow_rate_limit_per_minute'));
-    return ($rateLimit > 0 ? $rateLimit : 1800);
-  }
-
-  public function _getChangeNowQuoteCacheTtl(){
-    $ttl = intval($this->_getChangeNowSetting('changenow_quote_cache_ttl'));
-    return ($ttl > 0 ? $ttl : 30);
-  }
-
-  public function _getChangeNowMissingRequiredSettings(){
-    if(!$this->_changeNowProviderEnabled()) return [];
-
-    $missing = [];
-    if(strlen($this->_getChangeNowPublicApiKey()) == 0) $missing[] = 'public API key';
-    if(count($this->_getChangeNowEnabledFlows()) == 0) $missing[] = 'enabled swap flow';
-    if(strlen($this->_getChangeNowDefaultFromAsset()) == 0) $missing[] = 'default source asset';
-    if(strlen($this->_getChangeNowDefaultFromNetwork()) == 0) $missing[] = 'default source network';
-    if(strlen($this->_getChangeNowDefaultToAsset()) == 0) $missing[] = 'default destination asset';
-    if(strlen($this->_getChangeNowDefaultToNetwork()) == 0) $missing[] = 'default destination network';
-
-    return $missing;
-  }
-
-  public function _validateChangeNowLiveSwapSettings(){
-    if(!$this->_changeNowProviderEnabled()) throw new Exception('ChangeNOW provider is disabled. Enable and configure ChangeNOW before creating live swaps.', 1);
-
-    $missing = $this->_getChangeNowMissingRequiredSettings();
-    if(count($missing) > 0){
-      throw new Exception('ChangeNOW cannot create live swaps until these settings are configured: '.join(', ', $missing).'.', 1);
-    }
-
-    return true;
   }
 
   public function _hiddenThirdpartyNotConfigured(){
@@ -1509,23 +1510,6 @@ class App extends MySQL {
     }
   }
 
-  public function _saveChangeNowSettings($args){
-    $encryptedKeys = [
-      'changenow_public_api_key',
-      'changenow_private_api_key',
-      'changenow_callback_secret'
-    ];
-    if(class_exists('ChangeNowSettings')) $encryptedKeys = ChangeNowSettings::_encryptedKeys();
-
-    foreach ($args as $attribute => $value) {
-      $realValue = $value;
-      if($realValue === true) $realValue = '1';
-      if($realValue === false) $realValue = '0';
-      if($realValue == "*********************") continue;
-      $this->_saveSettingsAttribute($attribute, $realValue, in_array($attribute, $encryptedKeys, true));
-    }
-  }
-
   public function _saveIdentity($args){
     foreach ($args as $attribute => $value) {
       $realValue = $value;
@@ -1615,16 +1599,6 @@ class App extends MySQL {
   public function _saveReferal($enable, $comission){
     $this->_saveSettingsAttribute('referal_enable', $enable);
     $this->_saveSettingsAttribute('referall_win_amount', $comission);
-  }
-
-  public function _getReferalCodeOwnerId($code){
-    $code = strtolower(trim((string) $code));
-    $code = preg_replace('/[^a-z0-9_-]/', '', $code);
-    if($code == '') return null;
-
-    $r = parent::querySqlRequest("SELECT id_user FROM referal_krypto WHERE code_referal=:code_referal LIMIT 1", ['code_referal' => $code]);
-    if(count($r) == 0) return null;
-    return $r[0]['id_user'];
   }
 
   /**
@@ -1809,30 +1783,15 @@ class App extends MySQL {
     return strlen(substr(strrchr($num, "."), 1));
   }
 
-  public function _checkReferalSource($source = null){
+  public function _checkReferalSource(){
     if(!$this->_referalEnabled()) return false;
-
-    if(is_null($source)) $source = $_GET;
-    if(!is_array($source)) $source = [];
-    if(!isset($_SESSION) || !is_array($_SESSION)) $_SESSION = [];
-
-    if(class_exists('ChangeNowReferralAttribution')){
-      $App = $this;
-      return ChangeNowReferralAttribution::_captureLanding($source, $_SESSION, function($code) use ($App) {
-        return $App->_getReferalCodeOwnerId($code);
-      });
-    }
-
-    if(!empty($source) && isset($source['ref']) && !empty($source['ref'])){
-      $code = strtolower(trim((string) $source['ref']));
-      $code = preg_replace('/[^a-z0-9_-]/', '', $code);
-      if(!is_null($this->_getReferalCodeOwnerId($code))){
+    if(!empty($_GET) && isset($_GET['ref']) && !empty($_GET['ref'])){
+      $code = htmlspecialchars($_GET['ref']);
+      $r = parent::querySqlRequest("SELECT * FROM referal_krypto WHERE code_referal=:code_referal", ['code_referal' => $code]);
+      if(count($r) > 0){
         $_SESSION['referal_source_krypto'] = $code;
-        return true;
       }
     }
-
-    return false;
   }
 
   public function _cleanCache(){
