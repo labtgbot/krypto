@@ -4300,7 +4300,9 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (207, 'directdepositenable', '0', 0),
 (208, 'direct_deposit_enable', '0', 0),
 (209, 'automatic_crypto_withdraw', '0', 0),
-(210, 'enablenative_withoutexchange', '0', 0);
+(210, 'enablenative_withoutexchange', '0', 0),
+(211, 'changenow_provider_enabled', '0', 0),
+(212, 'legacy_exchange_connections_enabled', '1', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -4897,7 +4899,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=211;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
