@@ -75,12 +75,6 @@ $_SESSION['kr_account_view_user'] = $User->_getUserID();
   <?php if($User->_accessAllowedFeature($App, 'googleauthenticator')): ?>
     <li kr-user-v="security"><?php echo $Lang->tr('Security'); ?></li>
   <?php endif; ?>
-  <?php if($User->_accessAllowedFeature($App, 'tradinglive') && !$App->_hiddenThirdpartyActive()): ?>
-    <li kr-user-v="exchanges"><?php echo $Lang->tr('Exchanges'); ?></li>
-  <?php endif; ?>
-  <?php if($User->_accessAllowedFeature($App, 'tradinglive') && $App->_hiddenThirdpartyActive()): ?>
-    <li kr-user-v="widthdraw"><?php echo $Lang->tr('Widthdraw / Wallets'); ?></li>
-  <?php endif; ?>
   <?php if(!$adminView): ?>
     <li kr-user-v="logout"><?php echo $Lang->tr('Logout'); ?></li>
   <?php endif; ?>

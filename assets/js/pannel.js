@@ -94,9 +94,7 @@ let moduleConstruct = {
     'additionalpages': initAdmin,
     'bankaccounts': initAdmin,
     'identity': initAdmin,
-    'templates': initAdmin,
-    'walletaddress': initAdmin,
-    'autowithdrawconfigure': initAdmin
+    'templates': initAdmin
   },
   'blockfolio': {
     'blockfolio': initBlockFolio

@@ -757,6 +757,14 @@ class App extends MySQL {
     return $this->_getSettingsAttribute('hidden_third_trading') == 1;
   }
 
+  public function _legacyExchangeConnectionsEnabled(){
+    return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
+  }
+
+  public function _changeNowProviderEnabled(){
+    return $this->_getSettingsAttribute('changenow_provider_enabled') == 1;
+  }
+
   public function _hiddenThirdpartyNotConfigured(){
     return (!is_null($this->_hiddenThirdpartyServiceCfg()) && count($this->_hiddenThirdpartyServiceCfg()) > 0);
   }
