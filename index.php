@@ -45,6 +45,8 @@ try {
   define('ERROR_SOFTWARE', $e->getMessage());
 }
 
+$changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) && $App->_changeNowWidgetEnabled('landing'));
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -74,6 +76,7 @@ try {
     <link rel="stylesheet" href="assets/css/responsive-tablet.css">
     <link rel="stylesheet" href="assets/css/responsive-mobile.css">
     <link rel="stylesheet" href="assets/css/responsive-global.css">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/widget.css?v=<?php echo App::_getVersion(); ?>">
   </head>
   <body class="kr-login <?php if(isset($_GET['a'])) echo 'kr-ac-'.$_GET['a']; ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.$_GET['token'].'"'; ?>>
 
@@ -111,11 +114,16 @@ try {
       </div>
     </section>
 
-    <form action="" method="post">
+    <form action="" method="post" class="<?php echo ($changeNowLandingWidgetEnabled ? 'kr-login-widget-enabled' : ''); ?>">
 
       <section class="kr-login-view">
 
       </section>
+      <?php if($changeNowLandingWidgetEnabled): ?>
+        <section class="kr-changenow-login-widget">
+          <?php echo ChangeNowWidget::_renderFromApp($App, 'landing'); ?>
+        </section>
+      <?php endif; ?>
       <section class="kr-app-overview" nov="1">
 
         <div class="kr-app-ovrview-infos">

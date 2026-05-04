@@ -54,7 +54,7 @@ class Admin extends MySQL {
    */
   public function _getListSection(){
     return ['Dashboard', 'General settings', 'Coins', 'Currencies', 'Mail settings',
-            'Payment', 'Subscriptions', 'News - Social', 'Intro', 'Trading', 'Cron', 'Additional pages',
+            'Payment', 'Subscriptions', 'News - Social', 'Intro', 'Trading', 'Cron', 'Additional pages', 'ChangeNOW widget',
             'Bank accounts', 'Identity', 'Templates'];
   }
 

@@ -4300,7 +4300,30 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (207, 'directdepositenable', '0', 0),
 (208, 'direct_deposit_enable', '0', 0),
 (209, 'automatic_crypto_withdraw', '0', 0),
-(210, 'enablenative_withoutexchange', '0', 0);
+(210, 'enablenative_withoutexchange', '0', 0),
+(211, 'changenow_widget_enabled', '0', 0),
+(212, 'changenow_widget_amount', '0.1', 0),
+(213, 'changenow_widget_amount_fiat', '1500', 0),
+(214, 'changenow_widget_from', 'btc', 0),
+(215, 'changenow_widget_to', 'eth', 0),
+(216, 'changenow_widget_from_fiat', 'eur', 0),
+(217, 'changenow_widget_to_fiat', 'eth', 0),
+(218, 'changenow_widget_fiat_mode', '0', 0),
+(219, 'changenow_widget_lang', 'en-US', 0),
+(220, 'changenow_widget_dark_mode', '0', 0),
+(221, 'changenow_widget_logo', '1', 0),
+(222, 'changenow_widget_faq', '1', 0),
+(223, 'changenow_widget_locales', '1', 0),
+(224, 'changenow_widget_primary_color', '00C26F', 0),
+(225, 'changenow_widget_background_color', 'FFFFFF', 0),
+(226, 'changenow_widget_horizontal', '0', 0),
+(227, 'changenow_widget_link_id', '', 0),
+(228, 'changenow_widget_fallback_url', '', 0),
+(229, 'changenow_widget_place_landing', '0', 0),
+(230, 'changenow_widget_place_dashboard', '0', 0),
+(231, 'changenow_widget_place_coin', '0', 0),
+(232, 'changenow_widget_place_custom_page', '0', 0),
+(233, 'changenow_widget_to_the_moon', '1', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -4897,7 +4920,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=211;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=234;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
