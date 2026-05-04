@@ -71,6 +71,163 @@ $Admin = new Admin();
       </div>
     </div>
   </div>
+  <h3><?php echo $Lang->tr('ChangeNOW provider'); ?></h3>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Enable ChangeNOW provider'); ?></label>
+      </div>
+      <div>
+        <div class="ckbx-style-14">
+            <input type="checkbox" id="kr-adm-chk-enablechangenow" <?php echo ($App->_changeNowProviderEnabled() ? 'checked' : ''); ?> name="kr-adm-chk-enablechangenow">
+            <label for="kr-adm-chk-enablechangenow"></label>
+        </div>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW public API key'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your ChangeNOW public API key'); ?>" name="kr-adm-changenowpublicapikey" value="<?php echo ($App->_getChangeNowPublicApiKey() != '' ? '*********************' : ''); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW private API key'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your ChangeNOW private API key'); ?>" name="kr-adm-changenowprivateapikey" value="<?php echo ($App->_getChangeNowPrivateApiKey() != '' ? '*********************' : ''); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW callback secret'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your ChangeNOW callback secret'); ?>" name="kr-adm-changenowcallbacksecret" value="<?php echo ($App->_getChangeNowCallbackSecret() != '' ? '*********************' : ''); ?>">
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Enable standard flow'); ?></label>
+      </div>
+      <div>
+        <div class="ckbx-style-14">
+            <input type="checkbox" id="kr-adm-chk-changenowflowstandard" <?php echo ($App->_changeNowFlowEnabled('standard') ? 'checked' : ''); ?> name="kr-adm-chk-changenowflowstandard">
+            <label for="kr-adm-chk-changenowflowstandard"></label>
+        </div>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Enable fixed-rate flow'); ?></label>
+      </div>
+      <div>
+        <div class="ckbx-style-14">
+            <input type="checkbox" id="kr-adm-chk-changenowflowfixedrate" <?php echo ($App->_changeNowFlowEnabled('fixed-rate') ? 'checked' : ''); ?> name="kr-adm-chk-changenowflowfixedrate">
+            <label for="kr-adm-chk-changenowflowfixedrate"></label>
+        </div>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Default ChangeNOW flow'); ?></label>
+      </div>
+      <div>
+        <select name="kr-adm-changenowdefaultflow">
+          <option <?php echo ($App->_getChangeNowDefaultFlow() == 'standard' ? 'selected' : ''); ?> value="standard"><?php echo $Lang->tr('Standard'); ?></option>
+          <option <?php echo ($App->_getChangeNowDefaultFlow() == 'fixed-rate' ? 'selected' : ''); ?> value="fixed-rate"><?php echo $Lang->tr('Fixed rate'); ?></option>
+        </select>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW referral link ID'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your ChangeNOW referral link ID'); ?>" name="kr-adm-changenowreferrallinkid" value="<?php echo htmlspecialchars($App->_getChangeNowReferralLinkId(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW widget link ID'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your ChangeNOW widget link ID'); ?>" name="kr-adm-changenowwidgetlinkid" value="<?php echo htmlspecialchars($App->_getChangeNowWidgetLinkId(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Default source asset'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="btc" name="kr-adm-changenowdefaultfromasset" value="<?php echo htmlspecialchars($App->_getChangeNowDefaultFromAsset(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Default source network'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="btc" name="kr-adm-changenowdefaultfromnetwork" value="<?php echo htmlspecialchars($App->_getChangeNowDefaultFromNetwork(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Default destination asset'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="eth" name="kr-adm-changenowdefaulttoasset" value="<?php echo htmlspecialchars($App->_getChangeNowDefaultToAsset(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Default destination network'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="eth" name="kr-adm-changenowdefaulttonetwork" value="<?php echo htmlspecialchars($App->_getChangeNowDefaultToNetwork(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW support email'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Support email for ChangeNOW swaps'); ?>" name="kr-adm-changenowsupportemail" value="<?php echo htmlspecialchars($App->_getChangeNowSupportEmail(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW rate limit per second'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="30" name="kr-adm-changenowratelimitsecond" value="<?php echo $App->_getChangeNowRateLimitPerSecond(); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW rate limit per minute'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="1800" name="kr-adm-changenowratelimitminute" value="<?php echo $App->_getChangeNowRateLimitPerMinute(); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW quote cache TTL'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="30" name="kr-adm-changenowquotecachettl" value="<?php echo $App->_getChangeNowQuoteCacheTtl(); ?>">
+      </div>
+    </div>
+  </div>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
       <div>
