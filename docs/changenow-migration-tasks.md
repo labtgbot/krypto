@@ -183,6 +183,12 @@ Verification:
 - PHP syntax validation of touched files.
 - Manual admin form review in a browser when a runnable local environment is available.
 
+CN-02 settings note:
+
+- ChangeNOW credentials and operational defaults are documented in [ChangeNOW Provider Settings](changenow-provider-settings.md).
+- Public API key, private API key, and callback secret are saved as encrypted settings and preserved when the admin mask value is submitted.
+- Live swap creation should call `App::_validateChangeNowLiveSwapSettings()` so disabled or incomplete provider configuration fails with an admin-facing message before any ChangeNOW API call is attempted.
+
 ## Task CN-03: Implement The ChangeNOW API Client
 
 Suggested issue title: Implement a server-side ChangeNOW API client
