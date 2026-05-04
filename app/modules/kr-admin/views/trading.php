@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Admin news social settings
+ * Admin trading settings
  *
  * @package Krypto
  * @author Ovrley <hello@ovrley.com>
@@ -33,15 +33,10 @@ $Lang = new Lang($User->_getLang(), $App);
 // Init admin object
 $Admin = new Admin();
 
-// Init dashboard object
-$Dashboard = new Dashboard(new CryptoApi(null, null, $App), $User);
-
-$TradingCredentials = $App->_hiddenThirdpartyServiceCfg();
-
-$Trade = new Trade($User, $App);
-
+$legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
+$nativeTradingActive = $legacyExchangeConnectionsEnabled && $App->_hiddenThirdpartyActive();
 $SymbolListAvailable = [];
-if($App->_hiddenThirdpartyActive()){
+if($nativeTradingActive){
   $Balance = new Balance($User, $App, 'real');
 
   $SymbolListAvailable = $Balance->_getBalanceListResum();
@@ -57,47 +52,25 @@ if($App->_hiddenThirdpartyActive()){
     </ul>
   </nav>
 
+  <h3><?php echo $Lang->tr('Trading provider'); ?></h3>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
       <div>
-        <label><?php echo $Lang->tr('Enable native trading'); ?></label>
+        <label><?php echo $Lang->tr('Swap provider'); ?></label>
       </div>
       <div>
-        <div class="ckbx-style-14">
-            <input type="checkbox" id="kr-adm-chk-enablenativetrading" <?php echo ($App->_hiddenThirdpartyActive() ? 'checked' : ''); ?> name="kr-adm-chk-enablenativetrading">
-            <label for="kr-adm-chk-enablenativetrading"></label>
-        </div>
+        <span>ChangeNOW</span>
       </div>
     </div>
 
     <div class="kr-admin-field">
       <div>
-        <label><?php echo $Lang->tr('Enable native trading without exchange'); ?></label><br/>
-        <span><?php echo $Lang->tr('Warning !'); ?></span><br/>
-        <span><?php echo $Lang->tr('This option is more risky, because you need to manage by yourself the liquidy'); ?></span><br/><br/>
-        <span><?php echo $Lang->tr('You need to active the exchanges you want for fetch data from exchange'); ?></span>
+        <label><?php echo $Lang->tr('Provider status'); ?></label>
       </div>
       <div>
-        <div class="ckbx-style-14">
-            <input type="checkbox" id="kr-adm-chk-enablenativetradingwithoutexchange" <?php echo ($App->_enableNativeTradingWithoutExchange() ? 'checked' : ''); ?> name="kr-adm-chk-enablenativetradingwithoutexchange">
-            <label for="kr-adm-chk-enablenativetradingwithoutexchange"></label>
-        </div>
+        <span><?php echo $Lang->tr($App->_changeNowProviderEnabled() ? 'Enabled' : 'Disabled'); ?></span>
       </div>
     </div>
-
-    <div class="kr-admin-boxthird">
-      <?php
-      foreach ($Trade->_getThirdParty() as $key => $Exchange) {
-        ?>
-        <div kr-exchangename="<?php echo $Exchange->_getExchangeName(); ?>" onclick="_showThirdpartySetup('<?php echo $Exchange->_getExchangeName(); ?>', 'tradingglobal');" class="<?php if(array_key_exists($Exchange->_getExchangeName(), $App->_hiddenThirdpartyServiceCfg())) echo 'kr-account-config-exchange-enable'; ?>">
-          <div>
-            <svg class="lnr lnr-checkmark-circle"><use xlink:href="#lnr-checkmark-circle"></use></svg>
-          </div>
-          <img src="<?php echo APP_URL; ?>/assets/img/icons/trade/<?php echo $Exchange->_getLogo(); ?>" alt="<?php echo $Exchange->_getName(); ?>">
-        </div>
-      <?php } ?>
-    </div>
-
   </div>
 
   <?php if(false): ?>
@@ -164,7 +137,7 @@ if($App->_hiddenThirdpartyActive()){
               foreach ($SymbolListAvailable as $symbolReceive => $value) {
                 echo '<option '.($App->_getBalanceEstimationSymbol() == $symbolReceive ? 'selected' : '').' value="'.$symbolReceive.'">'.$symbolReceive.'</option>';
               }
-              if($App->_hiddenThirdpartyActive()){
+              if($nativeTradingActive){
                 foreach ($Balance->_getListMoney() as $key => $value) {
                   echo '<option '.($App->_getBalanceEstimationSymbol() == $value ? 'selected' : '').' value="'.$value.'">'.$value.'</option>';
                 }
@@ -265,7 +238,7 @@ if($App->_hiddenThirdpartyActive()){
         <div>
           <select id="select-state-disabled" name="deposit_currencies_allowed[]" multiple class="demo-default" placeholder="Select some currencies">
             <?php
-            if($App->_hiddenThirdpartyActive()){
+            if($nativeTradingActive){
               foreach ($Balance->_getListMoney() as $key => $value) {
                 ?>
                 <option <?php if(!is_null($App->_getListCurrencyDepositAvailable()) && in_array($value, $App->_getListCurrencyDepositAvailable())) echo 'selected'; ?> value="<?php echo $value; ?>"><?php echo $value; ?></option>
@@ -308,29 +281,6 @@ if($App->_hiddenThirdpartyActive()){
   </div>
   <h3><?php echo $Lang->tr('Withdraw configuration'); ?></h3>
   <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Enable automatic cryptocurrencies withdraw'); ?></label>
-        </div>
-        <div>
-          <div class="ckbx-style-14">
-              <input type="checkbox" id="kr-adm-chk-enableautomaticcryptocurrenciewithdraw" <?php echo ($App->_getEnableAutomaticWithdraw() ? 'checked' : ''); ?> name="kr-adm-chk-enableautomaticcryptocurrenciewithdraw">
-              <label for="kr-adm-chk-enableautomaticcryptocurrenciewithdraw"></label>
-          </div>
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Configure exchange needed for each cryptocurrencies'); ?></label><br/>
-          <span><?php echo $Lang->tr('You can define each exchange will be used for the withdraw for each cryptocurrency'); ?></span><br/>
-          <span><?php echo $Lang->tr('Ex : BTC = Binance'); ?></span><br/>
-          <span><?php echo $Lang->tr('Ex : ETH = Okcoin'); ?></span><br/>
-          <span><?php echo $Lang->tr('Ex : LTC = Btcmarkets'); ?></span>
-        </div>
-        <div>
-          <input type="button" onclick="changeView('admin', 'autowithdrawconfigure');" class="btn btn-green btn-autowidth" name="" value="Configure exchanges">
-        </div>
-      </div>
       <div class="kr-admin-field">
         <div>
           <label><?php echo $Lang->tr('Withdraw minimum (in $)'); ?></label>

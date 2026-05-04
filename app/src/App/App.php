@@ -193,6 +193,50 @@ class App extends MySQL {
   }
 
   /**
+   * Get sanitized ChangeNOW widget settings.
+   * @return Array
+   */
+  public function _getChangeNowWidgetConfig(){
+    if(!class_exists('ChangeNowWidget')) return [];
+
+    $config = [];
+    foreach (ChangeNowWidget::_getStorageDefaults() as $key => $defaultValue) {
+      $storedValue = $this->_getSettingsAttribute(ChangeNowWidget::_getStorageKey($key));
+      $config[$key] = (is_null($storedValue) ? $defaultValue : $storedValue);
+    }
+    return ChangeNowWidget::_sanitizeConfig($config);
+  }
+
+  /**
+   * Save sanitized ChangeNOW widget settings.
+   * @param Array $args Settings values
+   * @return Boolean
+   */
+  public function _saveChangeNowWidgetConfig($args){
+    if(!class_exists('ChangeNowWidget')) throw new Exception("Error : ChangeNOW widget module not loaded", 1);
+
+    $config = ChangeNowWidget::_sanitizeConfig($args);
+    foreach (ChangeNowWidget::_getStorageDefaults() as $key => $defaultValue) {
+      $storageKey = ChangeNowWidget::_getStorageKey($key);
+      $this->_saveSettingsAttribute($storageKey, $config[$key]);
+      $this->settingsData[$storageKey] = $config[$key];
+    }
+    return true;
+  }
+
+  /**
+   * Check ChangeNOW widget visibility.
+   * @param String $placement Optional placement name
+   * @return Boolean
+   */
+  public function _changeNowWidgetEnabled($placement = null){
+    if(!class_exists('ChangeNowWidget')) return false;
+    $config = $this->_getChangeNowWidgetConfig();
+    if(is_null($placement)) return array_key_exists('enabled', $config) && $config['enabled'] == '1';
+    return ChangeNowWidget::_isEnabledForPlacement($config, $placement);
+  }
+
+  /**
    * Get if app allow signup
    * @return Boolean
    */
@@ -763,7 +807,7 @@ class App extends MySQL {
   }
 
   public function _legacyExchangeConnectionsEnabled(){
-    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return true;
+    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return false;
     return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
   }
 

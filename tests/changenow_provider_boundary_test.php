@@ -92,13 +92,18 @@ foreach (['_changeNowProviderEnabled', '_legacyExchangeConnectionsEnabled', '_ch
 $installerSql = file_get_contents($root.'/install/assets/sql/krypto.sql');
 $requiredSettings = [
     "'changenow_provider_enabled', '0', 0",
-    "'legacy_exchange_connections_enabled', '1', 0",
+    "'legacy_exchange_connections_enabled', '0', 0",
 ];
 
 foreach ($requiredSettings as $settingSeed) {
     if (strpos($installerSql, $settingSeed) === false) {
         throw new Exception('Missing installer setting seed: '.$settingSeed);
     }
+}
+
+$legacyFlagMethod = strpos($appSource, "if(is_null(\$this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return false;");
+if ($legacyFlagMethod === false) {
+    throw new Exception('Legacy exchange connections must fail closed when the installer seed is absent');
 }
 
 echo "ChangeNOW provider boundary check passed\n";

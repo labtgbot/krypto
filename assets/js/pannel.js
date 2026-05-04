@@ -70,7 +70,8 @@ $(document).ready(function(){
 let moduleConstruct = {
   'dashboard': {
     'dashboard': initDashboard,
-    'custompage': initCustomPage
+    'custompage': initCustomPage,
+    'changenowwidget': initCustomPage
   },
   'marketanalysis': {
     'dashboard': initHeatmap,
@@ -92,6 +93,7 @@ let moduleConstruct = {
     'withdraw': initAdmin,
     'cron': initAdmin,
     'additionalpages': initAdmin,
+    'changenowwidget': initAdmin,
     'bankaccounts': initAdmin,
     'identity': initAdmin,
     'templates': initAdmin,
