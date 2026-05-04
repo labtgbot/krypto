@@ -43,19 +43,18 @@ async function pushProject() {
     // 6. Формируем URL с токеном для авторизации
     const remoteUrl = `https://x-access-token:${TOKEN}@github.com/${USER}/${REPO}.git`;
 
-    // 7. Обрабатываем remote origin (безопасно)
-    const remotes = await git.getRemotes(true);
-    const hasOrigin = remotes.some(r => r.name === 'origin');
-
-    if (hasOrigin) {
-      // Обновляем URL существующего origin
-      await git.updateRemote('origin', { url: remoteUrl });
-      console.log('🔗 Remote origin обновлён');
-    } else {
-      // Добавляем новый remote
-      await git.addRemote('origin', remoteUrl);
-      console.log('🔗 Remote origin добавлен');
+    // 7. Настраиваем remote origin (универсальный способ)
+    // Сначала пробуем удалить, если есть — игнорируем ошибку если не существует
+    try {
+      await git.removeRemote('origin');
+      console.log('🗑️ Старый remote origin удалён');
+    } catch (e) {
+      // Ок, если origin не существовал
     }
+    
+    // Добавляем новый remote
+    await git.addRemote('origin', remoteUrl);
+    console.log('🔗 Remote origin добавлен');
 
     // 8. Пушим на GitHub
     await git.push('origin', 'main');
