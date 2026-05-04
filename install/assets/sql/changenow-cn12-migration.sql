@@ -178,7 +178,7 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO `settings_krypto` (`key_settings`, `value_settings`, `encrypted_settings`)
-SELECT 'legacy_exchange_connections_enabled', '1', 0
+SELECT 'legacy_exchange_connections_enabled', '0', 0
 WHERE NOT EXISTS (
   SELECT 1 FROM `settings_krypto` WHERE `key_settings` = 'legacy_exchange_connections_enabled'
 );

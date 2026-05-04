@@ -66,7 +66,7 @@ foreach($requiredInstallerFragments as $fragment) {
 
 $requiredSettings = [
   "'changenow_provider_enabled', '0', 0",
-  "'legacy_exchange_connections_enabled', '1', 0",
+  "'legacy_exchange_connections_enabled', '0', 0",
   "'changenow_public_api_key', '', 1",
   "'changenow_private_api_key', '', 1",
   "'changenow_callback_secret', '', 1",

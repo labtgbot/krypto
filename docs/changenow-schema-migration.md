@@ -18,7 +18,7 @@ The migration is additive. It creates local ChangeNOW storage for:
 
 ## Installer Defaults
 
-The provider is disabled on install with `changenow_provider_enabled = 0`. Legacy exchange flows remain available with `legacy_exchange_connections_enabled = 1` until later product tasks finish feature parity and explicitly disable old exchange connection UX.
+The provider is disabled on install with `changenow_provider_enabled = 0`. Current installs also default `legacy_exchange_connections_enabled = 0`, so direct legacy exchange connection UX stays disabled while the preserved legacy tables remain available for rollback, support, audit, and historical data access.
 
 API keys and callback secrets are seeded as encrypted settings:
 

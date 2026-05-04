@@ -4433,7 +4433,7 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (209, 'automatic_crypto_withdraw', '0', 0),
 (210, 'enablenative_withoutexchange', '0', 0),
 (211, 'changenow_provider_enabled', '0', 0),
-(212, 'legacy_exchange_connections_enabled', '1', 0),
+(212, 'legacy_exchange_connections_enabled', '0', 0),
 (213, 'changenow_public_api_key', '', 1),
 (214, 'changenow_private_api_key', '', 1),
 (215, 'changenow_callback_secret', '', 1),
@@ -4449,7 +4449,30 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (225, 'changenow_rate_limit_per_second', '30', 0),
 (226, 'changenow_rate_limit_per_minute', '1800', 0),
 (227, 'changenow_quote_cache_ttl', '30', 0),
-(228, 'changenow_debug_logging_enabled', '0', 0);
+(228, 'changenow_widget_enabled', '0', 0),
+(229, 'changenow_widget_amount', '0.1', 0),
+(230, 'changenow_widget_amount_fiat', '1500', 0),
+(231, 'changenow_widget_from', 'btc', 0),
+(232, 'changenow_widget_to', 'eth', 0),
+(233, 'changenow_widget_from_fiat', 'eur', 0),
+(234, 'changenow_widget_to_fiat', 'eth', 0),
+(235, 'changenow_widget_fiat_mode', '0', 0),
+(236, 'changenow_widget_lang', 'en-US', 0),
+(237, 'changenow_widget_dark_mode', '0', 0),
+(238, 'changenow_widget_logo', '1', 0),
+(239, 'changenow_widget_faq', '1', 0),
+(240, 'changenow_widget_locales', '1', 0),
+(241, 'changenow_widget_primary_color', '00C26F', 0),
+(242, 'changenow_widget_background_color', 'FFFFFF', 0),
+(243, 'changenow_widget_horizontal', '0', 0),
+(244, 'changenow_widget_link_id', '', 0),
+(245, 'changenow_widget_fallback_url', '', 0),
+(246, 'changenow_widget_place_landing', '0', 0),
+(247, 'changenow_widget_place_dashboard', '0', 0),
+(248, 'changenow_widget_place_coin', '0', 0),
+(249, 'changenow_widget_place_custom_page', '0', 0),
+(250, 'changenow_widget_to_the_moon', '1', 0),
+(251, 'changenow_debug_logging_enabled', '0', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -5119,7 +5142,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=252;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;

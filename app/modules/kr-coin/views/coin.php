@@ -45,40 +45,43 @@ try {
   $GraphContainer = uniqid().rand().uniqid();
 
   $availableMarketGiven = true;
-
-  $Trade = new Trade($User, $App);
-
+  $legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
   $availableTrading = null;
-  if($App->_hiddenThirdpartyActive()){
+  $listMarketAvailable = [];
 
-    //error_log($CryptoApi->_getCurrencySymbol());
-    //
-    $Balance = new Balance($User, $App);
-    $CurrentBalance = $Balance->_getCurrentBalance();
-
-    $availableTrading = false;
+  if($legacyExchangeConnectionsEnabled){
+    $Trade = new Trade($User, $App);
     if($App->_hiddenThirdpartyActive()){
-      $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
-    } else {
-      $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
-    }
-    $availableTrading = count($listThirdParty) > 0;
-    if(count($listThirdParty) > 0) $availableTrading = $listThirdParty[0];
-  } else {
-    $availableMarketGiven = null;
-    if(isset($_POST['market'])){
-      $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency'], $_POST['market']);
-      if(count($availableMarketGiven) > 0) $availableTrading = $availableMarketGiven[0];
-    } else {
-      $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency']);
-      $availableTrading = $availableMarketGiven[0];
-    }
 
-    if($availableMarketGiven != null && !isset($_POST['market'])){
-      $listMarketAvailable = $availableMarketGiven;
+      //error_log($CryptoApi->_getCurrencySymbol());
+      //
+      $Balance = new Balance($User, $App);
+      $CurrentBalance = $Balance->_getCurrentBalance();
+
+      $availableTrading = false;
+      if($App->_hiddenThirdpartyActive()){
+        $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
+      } else {
+        $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
+      }
+      $availableTrading = count($listThirdParty) > 0;
+      if(count($listThirdParty) > 0) $availableTrading = $listThirdParty[0];
     } else {
-      $listMarketAvailable = $Trade->_thirdparySymbolTrading($_POST['symbol'], (isset($_POST['currency']) ? $_POST['currency'] : $CryptoApi->_getCurrency()));
-      if(count($listMarketAvailable) > 0 && is_null($availableTrading)) $availableTrading = $listMarketAvailable[0];
+      $availableMarketGiven = null;
+      if(isset($_POST['market'])){
+        $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency'], $_POST['market']);
+        if(count($availableMarketGiven) > 0) $availableTrading = $availableMarketGiven[0];
+      } else {
+        $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency']);
+        $availableTrading = $availableMarketGiven[0];
+      }
+
+      if($availableMarketGiven != null && !isset($_POST['market'])){
+        $listMarketAvailable = $availableMarketGiven;
+      } else {
+        $listMarketAvailable = $Trade->_thirdparySymbolTrading($_POST['symbol'], (isset($_POST['currency']) ? $_POST['currency'] : $CryptoApi->_getCurrency()));
+        if(count($listMarketAvailable) > 0 && is_null($availableTrading)) $availableTrading = $listMarketAvailable[0];
+      }
     }
   }
 
@@ -101,6 +104,8 @@ try {
   //$DepthGraphValue = $availableTrading->_getDepthGraphValue($OrderBook);
 } catch (Exception $e) {
 }
+
+$showChangeNowCoinWidget = $App->_changeNowWidgetEnabled('coin');
 
 ?>
 
@@ -138,8 +143,8 @@ try {
       </div>
     <?php endif; ?>
   </header>
-  <section>
-    <div style="<?php echo (is_null($availableTrading) ? 'width:100%;' : (is_null($OrderBook) ? 'width:85%;' : '')); ?>">
+  <section class="<?php echo ($showChangeNowCoinWidget ? 'kr-coin-with-changenow '.(is_null($availableTrading) ? 'kr-coin-with-changenow-only' : '') : ''); ?>">
+    <div style="<?php echo ($showChangeNowCoinWidget ? (is_null($availableTrading) ? 'width:70%;' : 'width:55%;') : (is_null($availableTrading) ? 'width:100%;' : (is_null($OrderBook) ? 'width:85%;' : ''))); ?>">
       <div class="kr-dash-pan-cry kr-dash-pan-cry-vsbl" style="width:100%;" id="<?php echo $GraphContainer; ?>" graph-id="<?php echo $GraphContainer; ?>" type-graph="candlestick" container="<?php echo $GraphContainer; ?>" currency="<?php echo $CryptoApi->_getCurrency(); ?>" market="<?php echo strtoupper($Coin->_getMarket()); ?>" symbol="<?php echo $Coin->_getSymbol(); ?>">
 
       </div>
@@ -177,6 +182,11 @@ try {
       </section>
     <?php endif; ?>
     </div>
+    <?php if($showChangeNowCoinWidget): ?>
+      <section class="kr-changenow-coin-placement">
+        <?php echo ChangeNowWidget::_renderFromApp($App, 'coin'); ?>
+      </section>
+    <?php endif; ?>
     <?php if(!is_null($availableTrading)): ?>
     <section>
       <?php if(!is_null($OrderBook)): ?>
@@ -274,7 +284,7 @@ try {
           ?>
           <section class="kr-cinf-wallet-inactive">
             <span><?php echo $Lang->tr('Enable live trading'); ?></span>
-            <a class="btn btn-orange btn-autowidth" onclick="_showThirdpartySetup('<?php echo $availableTrading->_getExchangeName(); ?>');"><?php echo $Lang->tr('Login with '.$availableTrading->_getName()); ?></a>
+            <span><?php echo $Lang->tr('Legacy exchange connections are disabled'); ?></span>
           </section>
         <?php endif; ?>
       </section>

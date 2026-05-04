@@ -35,11 +35,20 @@ try {
 
     if($App->_isDemoMode()) throw new Exception("App currently in demo mode", 1);
 
-    $TradingCredentials = $App->_hiddenThirdpartyServiceCfg();
-
+    $legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
+    $enableNativeTrading = 0;
+    $directDeposit = 0;
+    $automaticCryptoWithdraw = 0;
+    $enableNativeTradingWithoutExchange = 0;
+    if($legacyExchangeConnectionsEnabled){
+        $enableNativeTrading = (array_key_exists('kr-adm-chk-enablenativetrading', $_POST) && $_POST['kr-adm-chk-enablenativetrading'] == "on" ? 1 : 0);
+        $directDeposit = (array_key_exists('kr-adm-chk-directdepositenable', $_POST) && $_POST['kr-adm-chk-directdepositenable'] == "on" ? 1 : 0);
+        $automaticCryptoWithdraw = (array_key_exists('kr-adm-chk-enableautomaticcryptocurrenciewithdraw', $_POST) && $_POST['kr-adm-chk-enableautomaticcryptocurrenciewithdraw'] == "on" ? 1 : 0);
+        $enableNativeTradingWithoutExchange = (array_key_exists('kr-adm-chk-enablenativetradingwithoutexchange', $_POST) && $_POST['kr-adm-chk-enablenativetradingwithoutexchange'] == "on" ? 1 : 0);
+    }
 
     $App->_saveTrading(
-        (array_key_exists('kr-adm-chk-enablenativetrading', $_POST) && $_POST['kr-adm-chk-enablenativetrading'] == "on" ? 1 : 0),
+        $enableNativeTrading,
         json_encode([]),
         (isset($_POST['kr-adm-depositfees']) ? $_POST['kr-adm-depositfees'] : ''),
         (isset($_POST['kr-adm-depositminimum']) ? $_POST['kr-adm-depositminimum'] : ''),
@@ -62,9 +71,9 @@ try {
         (array_key_exists('kr-adm-chk-enableleaderboard', $_POST) && $_POST['kr-adm-chk-enableleaderboard'] == "on" ? 1 : 0),
         (array_key_exists('kr-adm-chk-hidemarket', $_POST) && $_POST['kr-adm-chk-hidemarket'] == "on" ? 1 : 0),
         (array_key_exists('kr-adm-chk-enablepracticeaccount', $_POST) && $_POST['kr-adm-chk-enablepracticeaccount'] == "on" ? 1 : 0),
-        (array_key_exists('kr-adm-chk-directdepositenable', $_POST) && $_POST['kr-adm-chk-directdepositenable'] == "on" ? 1 : 0),
-        (array_key_exists('kr-adm-chk-enableautomaticcryptocurrenciewithdraw', $_POST) && $_POST['kr-adm-chk-enableautomaticcryptocurrenciewithdraw'] == "on" ? 1 : 0),
-        (array_key_exists('kr-adm-chk-enablenativetradingwithoutexchange', $_POST) && $_POST['kr-adm-chk-enablenativetradingwithoutexchange'] == "on" ? 1 : 0)
+        $directDeposit,
+        $automaticCryptoWithdraw,
+        $enableNativeTradingWithoutExchange
       );
 
     $App->_cleanCache();

@@ -100,7 +100,7 @@ function iniLoginViewControllers(){
     showLoginView();
   });
 
-  $('form').off('submit');
+  $('body.kr-login > form').off('submit');
 
   $('.kr-lgs-v-login').off('submit').submit(function(e){
     showLoadingForm();

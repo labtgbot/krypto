@@ -13,7 +13,7 @@ class Manager extends MySQL {
   }
 
   public function _getListSection(){
-    $s = ['Statistics', 'Bank transferts', 'Payments', 'Subscriptions', 'Identity', 'Users', 'Orders', 'Withdraw'];
+    $s = ['Statistics', 'Bank transferts', 'Payments', 'Subscriptions', 'Identity', 'Users', 'Orders', 'Withdraw', 'ChangeNOW swaps'];
     if(!$this->_getApp()->_getIdentityEnabled()){
       unset($s[4]);
     }
@@ -327,6 +327,19 @@ class Manager extends MySQL {
       $r = parent::querySqlRequest("SELECT * FROM banktransfert_krypto WHERE status_banktransfert=:status_banktransfert OR status_banktransfert=:status_banktransfert_se ",
                                     ['status_banktransfert' => 0, 'status_banktransfert_se' => 1]);
       $nNotification += count($r);
+    }
+
+    if($type == "all" || $type == "changenowswaps"){
+      try {
+        $r = parent::querySqlRequest("SELECT * FROM changenow_transactions_krypto
+                                      WHERE refund_available_changenow_transaction=:refund_available
+                                      OR continue_available_changenow_transaction=:continue_available",
+                                      [
+                                        'refund_available' => 1,
+                                        'continue_available' => 1
+                                      ]);
+        $nNotification += count($r);
+      } catch (Exception $e) { }
     }
 
     return $nNotification;
