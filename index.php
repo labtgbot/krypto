@@ -21,15 +21,18 @@ require "app/src/Lang/Lang.php";
 $App = new App(true);
 $App->_checkDomain();
 $App->_loadModulesControllers();
+$User = null;
+$UserLogged = false;
+$Lang = null;
 
 try {
 
-  // Check if user is already logged
+  // Keep the public swap page reachable for anonymous and signed-in visitors.
   $User = new User();
-  if($User->_isLogged()) header('Location: '.APP_URL.'/dashboard'.($App->_rewriteDashBoardName() ? '' : '.php'));
+  $UserLogged = $User->_isLogged();
 
   // Init lang object
-  $Lang = new Lang(null, $App);
+  $Lang = new Lang(($UserLogged ? $User->_getLang() : null), $App);
 
   if(!empty($_GET) && isset($_GET['lng']) && !empty($_GET['lng'])){
     $Lang->setLangCookie($_GET['lng']);
@@ -74,8 +77,9 @@ try {
     <link rel="stylesheet" href="assets/css/responsive-tablet.css">
     <link rel="stylesheet" href="assets/css/responsive-mobile.css">
     <link rel="stylesheet" href="assets/css/responsive-global.css">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/public-swap.css?v=<?php echo App::_getVersion(); ?>">
   </head>
-  <body class="kr-login <?php if(isset($_GET['a'])) echo 'kr-ac-'.$_GET['a']; ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.$_GET['token'].'"'; ?>>
+  <body class="kr-login kr-public-swap-enabled <?php if($UserLogged) echo 'kr-public-swap-authenticated '; ?><?php if(isset($_GET['a'])) echo 'kr-ac-'.htmlspecialchars($_GET['a']); ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.htmlspecialchars($_GET['token']).'"'; ?>>
 
     <section class="kr-page-view">
       <section>
@@ -111,7 +115,9 @@ try {
       </div>
     </section>
 
-    <form action="" method="post">
+    <?php require 'app/modules/kr-changenow/views/publicSwap.php'; ?>
+
+    <form id="kr-account-access" action="" method="post">
 
       <section class="kr-login-view">
 
@@ -188,6 +194,7 @@ try {
 
   <script src="<?php echo APP_URL; ?>/assets/js/login.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/public-swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <?php
   if($App->_getUserActivationRequire()){
