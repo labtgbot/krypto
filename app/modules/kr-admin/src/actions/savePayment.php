@@ -120,6 +120,8 @@ try {
       "paystack_payment_fees" => $_POST['kr-adm-paystackfees']
     ]);
 
+    $App->_saveChangeNowSettings(ChangeNowSettings::_adminPostToSettings($_POST));
+
     // Return success message
     die(json_encode([
       'error' => 0,

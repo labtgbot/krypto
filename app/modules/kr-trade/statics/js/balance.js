@@ -43,17 +43,8 @@ $(document).ready(function(){
 
   $('.kr-wallet-top-change').find('[kr-wallet-exch-name]').off('click').click(function(){
     $('.kr-wallet-top > section').css('display', 'none');
-    $.post($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/changeMainThirdparty.php', {exchange:$(this).attr('kr-wallet-exch-name')}).done(function(data){
-      let jsonRes = jQuery.parseJSON(data);
-      if(jsonRes.error == 1){
-        showAlert('Oops', jsonRes.msg, 'error');
-      } else {
-        $('.kr-wallet-top-resum > ul').html('');
-        _updateBalanceData();
-      }
-    }).fail(function(){
-      showAlert('Oops', 'Fail to change exchange account', 'error');
-    });
+    showAlert('Oops', 'Legacy exchange switching is disabled', 'error');
+    return false;
   });
 
 });

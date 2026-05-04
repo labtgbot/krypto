@@ -35,6 +35,15 @@ try {
   $Balance = $Balance->_getCurrentBalance();
 
   $Manager = new Manager($App);
+  $ChangeNowTransactions = [];
+  if(class_exists('ChangeNowPublicSwapRepository')){
+    try {
+      $ChangeNowRepository = new ChangeNowPublicSwapRepository();
+      $ChangeNowTransactions = $ChangeNowRepository->_listByUser($User->_getUserID(), 50);
+    } catch (\Exception $e) {
+      $ChangeNowTransactions = [];
+    }
+  }
 
 } catch (\Exception $e) {
   die($e->getMessage());
@@ -51,6 +60,36 @@ try {
       </div>
     </div>
   </header>
+
+  <?php if(count($ChangeNowTransactions) > 0): ?>
+  <div class="kr-marketlist" style="margin-bottom:18px;">
+    <div class="kr-marketlist-header">
+      <div class="kr-marketlist-n"><span>ChangeNOW</span></div>
+      <div class="kr-mono"><span><?php echo $Lang->tr('Date'); ?></span></div>
+      <div class="kr-mono"><span><?php echo $Lang->tr('Status'); ?></span></div>
+      <div class="kr-mono"><span><?php echo $Lang->tr('Amount'); ?></span></div>
+      <div class="kr-mono"><span><?php echo $Lang->tr('Received'); ?></span></div>
+      <div class="kr-mono"><span><?php echo $Lang->tr('Address'); ?></span></div>
+    </div>
+    <?php foreach ($ChangeNowTransactions as $ChangeNowTransaction):
+      $changeNowCreatedAt = $ChangeNowTransaction['createdAt'];
+      if(is_numeric($changeNowCreatedAt)) $changeNowCreatedAt = date('d/m/Y H:i:s', $changeNowCreatedAt);
+      ?>
+      <div class="kr-marketlist-item kr-balanceitem-cv" kr-history-ref="<?php echo htmlspecialchars($ChangeNowTransaction['providerId']); ?>">
+        <div class="kr-marketlist-n">
+          <div class="kr-marketlist-n-nn">
+            <label class="kr-mono"><b><?php echo htmlspecialchars($ChangeNowTransaction['providerId']); ?></b></label>
+          </div>
+        </div>
+        <div class="kr-mono"><span><?php echo htmlspecialchars($changeNowCreatedAt); ?></span></div>
+        <div class="kr-mono"><span class="kr-admin-lst-tag kr-admin-lst-tag-blue"><?php echo htmlspecialchars($ChangeNowTransaction['status']); ?></span></div>
+        <div class="kr-mono"><span><?php echo htmlspecialchars($ChangeNowTransaction['fromAmount'].' '.strtoupper($ChangeNowTransaction['fromCurrency']).' / '.strtoupper($ChangeNowTransaction['fromNetwork'])); ?></span></div>
+        <div class="kr-mono"><span><?php echo htmlspecialchars($ChangeNowTransaction['toAmount'].' '.strtoupper($ChangeNowTransaction['toCurrency']).' / '.strtoupper($ChangeNowTransaction['toNetwork'])); ?></span></div>
+        <div class="kr-mono"><span><?php echo htmlspecialchars(substr($ChangeNowTransaction['payoutAddress'], 0, 18)); ?><?php echo (strlen($ChangeNowTransaction['payoutAddress']) > 18 ? '...' : ''); ?></span></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
 
   <div class="kr-marketlist">
     <div class="kr-marketlist-header">

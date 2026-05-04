@@ -64,15 +64,13 @@ try {
   // Init CryptoOrder
   $OrderCoin = new CryptoOrder($Coin);
 
-  $Trade = new Trade($User, $App);
-
+  $legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
   $availableTrading = false;
-  if($App->_hiddenThirdpartyActive()){
+  if($legacyExchangeConnectionsEnabled){
+    $Trade = new Trade($User, $App);
     $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_GET['market']);
-  } else {
-    $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_GET['market']);
+    $availableTrading = count($listThirdParty) > 0;
   }
-  $availableTrading = count($listThirdParty) > 0;
 
 
   if(!$User->_accessAllowedFeature($App, 'tradinglive')) $availableTrading = false;

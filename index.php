@@ -21,15 +21,18 @@ require "app/src/Lang/Lang.php";
 $App = new App(true);
 $App->_checkDomain();
 $App->_loadModulesControllers();
+$User = null;
+$UserLogged = false;
+$Lang = null;
 
 try {
 
-  // Check if user is already logged
+  // Keep the public swap page reachable for anonymous and signed-in visitors.
   $User = new User();
-  if($User->_isLogged()) header('Location: '.APP_URL.'/dashboard'.($App->_rewriteDashBoardName() ? '' : '.php'));
+  $UserLogged = $User->_isLogged();
 
   // Init lang object
-  $Lang = new Lang(null, $App);
+  $Lang = new Lang(($UserLogged ? $User->_getLang() : null), $App);
 
   if(!empty($_GET) && isset($_GET['lng']) && !empty($_GET['lng'])){
     $Lang->setLangCookie($_GET['lng']);
@@ -44,6 +47,8 @@ try {
 } catch (Exception $e) {
   define('ERROR_SOFTWARE', $e->getMessage());
 }
+
+$changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) && $App->_changeNowWidgetEnabled('landing'));
 
 ?>
 <!DOCTYPE html>
@@ -74,9 +79,11 @@ try {
     <link rel="stylesheet" href="assets/css/responsive-tablet.css">
     <link rel="stylesheet" href="assets/css/responsive-mobile.css">
     <link rel="stylesheet" href="assets/css/responsive-global.css">
-    <link rel="stylesheet" href="app/modules/kr-changenow/statics/css/swap.css?v=<?php echo App::_getVersion(); ?>">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/widget.css?v=<?php echo App::_getVersion(); ?>">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/public-swap.css?v=<?php echo App::_getVersion(); ?>">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/swap.css?v=<?php echo App::_getVersion(); ?>">
   </head>
-  <body class="kr-login kr-swap-first <?php if(isset($_GET['a'])) echo 'kr-ac-'.$_GET['a']; ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.$_GET['token'].'"'; ?>>
+  <body class="kr-login kr-public-swap-enabled <?php if($UserLogged) echo 'kr-public-swap-authenticated '; ?><?php if(isset($_GET['a'])) echo 'kr-public-account-access-visible kr-ac-'.htmlspecialchars($_GET['a']); ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.htmlspecialchars($_GET['token']).'"'; ?>>
 
     <section class="kr-page-view">
       <section>
@@ -112,7 +119,9 @@ try {
       </div>
     </section>
 
-    <form action="" method="post">
+    <?php require 'app/modules/kr-changenow/views/publicSwap.php'; ?>
+
+    <form id="kr-account-access" action="" method="post" class="<?php echo ($changeNowLandingWidgetEnabled ? 'kr-login-widget-enabled' : ''); ?>">
 
       <section class="kr-public-swap-panel">
         <?php
@@ -121,6 +130,31 @@ try {
         ?>
       </section>
       <section class="kr-login-view">
+      </section>
+      <?php if($changeNowLandingWidgetEnabled): ?>
+        <section class="kr-changenow-login-widget">
+          <?php echo ChangeNowWidget::_renderFromApp($App, 'landing'); ?>
+        </section>
+      <?php endif; ?>
+      <section class="kr-app-overview" nov="1">
+
+        <div class="kr-app-ovrview-infos">
+          <div>
+            <h2>Mobile ready !</h2>
+          </div>
+          <ul>
+            <li class="kr-app-ovrview-selected"></li>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+        </div>
+
+        <section kr-ov-title="Mobile ready !" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/1.jpg')"></section>
+        <section kr-ov-title="10 technical indicators" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/2.jpg')"></section>
+        <section kr-ov-title="Be alerted !" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/3.jpg')"></section>
+        <section kr-ov-title="All news at the same place" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/4.jpg')"></section>
+
       </section>
     </form>
     <footer>
@@ -174,6 +208,7 @@ try {
 
   <script src="<?php echo APP_URL; ?>/assets/js/login.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/public-swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <?php

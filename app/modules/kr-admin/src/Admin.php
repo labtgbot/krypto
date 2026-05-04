@@ -13,6 +13,7 @@ class Admin extends MySQL {
     'app/modules/kr-trade/src/actions/generateLeaderBoard.php' => 18000,
     'app/src/App/actions/cronCleanCache.php' => 3600,
     'app/src/CryptoApi/actions/SyncExchanges.php' => 43200,
+    'app/modules/kr-changenow/src/actions/syncMarketData.php' => 3600,
     'app/src/CryptoApi/actions/SyncCoin.php' => 43200,
     'app/modules/kr-trade/src/actions/CronLimitOrder.php' => 60
   ];
@@ -55,7 +56,7 @@ class Admin extends MySQL {
   public function _getListSection(){
     return ['Dashboard', 'General settings', 'Coins', 'Currencies', 'Mail settings',
             'Payment', 'Subscriptions', 'News - Social', 'Intro', 'Trading', 'Cron', 'Additional pages',
-            'Bank accounts', 'Identity', 'Templates'];
+            'ChangeNOW widget', 'Bank accounts', 'Identity', 'Templates', 'ChangeNOW swaps', 'ChangeNOW'];
   }
 
   /**

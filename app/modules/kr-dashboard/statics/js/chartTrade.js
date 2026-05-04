@@ -337,15 +337,8 @@ function placerOrder(container, side, market){
 }
 
 function _showThirdpartySetup(thirdparty, cmdcfg = "user"){
-  closeAccountView();
-  $('body').addClass('kr-nblr');
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-trade/views/connectThirdparty.php', {thirdparty:thirdparty, cmdcfg:cmdcfg}).done(function(data){
-    $.when($('body').prepend(data)).then(function(){
-      _initThirdpartySetupController();
-    });
-  }).fail(function(){
-    showAlert('Oops', 'Fail to load thirdparty setup form', 'error');
-  });
+  showAlert('Oops', 'Legacy exchange setup is disabled', 'error');
+  return false;
 }
 
 function _initThirdpartySetupController(){
@@ -383,18 +376,6 @@ function closeThirdpartySetup(){
 }
 
 function removeThirdpartySetup(token){
-  $('.kr-thirdparty-setup').find('form').hide();
-  $('.kr-thirdparty-setup').find('.spinner').show();
-  $.post($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/removeThirdparty.php', {token:token}).done(function(data){
-    let jsonRes = jQuery.parseJSON(data);
-    if(jsonRes.error == 1){
-      showAlert('Oops', jsonRes.msg, 'error');
-      $('.kr-thirdparty-setup').find('.spinner').hide();
-      $('.kr-thirdparty-setup').find('form').show();
-    } else {
-      location.reload();
-    }
-  }).fail(function(){
-    showAlert('Oops', 'Fail to remove thirdparty', 'error');
-  });
+  showAlert('Oops', 'Legacy exchange setup is disabled', 'error');
+  return false;
 }
