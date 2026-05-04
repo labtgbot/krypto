@@ -100,10 +100,17 @@ foreach ($testFiles as $testFile) {
         $source = '';
     }
 
-    fail_if(stripos($source, 'changenow.io') !== false, basename($testFile).' should use local fixtures instead of ChangeNOW live hosts.');
     fail_if(stripos($source, 'curl_exec(') !== false, basename($testFile).' should not perform live cURL calls.');
     fail_if(stripos($source, 'file_get_contents(\'http') !== false, basename($testFile).' should not fetch live HTTP URLs.');
     fail_if(stripos($source, 'file_get_contents("http') !== false, basename($testFile).' should not fetch live HTTP URLs.');
+    fail_if(
+        preg_match('/new\s+ChangeNowApiClient\s*\([^)]*changenow\.io/i', $source) === 1,
+        basename($testFile).' should not instantiate the real ChangeNOW API host.'
+    );
+    fail_if(
+        preg_match('/(?:->|::)\s*_request\s*\([^)]*changenow\.io/i', $source) === 1,
+        basename($testFile).' should not issue requests to the real ChangeNOW API host.'
+    );
 }
 
 if (count($failures) > 0) {
