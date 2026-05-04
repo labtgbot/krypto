@@ -25,7 +25,8 @@ class ChangeNowSettings {
       'changenow_default_to_network' => 'eth',
       'changenow_support_email' => '',
       'changenow_rate_limit_per_second' => '30',
-      'changenow_rate_limit_per_minute' => '1800'
+      'changenow_rate_limit_per_minute' => '1800',
+      'changenow_quote_cache_ttl' => '30'
     ];
   }
 
@@ -54,7 +55,8 @@ class ChangeNowSettings {
       'changenow_default_to_network' => self::_normalizeAsset(self::_stringValue($post, 'kr-adm-changenowdefaulttonetwork'), 'eth'),
       'changenow_support_email' => self::_stringValue($post, 'kr-adm-changenowsupportemail'),
       'changenow_rate_limit_per_second' => self::_normalizePositiveInteger(self::_stringValue($post, 'kr-adm-changenowratelimitsecond'), '30'),
-      'changenow_rate_limit_per_minute' => self::_normalizePositiveInteger(self::_stringValue($post, 'kr-adm-changenowratelimitminute'), '1800')
+      'changenow_rate_limit_per_minute' => self::_normalizePositiveInteger(self::_stringValue($post, 'kr-adm-changenowratelimitminute'), '1800'),
+      'changenow_quote_cache_ttl' => self::_normalizePositiveInteger(self::_stringValue($post, 'kr-adm-changenowquotecachettl'), '30')
     ];
 
     $secretFields = [

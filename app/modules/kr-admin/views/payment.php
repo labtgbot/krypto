@@ -219,6 +219,14 @@ $Admin = new Admin();
         <input type="text" placeholder="1800" name="kr-adm-changenowratelimitminute" value="<?php echo $App->_getChangeNowRateLimitPerMinute(); ?>">
       </div>
     </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW quote cache TTL'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="30" name="kr-adm-changenowquotecachettl" value="<?php echo $App->_getChangeNowQuoteCacheTtl(); ?>">
+      </div>
+    </div>
   </div>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
