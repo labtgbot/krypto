@@ -159,8 +159,8 @@ $Charge = $User->_getCharge($App);
   <?php if($App->_referalEnabled()): ?>
     <div class="kr-user-f-l">
       <div>
-        <label><?php echo $Lang->tr('Referal link'); ?></label>
-        <input type="text" readonly value="<?php echo APP_URL; ?>/?ref=<?php echo $User->_getReferalUrl(); ?>">
+        <label><?php echo $Lang->tr('Referral link'); ?></label>
+        <input type="text" readonly value="<?php echo rtrim(APP_URL, '/'); ?>/?ref=<?php echo rawurlencode($User->_getReferalUrl()); ?>">
       </div>
     </div>
   <?php endif; ?>

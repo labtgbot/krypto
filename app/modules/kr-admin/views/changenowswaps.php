@@ -32,6 +32,7 @@ $ChangeNowFilters = [
   'status' => (!empty($_POST) && isset($_POST['status']) ? $_POST['status'] : '')
 ];
 $ChangeNowTransactions = $ChangeNowRepository->_listForSupport($ChangeNowFilters, 100);
+$ChangeNowReferralReport = $ChangeNowRepository->_referralReportSummary($ChangeNowFilters, 500);
 
 ?>
 <section class="kr-admin">
@@ -45,7 +46,7 @@ $ChangeNowTransactions = $ChangeNowRepository->_listForSupport($ChangeNowFilters
 
   <div class="kr-manager-filter">
     <form class="kr-changenow-filter-search-f" kr-module="admin" kr-view="changenowswaps">
-      <input type="text" name="" placeholder="<?php echo $Lang->tr('Provider ID, user, status, asset'); ?>" value="<?php echo htmlspecialchars($ChangeNowFilters['search']); ?>">
+      <input type="text" name="" placeholder="<?php echo $Lang->tr('Provider ID, user, status, asset, referral'); ?>" value="<?php echo htmlspecialchars($ChangeNowFilters['search']); ?>">
     </form>
   </div>
 

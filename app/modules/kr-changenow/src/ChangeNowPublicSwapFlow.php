@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/ChangeNowApiException.php';
+require_once __DIR__.'/ChangeNowReferralAttribution.php';
 
 /**
  * Public no-registration ChangeNOW swap orchestration.
@@ -138,6 +139,9 @@ class ChangeNowPublicSwapFlow {
       $message = (is_array($validation) && array_key_exists('message', $validation) && $validation['message'] != '' ? $validation['message'] : 'ChangeNOW rejected the destination address.');
       throw new ChangeNowApiValidationException('Destination address is not valid.', 'ChangeNOW address validation failed: '.$message);
     }
+
+    $referralAttribution = $this->_referralAttributionForRequest($request, $userId);
+    if(count($referralAttribution) > 0) $normalized['referralAttribution'] = $referralAttribution;
 
     $swapRequest = $this->_swapRequestFromPublic($normalized);
     if(!is_null($userId) && $userId !== '') $swapRequest['userId'] = (string) $userId;
@@ -500,7 +504,33 @@ class ChangeNowPublicSwapFlow {
       if(!$this->_isBlank($normalized[$sourceKey])) $swapRequest[$targetKey] = $normalized[$sourceKey];
     }
 
+    if(array_key_exists('referralAttribution', $normalized) && is_array($normalized['referralAttribution']) && count($normalized['referralAttribution']) > 0){
+      $swapRequest['payload'] = [
+        'kryptoReferralAttribution' => $normalized['referralAttribution']
+      ];
+    }
+
     return $swapRequest;
+  }
+
+  private function _referralAttributionForRequest($request, $userId){
+    if(!class_exists('ChangeNowReferralAttribution')) return [];
+
+    $session = [];
+    if(array_key_exists('referral_session', $this->Options) && is_array($this->Options['referral_session'])) $session = $this->Options['referral_session'];
+    elseif(isset($_SESSION) && is_array($_SESSION)) $session = $_SESSION;
+
+    $options = [
+      'loggedInUserId' => $userId,
+      'changeNowReferralLinkId' => $this->_getChangeNowReferralLinkId(),
+      'referralCodeOwnerResolver' => $this->_referralCodeOwnerResolver()
+    ];
+
+    if(array_key_exists('attribution_time_factory', $this->Options) && is_callable($this->Options['attribution_time_factory'])){
+      $options['now'] = call_user_func($this->Options['attribution_time_factory']);
+    }
+
+    return ChangeNowReferralAttribution::_fromRequest($request, $session, $options);
   }
 
   private function _normalizePublicRequest($request, $requireAddress){
@@ -712,6 +742,28 @@ class ChangeNowPublicSwapFlow {
     if(array_key_exists('support_email', $this->Options)) return trim((string) $this->Options['support_email']);
     if(!is_null($this->App) && method_exists($this->App, '_getChangeNowSupportEmail')) return $this->App->_getChangeNowSupportEmail();
     return '';
+  }
+
+  private function _getChangeNowReferralLinkId(){
+    if(array_key_exists('change_now_referral_link_id', $this->Options)) return trim((string) $this->Options['change_now_referral_link_id']);
+    if(array_key_exists('changenow_referral_link_id', $this->Options)) return trim((string) $this->Options['changenow_referral_link_id']);
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowReferralLinkId')) return trim((string) $this->App->_getChangeNowReferralLinkId());
+    return '';
+  }
+
+  private function _referralCodeOwnerResolver(){
+    if(array_key_exists('referral_owner_resolver', $this->Options) && is_callable($this->Options['referral_owner_resolver'])){
+      return $this->Options['referral_owner_resolver'];
+    }
+
+    if(!is_null($this->App) && method_exists($this->App, '_getReferalCodeOwnerId')){
+      $App = $this->App;
+      return function($code) use ($App) {
+        return $App->_getReferalCodeOwnerId($code);
+      };
+    }
+
+    return null;
   }
 
   private function _flowEnabled($flow){

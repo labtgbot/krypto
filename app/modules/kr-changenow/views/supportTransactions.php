@@ -12,12 +12,39 @@ function changenow_support_date($value){
 }
 
 ?>
+<?php if(isset($ChangeNowReferralReport) && is_array($ChangeNowReferralReport)): ?>
+<div class="kr-admin-table" style="margin-bottom:12px;">
+  <table>
+    <thead>
+      <tr>
+        <td><?php echo $Lang->tr('Referral traffic'); ?></td>
+        <td><?php echo $Lang->tr('Internal rewards'); ?></td>
+        <td><?php echo $Lang->tr('ChangeNOW partner'); ?></td>
+        <td><?php echo $Lang->tr('UTM campaigns'); ?></td>
+        <td><?php echo $Lang->tr('Pending provider'); ?></td>
+        <td><?php echo $Lang->tr('Pending admin'); ?></td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['total']); ?></td>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['internal']); ?></td>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['changeNowPartner']); ?></td>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['utm']); ?></td>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['commissionStates']['pending_provider_confirmation']); ?></td>
+        <td><?php echo changenow_support_escape($ChangeNowReferralReport['commissionStates']['pending_admin_review']); ?></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
 <div class="kr-admin-table">
   <table>
     <thead>
       <tr>
         <td><?php echo $Lang->tr('Transaction'); ?></td>
         <td><?php echo $Lang->tr('User'); ?></td>
+        <td><?php echo $Lang->tr('Referral'); ?></td>
         <td><?php echo $Lang->tr('Pair'); ?></td>
         <td><?php echo $Lang->tr('Amount'); ?></td>
         <td><?php echo $Lang->tr('Status'); ?></td>
@@ -29,11 +56,15 @@ function changenow_support_date($value){
     <tbody>
       <?php if(count($ChangeNowTransactions) == 0): ?>
       <tr>
-        <td colspan="8"><?php echo $Lang->tr('No ChangeNOW transactions found.'); ?></td>
+        <td colspan="9"><?php echo $Lang->tr('No ChangeNOW transactions found.'); ?></td>
       </tr>
       <?php endif; ?>
 
       <?php foreach ($ChangeNowTransactions as $ChangeNowTransaction):
+        $referralAttribution = (array_key_exists('referralAttribution', $ChangeNowTransaction) && is_array($ChangeNowTransaction['referralAttribution']) ? $ChangeNowTransaction['referralAttribution'] : []);
+        $internalReferralCode = ChangeNowPublicSwapRepository::_referralInternalCode($referralAttribution);
+        $changeNowReferralLinkId = ChangeNowPublicSwapRepository::_referralChangeNowLinkId($referralAttribution);
+        $utmCampaign = ChangeNowPublicSwapRepository::_referralUtmCampaign($referralAttribution);
         $changeNowEvents = [];
         try {
           $changeNowEvents = $ChangeNowRepository->_listEventsForProvider($ChangeNowTransaction['providerId'], 5);
@@ -49,6 +80,21 @@ function changenow_support_date($value){
         </td>
         <td>
           <?php echo ($ChangeNowTransaction['userId'] == '' ? $Lang->tr('Anonymous') : '#'.changenow_support_escape($ChangeNowTransaction['userId'])); ?>
+        </td>
+        <td>
+          <?php if($internalReferralCode != ''): ?>
+            <b><?php echo $Lang->tr('Internal'); ?>:</b> <?php echo changenow_support_escape($internalReferralCode); ?><br>
+          <?php endif; ?>
+          <?php if($changeNowReferralLinkId != ''): ?>
+            <b><?php echo $Lang->tr('ChangeNOW'); ?>:</b> <?php echo changenow_support_escape($changeNowReferralLinkId); ?><br>
+          <?php endif; ?>
+          <?php if($utmCampaign != ''): ?>
+            <b><?php echo $Lang->tr('UTM'); ?>:</b> <?php echo changenow_support_escape($utmCampaign); ?><br>
+          <?php endif; ?>
+          <?php if($internalReferralCode == '' && $changeNowReferralLinkId == '' && $utmCampaign == ''): ?>
+            <?php echo $Lang->tr('None'); ?><br>
+          <?php endif; ?>
+          <span><?php echo changenow_support_escape(ChangeNowPublicSwapRepository::_referralCommissionStateLabel($ChangeNowTransaction['referralCommissionState'])); ?></span>
         </td>
         <td>
           <?php echo changenow_support_escape(strtoupper($ChangeNowTransaction['fromCurrency']).' / '.strtoupper($ChangeNowTransaction['fromNetwork'])); ?><br>

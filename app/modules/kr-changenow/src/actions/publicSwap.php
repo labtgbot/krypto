@@ -33,6 +33,7 @@ function changenow_public_error($errorCode, $message, $type = 'error'){
 
 $App = new App(true);
 $App->_loadModulesControllers();
+if(!empty($_POST)) $App->_checkReferalSource($_POST);
 
 try {
   $User = new User();

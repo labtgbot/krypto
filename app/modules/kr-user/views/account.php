@@ -81,6 +81,9 @@ $_SESSION['kr_account_view_user'] = $User->_getUserID();
   <?php if($User->_accessAllowedFeature($App, 'tradinglive') && $App->_hiddenThirdpartyActive()): ?>
     <li kr-user-v="widthdraw"><?php echo $Lang->tr('Widthdraw / Wallets'); ?></li>
   <?php endif; ?>
+  <?php if($App->_referalEnabled()): ?>
+    <li kr-user-v="referrals"><?php echo $Lang->tr('Referrals'); ?></li>
+  <?php endif; ?>
   <?php if(!$adminView): ?>
     <li kr-user-v="logout"><?php echo $Lang->tr('Logout'); ?></li>
   <?php endif; ?>
