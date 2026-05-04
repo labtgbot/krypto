@@ -80,6 +80,7 @@ class Install {
     return [
       'app/src/App/actions/cronCleanCache.php' => 'Clear cache',
       'app/src/CryptoApi/actions/SyncExchanges.php' => 'Exchanges sync',
+      'app/modules/kr-changenow/src/actions/syncMarketData.php' => 'ChangeNOW market data sync',
       'app/src/CryptoApi/actions/SyncCoin.php' => 'Coins sync',
       'app/modules/kr-search/src/actions/searchQuery.php?request=LT' => 'Load search engine'
     ];
