@@ -29,7 +29,7 @@ $(document).ready(function(){
   });
 
   $('.kr-logo').off('click').click(function(){
-    changeView('dashboard', 'dashboard');
+    changeView('changenow', 'swap');
   });
 
   $('.kr-watching-wdsf').off('click').click(function(){
@@ -63,11 +63,14 @@ $(document).ready(function(){
 
   });
 
-  changeView('dashboard', 'dashboard');
+  changeView('changenow', 'swap');
 
 });
 
 let moduleConstruct = {
+  'changenow': {
+    'swap': window.initChangeNowSwap || function(){}
+  },
   'dashboard': {
     'dashboard': initDashboard,
     'custompage': initCustomPage,
@@ -144,6 +147,10 @@ function enableTimeheader(timestamp){
 
 function changeView(mod, view, args = {}, callback = null, forcehidewatching = false){
   if(mod == undefined || view == undefined) return false;
+
+  $('body').removeClass(function(i, className){
+    return (className.match(/(^|\s)kr-view-\S+/g) || []).join(' ');
+  }).addClass('kr-view-' + mod + '-' + view);
 
   $('.kr-leftnav').find('li[kr-view].kr-leftnav-select').removeClass('kr-leftnav-select');
 

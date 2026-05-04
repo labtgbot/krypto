@@ -81,6 +81,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
     <link rel="stylesheet" href="assets/css/responsive-global.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/widget.css?v=<?php echo App::_getVersion(); ?>">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/public-swap.css?v=<?php echo App::_getVersion(); ?>">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/css/swap.css?v=<?php echo App::_getVersion(); ?>">
   </head>
   <body class="kr-login kr-public-swap-enabled <?php if($UserLogged) echo 'kr-public-swap-authenticated '; ?><?php if(isset($_GET['a'])) echo 'kr-public-account-access-visible kr-ac-'.htmlspecialchars($_GET['a']); ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.htmlspecialchars($_GET['token']).'"'; ?>>
 
@@ -122,8 +123,13 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
 
     <form id="kr-account-access" action="" method="post" class="<?php echo ($changeNowLandingWidgetEnabled ? 'kr-login-widget-enabled' : ''); ?>">
 
+      <section class="kr-public-swap-panel">
+        <?php
+        $changeNowSwapContext = 'public';
+        require 'app/views/changenow/swap_panel.php';
+        ?>
+      </section>
       <section class="kr-login-view">
-
       </section>
       <?php if($changeNowLandingWidgetEnabled): ?>
         <section class="kr-changenow-login-widget">
@@ -203,6 +209,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
   <script src="<?php echo APP_URL; ?>/assets/js/login.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/public-swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <?php
   if($App->_getUserActivationRequire()){
