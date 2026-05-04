@@ -24,6 +24,10 @@ $App->_loadModulesControllers();
 
 try {
 
+    if(!$App->_legacyExchangeConnectionsEnabled()){
+        throw new Exception("Legacy exchange connections are disabled", 1);
+    }
+
     // Check loggin & permission
     $User = new User();
     if (!$User->_isLogged()) {

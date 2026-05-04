@@ -45,40 +45,43 @@ try {
   $GraphContainer = uniqid().rand().uniqid();
 
   $availableMarketGiven = true;
-
-  $Trade = new Trade($User, $App);
-
+  $legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
   $availableTrading = null;
-  if($App->_hiddenThirdpartyActive()){
+  $listMarketAvailable = [];
 
-    //error_log($CryptoApi->_getCurrencySymbol());
-    //
-    $Balance = new Balance($User, $App);
-    $CurrentBalance = $Balance->_getCurrentBalance();
-
-    $availableTrading = false;
+  if($legacyExchangeConnectionsEnabled){
+    $Trade = new Trade($User, $App);
     if($App->_hiddenThirdpartyActive()){
-      $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
-    } else {
-      $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
-    }
-    $availableTrading = count($listThirdParty) > 0;
-    if(count($listThirdParty) > 0) $availableTrading = $listThirdParty[0];
-  } else {
-    $availableMarketGiven = null;
-    if(isset($_POST['market'])){
-      $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency'], $_POST['market']);
-      if(count($availableMarketGiven) > 0) $availableTrading = $availableMarketGiven[0];
-    } else {
-      $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency']);
-      $availableTrading = $availableMarketGiven[0];
-    }
 
-    if($availableMarketGiven != null && !isset($_POST['market'])){
-      $listMarketAvailable = $availableMarketGiven;
+      //error_log($CryptoApi->_getCurrencySymbol());
+      //
+      $Balance = new Balance($User, $App);
+      $CurrentBalance = $Balance->_getCurrentBalance();
+
+      $availableTrading = false;
+      if($App->_hiddenThirdpartyActive()){
+        $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
+      } else {
+        $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_POST['market']);
+      }
+      $availableTrading = count($listThirdParty) > 0;
+      if(count($listThirdParty) > 0) $availableTrading = $listThirdParty[0];
     } else {
-      $listMarketAvailable = $Trade->_thirdparySymbolTrading($_POST['symbol'], (isset($_POST['currency']) ? $_POST['currency'] : $CryptoApi->_getCurrency()));
-      if(count($listMarketAvailable) > 0 && is_null($availableTrading)) $availableTrading = $listMarketAvailable[0];
+      $availableMarketGiven = null;
+      if(isset($_POST['market'])){
+        $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency'], $_POST['market']);
+        if(count($availableMarketGiven) > 0) $availableTrading = $availableMarketGiven[0];
+      } else {
+        $availableMarketGiven = $Trade->_thirdparySymbolTrading($_POST['symbol'], $_POST['currency']);
+        $availableTrading = $availableMarketGiven[0];
+      }
+
+      if($availableMarketGiven != null && !isset($_POST['market'])){
+        $listMarketAvailable = $availableMarketGiven;
+      } else {
+        $listMarketAvailable = $Trade->_thirdparySymbolTrading($_POST['symbol'], (isset($_POST['currency']) ? $_POST['currency'] : $CryptoApi->_getCurrency()));
+        if(count($listMarketAvailable) > 0 && is_null($availableTrading)) $availableTrading = $listMarketAvailable[0];
+      }
     }
   }
 
@@ -281,7 +284,7 @@ $showChangeNowCoinWidget = $App->_changeNowWidgetEnabled('coin');
           ?>
           <section class="kr-cinf-wallet-inactive">
             <span><?php echo $Lang->tr('Enable live trading'); ?></span>
-            <a class="btn btn-orange btn-autowidth" onclick="_showThirdpartySetup('<?php echo $availableTrading->_getExchangeName(); ?>');"><?php echo $Lang->tr('Login with '.$availableTrading->_getName()); ?></a>
+            <span><?php echo $Lang->tr('Legacy exchange connections are disabled'); ?></span>
           </section>
         <?php endif; ?>
       </section>

@@ -807,7 +807,7 @@ class App extends MySQL {
   }
 
   public function _legacyExchangeConnectionsEnabled(){
-    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return true;
+    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return false;
     return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
   }
 
