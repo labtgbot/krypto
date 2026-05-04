@@ -34,7 +34,7 @@ Quote and swap creation accept request arrays instead of a `User` object. Authen
 ## Feature Flags
 
 - `changenow_provider_enabled`: defaults to `0`; later tasks turn on ChangeNOW-backed routing only when the provider is configured.
-- `legacy_exchange_connections_enabled`: defaults to `1`; legacy exchange flows remain available until feature parity and rollback requirements are satisfied.
+- `legacy_exchange_connections_enabled`: defaults to `0` after the later legacy-exchange UX disablement tasks are merged; preserved legacy data remains available for rollback, support, audit, and historical data access.
 
 When `changenow_provider_enabled = 1` and `legacy_exchange_connections_enabled = 0`, the application is in legacy-disabled mode. Later UI and action tasks should use that mode to remove direct exchange connection flows from the user product.
 

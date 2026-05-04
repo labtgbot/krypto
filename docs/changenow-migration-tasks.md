@@ -140,7 +140,7 @@ CN-01 boundary decision:
 
 - Architecture decision record: [ADR 0001: ChangeNOW Provider Boundary](adr-0001-changenow-provider-boundary.md).
 - Provider boundary location: `app/modules/kr-changenow/src/`.
-- Feature flags: `changenow_provider_enabled` defaults off, and `legacy_exchange_connections_enabled` defaults on.
+- Feature flags: `changenow_provider_enabled` defaults off, and `legacy_exchange_connections_enabled` defaults off after the later legacy-exchange UX disablement tasks are merged.
 - Legacy direct exchange flows remain callable only while the legacy flag is enabled. After ChangeNOW routing is complete, old exchange classes, user credential tables, balances, and order history are retained for rollback, support, audit, and data access, not for new public swap routing.
 
 ## Task CN-02: Add ChangeNOW Settings And Secure Configuration

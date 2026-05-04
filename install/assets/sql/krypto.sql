@@ -151,6 +151,25 @@ CREATE TABLE `cache_krypto` (
   `last_update_cache` varchar(12) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `cex_krypto` (
+  `id_cex` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
+  `key_cex` longtext NOT NULL,
+  `secret_cex` longtext NOT NULL,
+  `uid_cex` longtext NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `charges_krypto` (
+  `id_charges` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
+  `key_charges` text,
+  `date_charges` varchar(12) NOT NULL,
+  `status_charges` varchar(10) NOT NULL,
+  `ndays_charges` int(11) NOT NULL,
+  `type_payment` varchar(20) DEFAULT NULL,
+  `data_payment` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `changenow_assets_krypto` (
   `id_changenow_asset` int(11) NOT NULL,
   `ticker_changenow_asset` varchar(32) NOT NULL,
@@ -165,6 +184,8 @@ CREATE TABLE `changenow_assets_krypto` (
   `stable_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
   `featured_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
   `fixed_rate_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `extra_id_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `extra_id_name_changenow_asset` varchar(64) DEFAULT NULL,
   `provider_active_changenow_asset` tinyint(1) NOT NULL DEFAULT '1',
   `admin_enabled_changenow_asset` tinyint(1) NOT NULL DEFAULT '1',
   `raw_changenow_asset` longtext,
@@ -204,17 +225,6 @@ CREATE TABLE `changenow_quote_cache_krypto` (
   `created_at_changenow_quote_cache` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `changenow_sync_status_krypto` (
-  `id_changenow_sync` int(11) NOT NULL,
-  `sync_key_changenow_sync` varchar(64) NOT NULL,
-  `status_changenow_sync` varchar(20) NOT NULL,
-  `message_changenow_sync` text,
-  `assets_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
-  `pairs_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
-  `started_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0',
-  `finished_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `changenow_transactions_krypto` (
   `id_changenow_transaction` int(11) NOT NULL,
   `provider_id_changenow_transaction` varchar(120) NOT NULL,
@@ -238,11 +248,13 @@ CREATE TABLE `changenow_transactions_krypto` (
   `status_changenow_transaction` varchar(40) NOT NULL DEFAULT 'waiting',
   `refund_available_changenow_transaction` tinyint(1) NOT NULL DEFAULT '0',
   `continue_available_changenow_transaction` tinyint(1) NOT NULL DEFAULT '0',
+  `id_changenow_referral_attribution` int(11) DEFAULT NULL,
   `referral_attribution_changenow_transaction` longtext,
   `raw_create_changenow_transaction` longtext,
   `raw_status_changenow_transaction` longtext,
   `raw_actions_changenow_transaction` longtext,
   `support_note_changenow_transaction` text,
+  `provider_created_at_changenow_transaction` varchar(15) NOT NULL DEFAULT '0',
   `created_at_changenow_transaction` varchar(15) NOT NULL,
   `updated_at_changenow_transaction` varchar(15) NOT NULL,
   `expires_at_changenow_transaction` varchar(15) NOT NULL DEFAULT '0'
@@ -256,28 +268,37 @@ CREATE TABLE `changenow_transaction_events_krypto` (
   `actor_type_changenow_transaction_event` varchar(30) NOT NULL DEFAULT 'system',
   `event_type_changenow_transaction_event` varchar(40) NOT NULL,
   `event_status_changenow_transaction_event` varchar(40) NOT NULL,
+  `previous_status_changenow_transaction_event` varchar(40) DEFAULT NULL,
   `event_note_changenow_transaction_event` text,
   `raw_event_changenow_transaction_event` longtext,
   `created_at_changenow_transaction_event` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `cex_krypto` (
-  `id_cex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_cex` longtext NOT NULL,
-  `secret_cex` longtext NOT NULL,
-  `uid_cex` longtext NOT NULL
+CREATE TABLE `changenow_referral_attribution_krypto` (
+  `id_changenow_referral_attribution` int(11) NOT NULL,
+  `id_user` int(11) DEFAULT NULL,
+  `referral_code_changenow_referral` varchar(128) NOT NULL DEFAULT '',
+  `provider_user_id_changenow_referral` varchar(120) DEFAULT NULL,
+  `provider_payload_changenow_referral` varchar(255) DEFAULT NULL,
+  `campaign_changenow_referral` varchar(120) DEFAULT NULL,
+  `source_changenow_referral` varchar(120) DEFAULT NULL,
+  `landing_url_changenow_referral` text,
+  `anonymous_lookup_token_hash_changenow_referral` char(64) DEFAULT NULL,
+  `commission_state_changenow_referral` varchar(40) NOT NULL DEFAULT 'pending_provider_confirmation',
+  `raw_changenow_referral` longtext,
+  `created_at_changenow_referral` varchar(15) NOT NULL,
+  `updated_at_changenow_referral` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `charges_krypto` (
-  `id_charges` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_charges` text,
-  `date_charges` varchar(12) NOT NULL,
-  `status_charges` varchar(10) NOT NULL,
-  `ndays_charges` int(11) NOT NULL,
-  `type_payment` varchar(20) DEFAULT NULL,
-  `data_payment` text
+CREATE TABLE `changenow_sync_status_krypto` (
+  `id_changenow_sync` int(11) NOT NULL,
+  `sync_key_changenow_sync` varchar(64) NOT NULL,
+  `status_changenow_sync` varchar(20) NOT NULL,
+  `message_changenow_sync` text,
+  `assets_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
+  `pairs_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
+  `started_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0',
+  `finished_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `coinex_krypto` (
@@ -4450,7 +4471,8 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (247, 'changenow_widget_place_dashboard', '0', 0),
 (248, 'changenow_widget_place_coin', '0', 0),
 (249, 'changenow_widget_place_custom_page', '0', 0),
-(250, 'changenow_widget_to_the_moon', '1', 0);
+(250, 'changenow_widget_to_the_moon', '1', 0),
+(251, 'changenow_debug_logging_enabled', '0', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -4650,6 +4672,12 @@ ALTER TABLE `btcmarket_krypto`
 ALTER TABLE `cache_krypto`
   ADD PRIMARY KEY (`id_cache`);
 
+ALTER TABLE `cex_krypto`
+  ADD PRIMARY KEY (`id_cex`);
+
+ALTER TABLE `charges_krypto`
+  ADD PRIMARY KEY (`id_charges`);
+
 ALTER TABLE `changenow_assets_krypto`
   ADD PRIMARY KEY (`id_changenow_asset`),
   ADD UNIQUE KEY `ticker_network_changenow_asset` (`ticker_changenow_asset`,`network_changenow_asset`),
@@ -4668,11 +4696,6 @@ ALTER TABLE `changenow_quote_cache_krypto`
   ADD KEY `expires_at_changenow_quote_cache` (`expires_at_changenow_quote_cache`),
   ADD KEY `pair_changenow_quote_cache` (`from_currency_changenow_quote_cache`,`from_network_changenow_quote_cache`,`to_currency_changenow_quote_cache`,`to_network_changenow_quote_cache`,`flow_changenow_quote_cache`);
 
-ALTER TABLE `changenow_sync_status_krypto`
-  ADD PRIMARY KEY (`id_changenow_sync`),
-  ADD UNIQUE KEY `sync_key_changenow_sync` (`sync_key_changenow_sync`),
-  ADD KEY `status_changenow_sync` (`status_changenow_sync`);
-
 ALTER TABLE `changenow_transactions_krypto`
   ADD PRIMARY KEY (`id_changenow_transaction`),
   ADD UNIQUE KEY `provider_id_changenow_transaction` (`provider_id_changenow_transaction`),
@@ -4680,6 +4703,8 @@ ALTER TABLE `changenow_transactions_krypto`
   ADD KEY `session_key_changenow_transaction` (`session_key_changenow_transaction`),
   ADD KEY `user_changenow_transaction` (`id_user`),
   ADD KEY `status_changenow_transaction` (`status_changenow_transaction`),
+  ADD KEY `created_at_changenow_transaction` (`created_at_changenow_transaction`),
+  ADD KEY `referral_changenow_transaction` (`id_changenow_referral_attribution`),
   ADD KEY `action_changenow_transaction` (`refund_available_changenow_transaction`,`continue_available_changenow_transaction`),
   ADD KEY `pair_changenow_transaction` (`from_currency_changenow_transaction`,`from_network_changenow_transaction`,`to_currency_changenow_transaction`,`to_network_changenow_transaction`);
 
@@ -4688,13 +4713,22 @@ ALTER TABLE `changenow_transaction_events_krypto`
   ADD KEY `transaction_changenow_transaction_event` (`id_changenow_transaction`),
   ADD KEY `provider_changenow_transaction_event` (`provider_id_changenow_transaction`),
   ADD KEY `actor_changenow_transaction_event` (`actor_user_id_changenow_transaction_event`,`actor_type_changenow_transaction_event`),
-  ADD KEY `type_changenow_transaction_event` (`event_type_changenow_transaction_event`,`event_status_changenow_transaction_event`);
+  ADD KEY `type_changenow_transaction_event` (`event_type_changenow_transaction_event`,`event_status_changenow_transaction_event`),
+  ADD KEY `created_at_changenow_transaction_event` (`created_at_changenow_transaction_event`);
 
-ALTER TABLE `cex_krypto`
-  ADD PRIMARY KEY (`id_cex`);
+ALTER TABLE `changenow_referral_attribution_krypto`
+  ADD PRIMARY KEY (`id_changenow_referral_attribution`),
+  ADD KEY `referral_code_changenow_referral` (`referral_code_changenow_referral`),
+  ADD KEY `user_changenow_referral` (`id_user`),
+  ADD KEY `provider_user_changenow_referral` (`provider_user_id_changenow_referral`),
+  ADD KEY `lookup_token_changenow_referral` (`anonymous_lookup_token_hash_changenow_referral`),
+  ADD KEY `commission_state_changenow_referral` (`commission_state_changenow_referral`),
+  ADD KEY `created_at_changenow_referral` (`created_at_changenow_referral`);
 
-ALTER TABLE `charges_krypto`
-  ADD PRIMARY KEY (`id_charges`);
+ALTER TABLE `changenow_sync_status_krypto`
+  ADD PRIMARY KEY (`id_changenow_sync`),
+  ADD UNIQUE KEY `sync_key_changenow_sync` (`sync_key_changenow_sync`),
+  ADD KEY `status_changenow_sync` (`status_changenow_sync`);
 
 ALTER TABLE `coinex_krypto`
   ADD PRIMARY KEY (`id_coinex`);
@@ -4942,6 +4976,12 @@ ALTER TABLE `btcmarket_krypto`
 ALTER TABLE `cache_krypto`
   MODIFY `id_cache` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12644;
 
+ALTER TABLE `cex_krypto`
+  MODIFY `id_cex` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `charges_krypto`
+  MODIFY `id_charges` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
 ALTER TABLE `changenow_assets_krypto`
   MODIFY `id_changenow_asset` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -4951,20 +4991,17 @@ ALTER TABLE `changenow_pairs_krypto`
 ALTER TABLE `changenow_quote_cache_krypto`
   MODIFY `id_changenow_quote_cache` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `changenow_sync_status_krypto`
-  MODIFY `id_changenow_sync` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `changenow_transactions_krypto`
   MODIFY `id_changenow_transaction` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `changenow_transaction_events_krypto`
   MODIFY `id_changenow_transaction_event` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `cex_krypto`
-  MODIFY `id_cex` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `changenow_referral_attribution_krypto`
+  MODIFY `id_changenow_referral_attribution` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `charges_krypto`
-  MODIFY `id_charges` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+ALTER TABLE `changenow_sync_status_krypto`
+  MODIFY `id_changenow_sync` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `coinex_krypto`
   MODIFY `id_coinex` int(11) NOT NULL AUTO_INCREMENT;
@@ -5105,7 +5142,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=251;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=252;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
