@@ -4472,7 +4472,11 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (248, 'changenow_widget_place_coin', '0', 0),
 (249, 'changenow_widget_place_custom_page', '0', 0),
 (250, 'changenow_widget_to_the_moon', '1', 0),
-(251, 'changenow_debug_logging_enabled', '0', 0);
+(251, 'changenow_debug_logging_enabled', '0', 0),
+(252, 'changenow_debug_logging', '0', 0),
+(253, 'changenow_unsupported_countries', '[]', 0),
+(254, 'changenow_rate_limits', '{"quote":{"limit":30,"window_seconds":60},"transaction":{"limit":6,"window_seconds":60}}', 0),
+(255, 'changenow_compliance_copy', '{"non_custodial_warning":"Krypto does not custody funds. ChangeNOW processes the exchange and controls provider-side timing, limits, and status updates.","unsupported_region":"ChangeNOW swaps are not available in your region under current provider or local policy.","unsupported_pair":"This pair is not available for ChangeNOW exchange right now.","provider_down":"ChangeNOW exchange is temporarily unavailable. Please try again later.","expired_quote":"The quote expired. Request a new quote before creating a transaction.","address_validation_failed":"The destination or refund address could not be validated for the selected asset and network.","rate_limited":"Too many swap requests. Please wait before trying again."}', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -5142,7 +5146,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=252;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
