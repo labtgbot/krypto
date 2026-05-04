@@ -38,6 +38,7 @@ $post = [
     'kr-adm-changenowsupportemail' => ' swaps@example.com ',
     'kr-adm-changenowratelimitsecond' => '25',
     'kr-adm-changenowratelimitminute' => '1200',
+    'kr-adm-changenowquotecachettl' => '45',
 ];
 
 $settings = ChangeNowSettings::_adminPostToSettings($post);
@@ -57,6 +58,7 @@ assertSameValue('eth', $settings['changenow_default_to_network'], 'Default desti
 assertSameValue('swaps@example.com', $settings['changenow_support_email'], 'Support email should be trimmed');
 assertSameValue('25', $settings['changenow_rate_limit_per_second'], 'Per-second rate limit should be saved');
 assertSameValue('1200', $settings['changenow_rate_limit_per_minute'], 'Per-minute rate limit should be saved');
+assertSameValue('45', $settings['changenow_quote_cache_ttl'], 'Quote cache TTL should be saved');
 
 $maskedSettings = ChangeNowSettings::_adminPostToSettings([
     'kr-adm-changenowpublicapikey' => ChangeNowSettings::SECRET_MASK,
@@ -66,6 +68,7 @@ $maskedSettings = ChangeNowSettings::_adminPostToSettings([
     'kr-adm-changenowdefaultflow' => 'unsupported-flow',
     'kr-adm-changenowratelimitsecond' => '0',
     'kr-adm-changenowratelimitminute' => '-9',
+    'kr-adm-changenowquotecachettl' => 'invalid',
 ]);
 
 assertTrueValue(!array_key_exists('changenow_public_api_key', $maskedSettings), 'Masked public API key should preserve the existing encrypted value');
@@ -76,6 +79,7 @@ assertSameValue('0', $maskedSettings['changenow_provider_enabled'], 'Missing che
 assertSameValue('standard', $maskedSettings['changenow_default_flow'], 'Invalid default flow should fall back to standard');
 assertSameValue('30', $maskedSettings['changenow_rate_limit_per_second'], 'Invalid per-second rate limit should fall back to the safe default');
 assertSameValue('1800', $maskedSettings['changenow_rate_limit_per_minute'], 'Invalid per-minute rate limit should fall back to the safe default');
+assertSameValue('30', $maskedSettings['changenow_quote_cache_ttl'], 'Invalid quote cache TTL should fall back to the safe default');
 
 $encryptedKeys = ChangeNowSettings::_encryptedKeys();
 foreach (['changenow_public_api_key', 'changenow_private_api_key', 'changenow_callback_secret'] as $encryptedKey) {
@@ -88,6 +92,7 @@ foreach ([
     "'changenow_private_api_key', '', 1",
     "'changenow_callback_secret', '', 1",
     "'changenow_provider_enabled', '0', 0",
+    "'changenow_quote_cache_ttl', '30', 0",
 ] as $settingSeed) {
     assertTrueValue(strpos($installerSql, $settingSeed) !== false, 'Missing installer seed: '.$settingSeed);
 }
@@ -99,6 +104,7 @@ foreach ([
     'kr-adm-changenowcallbacksecret',
     'kr-adm-chk-changenowflowstandard',
     'kr-adm-chk-changenowflowfixedrate',
+    'kr-adm-changenowquotecachettl',
     '*********************',
 ] as $viewNeedle) {
     assertTrueValue(strpos($paymentView, $viewNeedle) !== false, 'Missing admin payment view wiring: '.$viewNeedle);
@@ -114,6 +120,7 @@ foreach ([
     '_getChangeNowPublicApiKey',
     '_getChangeNowPrivateApiKey',
     '_getChangeNowCallbackSecret',
+    '_getChangeNowQuoteCacheTtl',
     '_validateChangeNowLiveSwapSettings',
 ] as $appMethod) {
     assertTrueValue(strpos($appSource, 'function '.$appMethod.'(') !== false, 'Missing App ChangeNOW method: '.$appMethod);

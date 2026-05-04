@@ -792,7 +792,8 @@ class App extends MySQL {
       'changenow_default_to_network' => 'eth',
       'changenow_support_email' => '',
       'changenow_rate_limit_per_second' => '30',
-      'changenow_rate_limit_per_minute' => '1800'
+      'changenow_rate_limit_per_minute' => '1800',
+      'changenow_quote_cache_ttl' => '30'
     ];
 
     return (array_key_exists($key, $defaults) ? $defaults[$key] : '');
@@ -856,6 +857,11 @@ class App extends MySQL {
   public function _getChangeNowRateLimitPerMinute(){
     $rateLimit = intval($this->_getChangeNowSetting('changenow_rate_limit_per_minute'));
     return ($rateLimit > 0 ? $rateLimit : 1800);
+  }
+
+  public function _getChangeNowQuoteCacheTtl(){
+    $ttl = intval($this->_getChangeNowSetting('changenow_quote_cache_ttl'));
+    return ($ttl > 0 ? $ttl : 30);
   }
 
   public function _getChangeNowMissingRequiredSettings(){
