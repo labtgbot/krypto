@@ -125,7 +125,7 @@ try {
 
     <link rel="stylesheet" href="assets/css/themes/light.css">
   </head>
-  <body kr-hm="<?php echo ($App->_getHideMarket() ? "1" : "0"); ?>" logopath-black="<?php echo $App->_getLogoBlackPath(); ?>" logopath="<?php echo $App->_getLogoPath(); ?>" hrefapp="<?php echo APP_URL; ?>" kr-timestamp="<?php echo time(); ?>" mbill="<?php echo ($mobileDetected->isMobile() || $mobileDetected->isTablet() ? 'true' : 'false'); ?>" sintro="<?php echo (!$Dashboard->_isNew() ? '1' : '0'); ?>" <?php echo ($User->_whiteMode() ? 'kr-theme="light"' : ''); ?> kr-numformat='<?php echo str_replace('"', '', $App->_getNumberFormat()); ?>' class="<?php if($Dashboard->_isNew() || ($App->_getNewsPopup() && $User->_showNewsPopupNeeded($App))) echo 'kr-nblr'; ?> " activeabo="<?php echo ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled() ? '1' : '0'); ?>">
+  <body kr-hm="<?php echo ($App->_getHideMarket() ? "1" : "0"); ?>" logopath-black="<?php echo $App->_getLogoBlackPath(); ?>" logopath="<?php echo $App->_getLogoPath(); ?>" hrefapp="<?php echo APP_URL; ?>" kr-timestamp="<?php echo time(); ?>" mbill="<?php echo ($mobileDetected->isMobile() || $mobileDetected->isTablet() ? 'true' : 'false'); ?>" sintro="<?php echo (!$Dashboard->_isNew() ? '1' : '0'); ?>" <?php echo ($User->_whiteMode() ? 'kr-theme="light"' : ''); ?> kr-numformat='<?php echo str_replace('"', '', $App->_getNumberFormat()); ?>' class="kr-view-changenow-swap <?php if($Dashboard->_isNew() || ($App->_getNewsPopup() && $User->_showNewsPopupNeeded($App))) echo 'kr-nblr'; ?> " activeabo="<?php echo ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled() ? '1' : '0'); ?>">
   <!--    <section class="kr-search">
       <header>
         <input type="text" name="" value="">
@@ -140,7 +140,7 @@ try {
 
   -->
   <?php if($mobileDetected->isMobile() || $mobileDetected->isTablet()): ?>
-    <section class="responsive-portrait kr-ov-nblr">
+    <section class="responsive-portrait kr-legacy-market-portrait kr-ov-nblr">
       <div>
         <?php
         if($App->_isLogoDefault()){
@@ -576,13 +576,17 @@ try {
     <section class="kr-page-content">
       <nav class="kr-leftnav">
         <ul>
+          <li type="module" kr-modules-hleft="true" kr-module="changenow" kr-view="swap" class="kr-leftnav-select">
+            <svg class="lnr lnr-sync"><use xlink:href="#lnr-sync"></use></svg>
+            <span><?php echo $Lang->tr('Swap'); ?></span>
+          </li>
           <li type="module" kr-module="dashboard" kr-view="dashboard">
             <svg class="lnr lnr-chart-bars"><use xlink:href="#lnr-chart-bars"></use></svg>
-            <span><?php echo $Lang->tr('Board'); ?></span>
+            <span><?php echo $Lang->tr('Markets'); ?></span>
           </li>
           <?php if((!is_null($listThirdParty) && count($listThirdParty) > 0) || $App->_hiddenThirdpartyActive()): ?>
-            <li type="side" kr-side="kr-orderbook" kr-side-part="kr-orderbook">
-              <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 512 512"> <g> <g> <path d="m307.7,212.5c-10.2,12.7-6.6,28.7 2.2,37.5l13.6,12.6c15.3,15.4 34.4,5.3 39.6,0l59.4-58.9c7-7.1 13.8-26 0-40l-13.6-12.6c-10-10.1-27.5-10.5-38.2-1.3l-80.9-80.1c6.4-8.1 11.2-25.3-1.6-38.2l-13.6-12.6c-10.4-10.5-29.2-10.5-39.6,0l-59.4,58.9c-12.9,13-9.4,30.5 0,40l13.6,12.6c13.3,13.5 29.6,7.4 37,2.2l14.9,14.6-230.1,228.5 50,50.5 230.9-229.2 15.8,15.5zm76.2-47.7c2.9-3 7.5-3 11.5,1.1l13.6,12.6c2.4,2.5 2.5,6.9 0,9.5l-59.4,58.9c-3.1,3.2-8.3,3.2-11.5,0l-13.6-12.6c-2-2-4-6.5 0-10.5l59.4-59zm-27.2-1.1l-35.2,35-80-79.7 35.4-35.8 79.8,80.5zm-141.4-49c-3.1,3.2-8.3,3.2-11.5,0l-13.6-12.6c-2-2-4-6.5 0-10.5l59.4-58.9c2.9-3 7.5-3 11.5,1.1l13.6,12.6c2.4,2.5 2.5,6.9 0,9.5l-59.4,58.8zm-153.2,282.1l-21.9-21.1 215.4-214.3 21.7,21.3-215.2,214.1z"/> <path d="m457.2,424.2v-55.8h-188.7v55.8h-43.8v76.8h276.3v-76.8h-43.8zm-167.8-35.8h148v35.8h-148v-35.8zm191.8,91.5h-235.6v-34.7h235.6v34.7z"/> </g> </g> </svg>
+            <li type="side" kr-side="kr-orderbook" kr-side-part="kr-orderbook" class="kr-legacy-orderbook-nav">
+              <svg class="lnr lnr-book"><use xlink:href="#lnr-book"></use></svg>
               <span><?php echo $Lang->tr('Order book'); ?></span>
             </li>
           <?php endif; ?>
@@ -639,6 +643,12 @@ try {
             <?php
           }
           ?>
+          <?php if($App->_changeNowWidgetEnabled('custom_page')): ?>
+            <li type="module" kr-modules-hleft="true" kr-module="dashboard" kr-view="changenowwidget">
+              <svg class="lnr lnr-sync"><use xlink:href="#lnr-sync"></use></svg>
+              <span><?php echo $Lang->tr('Exchange'); ?></span>
+            </li>
+          <?php endif; ?>
           <?php
           if($User->_isManager()):
             $Manager = new Manager($App);
