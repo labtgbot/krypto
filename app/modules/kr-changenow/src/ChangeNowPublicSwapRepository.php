@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/ChangeNowReferralAttribution.php';
+
 /**
  * Anonymous ChangeNOW transaction storage for the public swap flow.
  *
@@ -163,13 +165,16 @@ class ChangeNowPublicSwapRepository extends MySQL {
     $query = trim((string) $this->_value($filters, ['query', 'q', 'search'], ''));
     $status = trim((string) $this->_value($filters, ['status'], ''));
     $userId = trim((string) $this->_value($filters, ['userId', 'id_user', 'user'], ''));
+    $referralCode = $this->_normalizeReferralCode($this->_value($filters, ['referralCode', 'referral_code', 'ref'], ''));
+    $hasReferral = $this->_value($filters, ['hasReferral', 'has_referral'], null);
 
     if($query != ''){
       $where[] = "(provider_id_changenow_transaction LIKE :query_search
                   OR CAST(id_user AS CHAR) LIKE :query_search
                   OR from_currency_changenow_transaction LIKE :query_search
                   OR to_currency_changenow_transaction LIKE :query_search
-                  OR status_changenow_transaction LIKE :query_search)";
+                  OR status_changenow_transaction LIKE :query_search
+                  OR referral_attribution_changenow_transaction LIKE :query_search)";
       $params['query_search'] = '%'.$query.'%';
     }
 
@@ -183,11 +188,51 @@ class ChangeNowPublicSwapRepository extends MySQL {
       $params['id_user'] = $userId;
     }
 
+    if($referralCode != ''){
+      $where[] = "referral_attribution_changenow_transaction LIKE :referral_code_search";
+      $params['referral_code_search'] = '%'.$referralCode.'%';
+    }
+
+    if(!is_null($hasReferral) && $this->_boolValue($hasReferral)){
+      $where[] = "referral_attribution_changenow_transaction IS NOT NULL AND referral_attribution_changenow_transaction <> '' AND referral_attribution_changenow_transaction <> '[]'";
+    }
+
     $sql = "SELECT * FROM changenow_transactions_krypto";
     if(count($where) > 0) $sql .= " WHERE ".implode(" AND ", $where);
     $sql .= " ORDER BY updated_at_changenow_transaction DESC, id_changenow_transaction DESC LIMIT ".$limit;
 
     return $this->_mapRows(parent::querySqlRequest($sql, $params));
+  }
+
+  public function _listByReferralCode($code, $limit = 50){
+    $this->_ensureSchema();
+    $limit = $this->_safeLimit($limit, 50, 500);
+    $code = $this->_normalizeReferralCode($code);
+    if($code == '') return [];
+
+    $rows = parent::querySqlRequest("SELECT * FROM changenow_transactions_krypto
+                                     WHERE referral_attribution_changenow_transaction LIKE :referral_code_search
+                                     ORDER BY updated_at_changenow_transaction DESC, id_changenow_transaction DESC
+                                     LIMIT ".$limit,
+                                     [
+                                      'referral_code_search' => '%'.$code.'%'
+                                     ]);
+
+    $records = [];
+    foreach ($this->_mapRows($rows) as $record) {
+      if(self::_referralInternalCode($this->_value($record, ['referralAttribution'], [])) === $code) $records[] = $record;
+    }
+    return $records;
+  }
+
+  public function _referralSummaryByCode($code, $limit = 500){
+    return $this->_referralSummaryFromTransactions($this->_listByReferralCode($code, $limit));
+  }
+
+  public function _referralReportSummary($filters = [], $limit = 500){
+    if(!is_array($filters)) $filters = [];
+    $filters['hasReferral'] = true;
+    return $this->_referralSummaryFromTransactions($this->_listForSupport($filters, $limit));
   }
 
   public function _updateStatusSnapshot($lookupToken, $statusPayload, $updatedAt = null){
@@ -275,6 +320,29 @@ class ChangeNowPublicSwapRepository extends MySQL {
     return hash('sha256', trim((string) $sessionKey));
   }
 
+  public static function _referralInternalCode($attribution){
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_internalCode($attribution);
+    if(!is_array($attribution) || !array_key_exists('internal', $attribution) || !is_array($attribution['internal'])) return '';
+    return (array_key_exists('code', $attribution['internal']) ? trim((string) $attribution['internal']['code']) : '');
+  }
+
+  public static function _referralChangeNowLinkId($attribution){
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_changeNowReferralLinkId($attribution);
+    if(!is_array($attribution) || !array_key_exists('changeNow', $attribution) || !is_array($attribution['changeNow'])) return '';
+    return (array_key_exists('referralLinkId', $attribution['changeNow']) ? trim((string) $attribution['changeNow']['referralLinkId']) : '');
+  }
+
+  public static function _referralUtmCampaign($attribution){
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_utmCampaign($attribution);
+    if(!is_array($attribution) || !array_key_exists('utm', $attribution) || !is_array($attribution['utm'])) return '';
+    return (array_key_exists('campaign', $attribution['utm']) ? trim((string) $attribution['utm']['campaign']) : '');
+  }
+
+  public static function _referralCommissionStateLabel($state){
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_commissionStateLabel($state);
+    return trim((string) $state);
+  }
+
   private function _updateStatusSnapshotByColumn($column, $columnValue, $previous, $statusPayload, $updatedAt = null){
     $this->_ensureSchema();
     $updatedAt = (is_null($updatedAt) ? time() : $updatedAt);
@@ -348,6 +416,7 @@ class ChangeNowPublicSwapRepository extends MySQL {
     $referralAttribution = json_decode($this->_value($row, ['referral_attribution_changenow_transaction'], ''), true);
     $refundAvailable = $this->_boolValue($this->_value($row, ['refund_available_changenow_transaction'], 0));
     $continueAvailable = $this->_boolValue($this->_value($row, ['continue_available_changenow_transaction'], 0));
+    $status = $this->_value($row, ['status_changenow_transaction'], 'waiting');
 
     return [
       'id' => $this->_value($row, ['id_changenow_transaction'], null),
@@ -367,7 +436,7 @@ class ChangeNowPublicSwapRepository extends MySQL {
       'payoutAddressFingerprint' => $this->_value($row, ['payout_address_fingerprint_changenow_transaction'], ''),
       'refundAddress' => $this->_value($row, ['refund_address_changenow_transaction'], ''),
       'refundExtraId' => $this->_value($row, ['refund_extra_id_changenow_transaction'], ''),
-      'status' => $this->_value($row, ['status_changenow_transaction'], 'waiting'),
+      'status' => $status,
       'refundAvailable' => $refundAvailable,
       'continueAvailable' => $continueAvailable,
       'availableActions' => [
@@ -381,7 +450,8 @@ class ChangeNowPublicSwapRepository extends MySQL {
       'rawCreate' => (is_array($rawCreate) ? $rawCreate : []),
       'rawStatus' => (is_array($rawStatus) ? $rawStatus : []),
       'rawActions' => (is_array($rawActions) ? $rawActions : []),
-      'referralAttribution' => (is_array($referralAttribution) ? $referralAttribution : [])
+      'referralAttribution' => (is_array($referralAttribution) ? $referralAttribution : []),
+      'referralCommissionState' => $this->_referralCommissionStateForStatus($status, (is_array($referralAttribution) ? $referralAttribution : []))
     ];
   }
 
@@ -414,10 +484,72 @@ class ChangeNowPublicSwapRepository extends MySQL {
 
   private function _referralAttributionFromRequest($request){
     if(!is_array($request)) return [];
+    if(array_key_exists('referralAttribution', $request)){
+      if(is_array($request['referralAttribution'])) return $request['referralAttribution'];
+      if(is_string($request['referralAttribution'])){
+        $decoded = json_decode($request['referralAttribution'], true);
+        if(is_array($decoded)) return $decoded;
+      }
+    }
+
+    if(class_exists('ChangeNowReferralAttribution')){
+      $attribution = ChangeNowReferralAttribution::_fromRequest($request, [], []);
+      if(count($attribution) > 0) return $attribution;
+    }
+
     foreach (['referralAttribution', 'referral_attribution', 'referral', 'affiliate', 'campaign'] as $key) {
       if(array_key_exists($key, $request) && $request[$key] !== '') return [$key => $request[$key]];
     }
     return [];
+  }
+
+  private function _referralSummaryFromTransactions($transactions){
+    $summary = [
+      'total' => count($transactions),
+      'internal' => 0,
+      'changeNowPartner' => 0,
+      'utm' => 0,
+      'anonymous' => 0,
+      'loggedIn' => 0,
+      'statuses' => [],
+      'commissionStates' => [
+        'pending_provider_confirmation' => 0,
+        'pending_admin_review' => 0,
+        'not_eligible' => 0
+      ]
+    ];
+
+    foreach ($transactions as $transaction) {
+      $attribution = $this->_value($transaction, ['referralAttribution'], []);
+      if(self::_referralInternalCode($attribution) != '') $summary['internal']++;
+      if(self::_referralChangeNowLinkId($attribution) != '') $summary['changeNowPartner']++;
+      if(self::_referralUtmCampaign($attribution) != '') $summary['utm']++;
+      if($this->_value($transaction, ['userId'], '') == '') $summary['anonymous']++;
+      else $summary['loggedIn']++;
+
+      $status = trim((string) $this->_value($transaction, ['status'], 'waiting'));
+      if(!array_key_exists($status, $summary['statuses'])) $summary['statuses'][$status] = 0;
+      $summary['statuses'][$status]++;
+
+      $commissionState = $this->_referralCommissionStateForStatus($status, $attribution);
+      if(!array_key_exists($commissionState, $summary['commissionStates'])) $summary['commissionStates'][$commissionState] = 0;
+      $summary['commissionStates'][$commissionState]++;
+    }
+
+    return $summary;
+  }
+
+  private function _referralCommissionStateForStatus($status, $attribution = []){
+    $state = $this->_value($attribution, ['commissionState'], '');
+    if(trim((string) $state) != '' && $state != 'pending_provider_confirmation') return trim((string) $state);
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_commissionStateForStatus($status);
+    return 'pending_provider_confirmation';
+  }
+
+  private function _normalizeReferralCode($code){
+    if(class_exists('ChangeNowReferralAttribution')) return ChangeNowReferralAttribution::_sanitizeReferralCode($code);
+    $code = strtolower(trim((string) $code));
+    return substr(preg_replace('/[^a-z0-9_-]/', '', $code), 0, 200);
   }
 
   private function _availableActionsFromPayload($payload){

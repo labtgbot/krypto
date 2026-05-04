@@ -143,11 +143,16 @@ assertContainsText('changenowswaps', $panelSource, 'Dashboard router should init
 
 $indexSource = file_get_contents($root.'/index.php');
 $publicActionSource = file_get_contents($root.'/app/modules/kr-changenow/src/actions/publicSwap.php');
+$accountSource = file_get_contents($root.'/app/modules/kr-user/views/account.php');
+$referralsSource = file_get_contents($root.'/app/modules/kr-user/views/referrals.php');
 assertContainsText('kr-public-swap-enabled', $indexSource, 'Homepage should render the public swap shell');
 assertContainsText("require 'app/modules/kr-changenow/views/publicSwap.php'", $indexSource, 'Homepage should include public swap view');
+assertContainsText('$App->_checkReferalSource($_POST)', $publicActionSource, 'Public swap actions should capture referral sources posted with swap requests');
 assertContainsText('$Flow->_createSwap($_POST, $sessionKey, $loggedUserId)', $publicActionSource, 'Public action should create anonymous ChangeNOW swaps');
 assertContainsText('$Flow->_requestRefund($lookupToken', $publicActionSource, 'Public action should expose ChangeNOW refund action');
 assertContainsText('$Flow->_continueSwap($lookupToken', $publicActionSource, 'Public action should expose ChangeNOW continue action');
+assertContainsText('kr-user-v="referrals"', $accountSource, 'Account navigation should expose the referral dashboard');
+assertContainsText('ChangeNowPublicSwapRepository', $referralsSource, 'Referral dashboard should read ChangeNOW attributed swaps');
 
 echo "ChangeNOW schema check passed\n";
 

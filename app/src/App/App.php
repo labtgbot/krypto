@@ -127,7 +127,7 @@ class App extends MySQL {
       foreach ($moduleObject->_loadControllers() as $controlers) {
         // Require controllers class
         if($controlers == "error_log") continue;
-        require $moduleObject->_getModulePath().'/src/'.$controlers;
+        require_once $moduleObject->_getModulePath().'/src/'.$controlers;
       }
     }
 
@@ -672,7 +672,7 @@ class App extends MySQL {
   }
 
   public function _referalEnabled(){
-    return intval($this->_getSettingsAttribute('referal_enable')) == 1 && $this->_hiddenThirdpartyActive();
+    return intval($this->_getSettingsAttribute('referal_enable')) == 1 && ($this->_hiddenThirdpartyActive() || $this->_changeNowProviderEnabled());
   }
 
   public function _getReferalWinAmount(){
@@ -1617,6 +1617,16 @@ class App extends MySQL {
     $this->_saveSettingsAttribute('referall_win_amount', $comission);
   }
 
+  public function _getReferalCodeOwnerId($code){
+    $code = strtolower(trim((string) $code));
+    $code = preg_replace('/[^a-z0-9_-]/', '', $code);
+    if($code == '') return null;
+
+    $r = parent::querySqlRequest("SELECT id_user FROM referal_krypto WHERE code_referal=:code_referal LIMIT 1", ['code_referal' => $code]);
+    if(count($r) == 0) return null;
+    return $r[0]['id_user'];
+  }
+
   /**
    * Get list month name
    * @param Lang   Lang object
@@ -1799,15 +1809,30 @@ class App extends MySQL {
     return strlen(substr(strrchr($num, "."), 1));
   }
 
-  public function _checkReferalSource(){
+  public function _checkReferalSource($source = null){
     if(!$this->_referalEnabled()) return false;
-    if(!empty($_GET) && isset($_GET['ref']) && !empty($_GET['ref'])){
-      $code = htmlspecialchars($_GET['ref']);
-      $r = parent::querySqlRequest("SELECT * FROM referal_krypto WHERE code_referal=:code_referal", ['code_referal' => $code]);
-      if(count($r) > 0){
+
+    if(is_null($source)) $source = $_GET;
+    if(!is_array($source)) $source = [];
+    if(!isset($_SESSION) || !is_array($_SESSION)) $_SESSION = [];
+
+    if(class_exists('ChangeNowReferralAttribution')){
+      $App = $this;
+      return ChangeNowReferralAttribution::_captureLanding($source, $_SESSION, function($code) use ($App) {
+        return $App->_getReferalCodeOwnerId($code);
+      });
+    }
+
+    if(!empty($source) && isset($source['ref']) && !empty($source['ref'])){
+      $code = strtolower(trim((string) $source['ref']));
+      $code = preg_replace('/[^a-z0-9_-]/', '', $code);
+      if(!is_null($this->_getReferalCodeOwnerId($code))){
         $_SESSION['referal_source_krypto'] = $code;
+        return true;
       }
     }
+
+    return false;
   }
 
   public function _cleanCache(){

@@ -185,7 +185,7 @@ if($nativeTradingActive){
     <div class="kr-admin-line kr-admin-line-cls">
       <div class="kr-admin-field">
         <div>
-          <label><?php echo $Lang->tr('Enable referal (native trading need to be enabled)'); ?></label>
+          <label><?php echo $Lang->tr('Enable referral (native trading or ChangeNOW need to be enabled)'); ?></label>
         </div>
         <div>
           <div class="ckbx-style-14">
