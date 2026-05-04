@@ -1,0 +1,18 @@
+{
+  "id": "tx-created",
+  "fromCurrency": "btc",
+  "fromNetwork": "btc",
+  "toCurrency": "eth",
+  "toNetwork": "eth",
+  "fromAmount": 0.01,
+  "toAmount": 0.052286,
+  "flow": "standard",
+  "type": "direct",
+  "payinAddress": "bc1qexamplepayinaddress",
+  "payinExtraId": null,
+  "payoutAddress": "0xexamplepayoutaddress",
+  "payoutExtraId": null,
+  "refundAddress": "bc1qexamplerefundaddress",
+  "refundExtraId": null,
+  "validUntil": null
+}

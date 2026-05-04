@@ -1,0 +1,17 @@
+{
+  "id": "tx-created",
+  "status": "finished",
+  "actionsAvailable": false,
+  "fromCurrency": "btc",
+  "fromNetwork": "btc",
+  "toCurrency": "eth",
+  "toNetwork": "eth",
+  "amountFrom": 0.01,
+  "amountTo": 0.052286,
+  "payinAddress": "bc1qexamplepayinaddress",
+  "payinExtraId": null,
+  "payoutAddress": "0xexamplepayoutaddress",
+  "payoutExtraId": null,
+  "createdAt": "2026-05-04T11:00:00.000Z",
+  "updatedAt": "2026-05-04T11:10:00.000Z"
+}
