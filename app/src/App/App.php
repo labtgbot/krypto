@@ -193,6 +193,36 @@ class App extends MySQL {
   }
 
   /**
+   * Get ChangeNOW settings merged with module defaults.
+   * @return Array ChangeNOW admin settings
+   */
+  public function _getChangeNowSettings(){
+    if(!class_exists('ChangeNowSettings')) return [];
+
+    $settings = ChangeNowSettings::_defaults();
+    foreach ($settings as $key => $default) {
+      $value = $this->_getSettingsAttribute($key);
+      if(!is_null($value)) $settings[$key] = $value;
+    }
+
+    return ChangeNowSettings::_sanitizeSettings($settings);
+  }
+
+  /**
+   * Save ChangeNOW admin settings from an admin panel POST payload.
+   * @param Array $post Posted admin settings
+   */
+  public function _saveChangeNowSettings($post){
+    if(!class_exists('ChangeNowSettings')) throw new Exception("ChangeNOW settings helper is not loaded.", 1);
+
+    foreach (ChangeNowSettings::_adminPostToSettings($post) as $key => $value) {
+      $this->_saveSettingsAttribute($key, $value, in_array($key, ChangeNowSettings::_encryptedKeys(), true));
+    }
+
+    return true;
+  }
+
+  /**
    * Get if app allow signup
    * @return Boolean
    */

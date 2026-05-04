@@ -13,6 +13,22 @@ function initAdmin(){
     changeView('admin', 'coins', {page:$(this).attr('kr-page')});
   });
 
+  $('.kr-changenow-search-f').off('submit').submit(function(e){
+    let args = {};
+    $.each($(this).serializeArray(), function(index, field){
+      args[field.name] = field.value;
+    });
+    changeView('admin', 'changenow', args);
+    e.preventDefault();
+    return false;
+  });
+
+  $('.kr-changenow-clear-search').off('click').click(function(e){
+    changeView('admin', 'changenow');
+    e.preventDefault();
+    return false;
+  });
+
   $('[kr-step-identity-type-s="true"]').off('change').change(function(){
     if($(this).val() == "form"){
       $('[kr-step-h="form"]').hide();

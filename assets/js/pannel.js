@@ -95,6 +95,7 @@ let moduleConstruct = {
     'bankaccounts': initAdmin,
     'identity': initAdmin,
     'templates': initAdmin,
+    'changenow': initAdmin,
     'walletaddress': initAdmin,
     'autowithdrawconfigure': initAdmin
   },
