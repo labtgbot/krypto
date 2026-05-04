@@ -95,6 +95,7 @@ let moduleConstruct = {
     'bankaccounts': initAdmin,
     'identity': initAdmin,
     'templates': initAdmin,
+    'changenowswaps': initAdmin,
     'walletaddress': initAdmin,
     'autowithdrawconfigure': initAdmin
   },
@@ -113,7 +114,8 @@ let moduleConstruct = {
     'users': initManager,
     'userinfos': initManager,
     'orders': initManager,
-    'subscriptions': initManager
+    'subscriptions': initManager,
+    'changenowswaps': initManager
   },
   'trade': {
     'balances': initBalanceView,

@@ -10,6 +10,8 @@
     var $message = $shell.find('.kr-public-swap-message');
     var $quotePanel = $shell.find('.kr-public-quote-panel');
     var $resultPanel = $shell.find('.kr-public-result-panel');
+    var currentLookupToken = statusToken || '';
+    var currentStatusUrl = currentLookupToken ? window.location.href : '';
 
     syncAllAssetFields();
 
@@ -76,6 +78,52 @@
     $shell.on('click', '.kr-public-copy-payin', function(){
       copyText($(this).attr('data-copy'));
       setMessage('success', 'Pay-in address copied.');
+    });
+
+    $shell.on('click', '.kr-public-refresh-status', function(){
+      var $button = $(this);
+      if(!currentLookupToken) return;
+      setBusy($button, 'Refreshing');
+      request('status', {lookupToken: currentLookupToken}).done(function(response){
+        applyStatus(response.status || {});
+        setMessage('success', 'Status refreshed.');
+      }).fail(function(response){
+        setMessage('error', responseMessage(response));
+      }).always(function(){
+        clearBusy($button);
+      });
+    });
+
+    $shell.on('click', '.kr-public-refund-swap', function(){
+      var $button = $(this);
+      if(!currentLookupToken) return;
+      setBusy($button, 'Requesting');
+      request('refund', {
+        lookupToken: currentLookupToken,
+        refundAddress: $form.find('input[name="refundAddress"]').val(),
+        refundExtraId: $form.find('input[name="refundExtraId"]').val()
+      }).done(function(response){
+        applyStatus(response.status || {});
+        setMessage('success', 'Refund requested.');
+      }).fail(function(response){
+        setMessage('error', responseMessage(response));
+      }).always(function(){
+        clearBusy($button);
+      });
+    });
+
+    $shell.on('click', '.kr-public-continue-swap', function(){
+      var $button = $(this);
+      if(!currentLookupToken) return;
+      setBusy($button, 'Continuing');
+      request('continue', {lookupToken: currentLookupToken}).done(function(response){
+        applyStatus(response.status || {});
+        setMessage('success', 'Continue requested.');
+      }).fail(function(response){
+        setMessage('error', responseMessage(response));
+      }).always(function(){
+        clearBusy($button);
+      });
     });
 
     $shell.on('click', '.kr-public-create-account, .kr-public-auth-jump', function(e){
@@ -202,6 +250,8 @@
 
     function applyCreatedSwap(swap){
       var transaction = swap.transaction || {};
+      currentLookupToken = swap.lookupToken || currentLookupToken;
+      currentStatusUrl = swap.statusUrl || currentStatusUrl;
       renderTransaction(transaction, swap.lookupToken, swap.statusUrl, swap.supportEmail, null);
       if(swap.statusUrl && window.history && window.history.replaceState){
         try {
@@ -212,7 +262,7 @@
 
     function applyStatus(status){
       var transaction = status.transaction || {};
-      renderTransaction(transaction, null, null, status.supportEmail, status.statusWarning || null);
+      renderTransaction(transaction, currentLookupToken, currentStatusUrl, status.supportEmail, status.statusWarning || null);
       if(status.statusWarning) setMessage('info', status.statusWarning);
     }
 
@@ -231,7 +281,11 @@
       ].join('');
 
       var actions = '<div class="kr-public-result-actions">';
+      var availableActions = transaction.availableActions || {};
       if(transaction.payinAddress) actions += '<button type="button" class="kr-public-copy-payin" data-copy="' + escapeHtml(transaction.payinAddress) + '">Copy pay-in address</button>';
+      if(lookupToken) actions += '<button type="button" class="kr-public-refresh-status">Refresh status</button>';
+      if(lookupToken && availableActions.refund === true) actions += '<button type="button" class="kr-public-refund-swap">Request refund</button>';
+      if(lookupToken && availableActions.continue === true) actions += '<button type="button" class="kr-public-continue-swap">Continue swap</button>';
       if(statusUrl) actions += '<a href="' + escapeHtml(statusUrl) + '">Status link</a>';
       if($('#kr-account-access').length > 0) actions += '<button type="button" class="kr-public-create-account">Create account</button>';
       if(supportEmail) actions += '<a href="mailto:' + escapeHtml(supportEmail) + '">Support</a>';
