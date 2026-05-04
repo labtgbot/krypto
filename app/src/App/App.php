@@ -757,6 +757,20 @@ class App extends MySQL {
     return $this->_getSettingsAttribute('hidden_third_trading') == 1;
   }
 
+  public function _changeNowProviderEnabled(){
+    if(is_null($this->_getSettingsAttribute('changenow_provider_enabled'))) return false;
+    return $this->_getSettingsAttribute('changenow_provider_enabled') == 1;
+  }
+
+  public function _legacyExchangeConnectionsEnabled(){
+    if(is_null($this->_getSettingsAttribute('legacy_exchange_connections_enabled'))) return true;
+    return $this->_getSettingsAttribute('legacy_exchange_connections_enabled') == 1;
+  }
+
+  public function _changeNowLegacyDisabledMode(){
+    return $this->_changeNowProviderEnabled() && !$this->_legacyExchangeConnectionsEnabled();
+  }
+
   public function _hiddenThirdpartyNotConfigured(){
     return (!is_null($this->_hiddenThirdpartyServiceCfg()) && count($this->_hiddenThirdpartyServiceCfg()) > 0);
   }
