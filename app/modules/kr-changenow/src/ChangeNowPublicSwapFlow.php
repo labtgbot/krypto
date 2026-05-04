@@ -176,7 +176,7 @@ class ChangeNowPublicSwapFlow {
     }
 
     try {
-      $status = $this->Client->_getSwapStatus($providerId);
+      $status = $this->_fetchStatusWithActions($providerId);
       $record = $this->Repository->_updateStatusSnapshot($lookupToken, $status);
       return [
         'transaction' => $this->_publicTransaction(array_merge($record, $status)),
@@ -191,6 +191,170 @@ class ChangeNowPublicSwapFlow {
     }
   }
 
+  public function _getUserHistory($userId, $limit = 50){
+    if($this->_isBlank($userId)){
+      throw new ChangeNowApiValidationException('User account is required for ChangeNOW history.', 'ChangeNOW user history requires a user id.');
+    }
+
+    $records = [];
+    if(method_exists($this->Repository, '_listByUser')) $records = $this->Repository->_listByUser($userId, $limit);
+
+    $transactions = [];
+    foreach ($records as $record) {
+      $transactions[] = $this->_publicTransaction($record);
+    }
+
+    return [
+      'transactions' => $transactions,
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _requestRefund($lookupToken, $refundAddress = '', $refundExtraId = '', $actorUserId = null, $actorType = 'user'){
+    $lookupToken = trim((string) $lookupToken);
+    if($lookupToken == ''){
+      throw new ChangeNowApiValidationException('Swap lookup token is required.', 'ChangeNOW refund requires a lookup token.');
+    }
+
+    $record = $this->_recordByLookupToken($lookupToken);
+    $this->_assertActionActorAllowed($record, $actorUserId, $actorType);
+    $record = $this->_refreshLookupRecord($lookupToken, $record);
+
+    if(!$this->_actionAvailable($record, 'refund')){
+      throw new ChangeNowApiValidationException('Refund is not available for this ChangeNOW transaction.', 'ChangeNOW refund requested when provider action is unavailable.');
+    }
+
+    $providerId = $this->_value($record, ['providerId'], '');
+    $refundAddress = trim((string) $refundAddress);
+    if($refundAddress == '') $refundAddress = trim((string) $this->_value($record, ['refundAddress'], ''));
+    if($refundAddress == ''){
+      throw new ChangeNowApiValidationException('Refund address is required.', 'ChangeNOW refund action requires a refund address.');
+    }
+
+    $refundExtraId = trim((string) $refundExtraId);
+    if($refundExtraId == '') $refundExtraId = trim((string) $this->_value($record, ['refundExtraId'], ''));
+
+    $result = $this->Client->_refundTransaction($providerId, $refundAddress, ($refundExtraId == '' ? null : $refundExtraId));
+    if(method_exists($this->Repository, '_recordEvent')){
+      $this->Repository->_recordEvent($providerId, 'refund_requested', 'submitted', $actorUserId, $this->_normalizeActorType($actorType), '', $result);
+    }
+
+    return [
+      'transaction' => $this->_publicTransaction($record),
+      'lastAction' => $result,
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _continueSwap($lookupToken, $actorUserId = null, $actorType = 'user'){
+    $lookupToken = trim((string) $lookupToken);
+    if($lookupToken == ''){
+      throw new ChangeNowApiValidationException('Swap lookup token is required.', 'ChangeNOW continue requires a lookup token.');
+    }
+
+    $record = $this->_recordByLookupToken($lookupToken);
+    $this->_assertActionActorAllowed($record, $actorUserId, $actorType);
+    $record = $this->_refreshLookupRecord($lookupToken, $record);
+
+    if(!$this->_actionAvailable($record, 'continue')){
+      throw new ChangeNowApiValidationException('Continue is not available for this ChangeNOW transaction.', 'ChangeNOW continue requested when provider action is unavailable.');
+    }
+
+    $providerId = $this->_value($record, ['providerId'], '');
+    $result = $this->Client->_continueTransaction($providerId);
+    if(method_exists($this->Repository, '_recordEvent')){
+      $this->Repository->_recordEvent($providerId, 'continue_requested', 'submitted', $actorUserId, $this->_normalizeActorType($actorType), '', $result);
+    }
+
+    return [
+      'transaction' => $this->_publicTransaction($record),
+      'lastAction' => $result,
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _refreshProviderStatus($providerId, $actorUserId = null, $actorType = 'support'){
+    $record = $this->_recordByProviderId($providerId);
+    $status = $this->_fetchStatusWithActions($this->_value($record, ['providerId'], ''));
+    if(method_exists($this->Repository, '_updateStatusSnapshotByProviderId')){
+      $updated = $this->Repository->_updateStatusSnapshotByProviderId($this->_value($record, ['providerId'], ''), $status);
+      $record = (is_array($updated) ? $updated : array_merge($record, $status));
+    } else {
+      $record = array_merge($record, $status);
+    }
+
+    if(method_exists($this->Repository, '_recordEvent')){
+      $this->Repository->_recordEvent($this->_value($record, ['providerId'], $providerId), 'status_refreshed', 'completed', $actorUserId, $this->_normalizeActorType($actorType), '', $status);
+    }
+
+    return [
+      'transaction' => $this->_publicTransaction(array_merge($record, $status)),
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _requestRefundByProviderId($providerId, $refundAddress = '', $refundExtraId = '', $actorUserId = null, $actorType = 'support'){
+    $record = $this->_recordByProviderId($providerId);
+    $record = $this->_refreshProviderRecord($record);
+
+    if(!$this->_actionAvailable($record, 'refund')){
+      throw new ChangeNowApiValidationException('Refund is not available for this ChangeNOW transaction.', 'ChangeNOW support refund requested when provider action is unavailable.');
+    }
+
+    $refundAddress = trim((string) $refundAddress);
+    if($refundAddress == '') $refundAddress = trim((string) $this->_value($record, ['refundAddress'], ''));
+    if($refundAddress == ''){
+      throw new ChangeNowApiValidationException('Refund address is required.', 'ChangeNOW support refund action requires a refund address.');
+    }
+
+    $refundExtraId = trim((string) $refundExtraId);
+    if($refundExtraId == '') $refundExtraId = trim((string) $this->_value($record, ['refundExtraId'], ''));
+
+    $result = $this->Client->_refundTransaction($this->_value($record, ['providerId'], ''), $refundAddress, ($refundExtraId == '' ? null : $refundExtraId));
+    if(method_exists($this->Repository, '_recordEvent')){
+      $this->Repository->_recordEvent($this->_value($record, ['providerId'], ''), 'refund_requested', 'submitted', $actorUserId, $this->_normalizeActorType($actorType), '', $result);
+    }
+
+    return [
+      'transaction' => $this->_publicTransaction($record),
+      'lastAction' => $result,
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _continueSwapByProviderId($providerId, $actorUserId = null, $actorType = 'support'){
+    $record = $this->_recordByProviderId($providerId);
+    $record = $this->_refreshProviderRecord($record);
+
+    if(!$this->_actionAvailable($record, 'continue')){
+      throw new ChangeNowApiValidationException('Continue is not available for this ChangeNOW transaction.', 'ChangeNOW support continue requested when provider action is unavailable.');
+    }
+
+    $result = $this->Client->_continueTransaction($this->_value($record, ['providerId'], ''));
+    if(method_exists($this->Repository, '_recordEvent')){
+      $this->Repository->_recordEvent($this->_value($record, ['providerId'], ''), 'continue_requested', 'submitted', $actorUserId, $this->_normalizeActorType($actorType), '', $result);
+    }
+
+    return [
+      'transaction' => $this->_publicTransaction($record),
+      'lastAction' => $result,
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
+  public function _saveSupportNoteByProviderId($providerId, $note, $actorUserId = null, $actorType = 'support'){
+    if(!method_exists($this->Repository, '_saveSupportNote')){
+      throw new ChangeNowApiConfigurationException('ChangeNOW transaction repository cannot save support notes.');
+    }
+    $record = $this->Repository->_saveSupportNote($providerId, $note, $actorUserId, $this->_normalizeActorType($actorType));
+    if(!is_array($record)) throw new ChangeNowApiNotFoundException('No ChangeNOW transaction matched the provider id for support note.');
+
+    return [
+      'transaction' => $this->_publicTransaction($record),
+      'supportEmail' => $this->_getSupportEmail()
+    ];
+  }
+
   public static function _sessionKeyFromSession(&$session){
     if(!array_key_exists(self::SESSION_KEY, $session) || trim((string) $session[self::SESSION_KEY]) == ''){
       $session[self::SESSION_KEY] = self::_randomToken();
@@ -202,6 +366,102 @@ class ChangeNowPublicSwapFlow {
     if(function_exists('random_bytes')) return bin2hex(random_bytes(32));
     if(function_exists('openssl_random_pseudo_bytes')) return bin2hex(openssl_random_pseudo_bytes(32));
     return hash('sha256', uniqid('', true).mt_rand());
+  }
+
+  private function _recordByLookupToken($lookupToken){
+    $record = $this->Repository->_findByLookupToken($lookupToken);
+    if(!is_array($record)){
+      throw new ChangeNowApiNotFoundException('No ChangeNOW public swap record matched the lookup token.');
+    }
+    return $record;
+  }
+
+  private function _recordByProviderId($providerId){
+    if(!method_exists($this->Repository, '_findByProviderId')){
+      throw new ChangeNowApiConfigurationException('ChangeNOW transaction repository cannot look up provider transactions.');
+    }
+
+    $record = $this->Repository->_findByProviderId($providerId);
+    if(!is_array($record)){
+      throw new ChangeNowApiNotFoundException('No ChangeNOW transaction matched the provider id.');
+    }
+    return $record;
+  }
+
+  private function _refreshLookupRecord($lookupToken, $record){
+    $providerId = $this->_value($record, ['providerId', 'id'], '');
+    if($providerId == '') return $record;
+    $status = $this->_fetchStatusWithActions($providerId);
+    $updated = $this->Repository->_updateStatusSnapshot($lookupToken, $status);
+    return (is_array($updated) ? $updated : array_merge($record, $status));
+  }
+
+  private function _refreshProviderRecord($record){
+    $providerId = $this->_value($record, ['providerId', 'id'], '');
+    if($providerId == '') return $record;
+    $status = $this->_fetchStatusWithActions($providerId);
+    if(method_exists($this->Repository, '_updateStatusSnapshotByProviderId')){
+      $updated = $this->Repository->_updateStatusSnapshotByProviderId($providerId, $status);
+      return (is_array($updated) ? $updated : array_merge($record, $status));
+    }
+    return array_merge($record, $status);
+  }
+
+  private function _fetchStatusWithActions($providerId){
+    $status = $this->Client->_getSwapStatus($providerId);
+    if(is_array($status) && array_key_exists('actionsAvailable', $status) && $status['actionsAvailable'] === true && method_exists($this->Client, '_getAvailableActions')){
+      try {
+        $status['actionsAvailable'] = $this->Client->_getAvailableActions($providerId);
+      } catch (ChangeNowApiException $e) {
+        $status['actionsWarning'] = $e->_getUserMessage();
+      }
+    }
+    return $status;
+  }
+
+  private function _assertActionActorAllowed($record, $actorUserId, $actorType){
+    $actorType = $this->_normalizeActorType($actorType);
+    if(in_array($actorType, ['admin', 'manager', 'support', 'system'], true)) return true;
+
+    $recordUserId = $this->_value($record, ['userId'], null);
+    if($recordUserId === null || $recordUserId === '') return true;
+
+    if(!$this->_isBlank($actorUserId) && (string) $actorUserId === (string) $recordUserId) return true;
+    throw new ChangeNowApiNotFoundException('ChangeNOW action denied for transaction owner mismatch.');
+  }
+
+  private function _actionAvailable($record, $action){
+    $availableActions = $this->_value($record, ['availableActions'], []);
+    if(is_array($availableActions) && array_key_exists($action, $availableActions)) return $this->_boolValue($availableActions[$action]);
+    if($action == 'refund') return $this->_boolValue($this->_value($record, ['refundAvailable'], false));
+    if($action == 'continue') return $this->_boolValue($this->_value($record, ['continueAvailable'], false));
+    return false;
+  }
+
+  private function _publicAvailableActions($payload){
+    $actions = [
+      'refund' => $this->_boolValue($this->_value($payload, ['refundAvailable'], false)),
+      'continue' => $this->_boolValue($this->_value($payload, ['continueAvailable'], false))
+    ];
+
+    $availableActions = $this->_value($payload, ['availableActions'], null);
+    if(is_array($availableActions)){
+      if(array_key_exists('refund', $availableActions)) $actions['refund'] = $this->_boolValue($availableActions['refund']);
+      if(array_key_exists('continue', $availableActions)) $actions['continue'] = $this->_boolValue($availableActions['continue']);
+    }
+
+    return $actions;
+  }
+
+  private function _normalizeActorType($actorType){
+    $actorType = strtolower(trim((string) $actorType));
+    if($actorType == '') return 'user';
+    if($actorType == 'anonymous') return 'anonymous';
+    if($actorType == 'admin') return 'admin';
+    if($actorType == 'manager') return 'manager';
+    if($actorType == 'support') return 'support';
+    if($actorType == 'system') return 'system';
+    return 'user';
   }
 
   private function _quoteRequestFromPublic($request){
@@ -342,8 +602,10 @@ class ChangeNowPublicSwapFlow {
       'payinExtraId' => $this->_value($payload, ['payinExtraId'], null),
       'payoutAddress' => $this->_value($payload, ['payoutAddress'], null),
       'payoutExtraId' => $this->_value($payload, ['payoutExtraId'], null),
+      'payoutAddressFingerprint' => $this->_value($payload, ['payoutAddressFingerprint'], null),
       'refundAddress' => $this->_value($payload, ['refundAddress'], null),
       'refundExtraId' => $this->_value($payload, ['refundExtraId'], null),
+      'availableActions' => $this->_publicAvailableActions($payload),
       'validUntil' => $this->_value($payload, ['validUntil'], null),
       'createdAt' => $this->_value($payload, ['createdAt'], null),
       'updatedAt' => $this->_value($payload, ['updatedAt'], null)

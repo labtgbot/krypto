@@ -90,6 +90,28 @@ try {
     ]);
   }
 
+  if($action == 'refund'){
+    $lookupToken = '';
+    if(array_key_exists('lookupToken', $_POST)) $lookupToken = $_POST['lookupToken'];
+    elseif(array_key_exists('lookup_token', $_POST)) $lookupToken = $_POST['lookup_token'];
+    $refundAddress = (array_key_exists('refundAddress', $_POST) ? $_POST['refundAddress'] : (array_key_exists('refund_address', $_POST) ? $_POST['refund_address'] : ''));
+    $refundExtraId = (array_key_exists('refundExtraId', $_POST) ? $_POST['refundExtraId'] : (array_key_exists('refund_extra_id', $_POST) ? $_POST['refund_extra_id'] : ''));
+    changenow_public_json([
+      'error' => 0,
+      'status' => $Flow->_requestRefund($lookupToken, $refundAddress, $refundExtraId, $loggedUserId, (is_null($loggedUserId) ? 'anonymous' : 'user'))
+    ]);
+  }
+
+  if($action == 'continue'){
+    $lookupToken = '';
+    if(array_key_exists('lookupToken', $_POST)) $lookupToken = $_POST['lookupToken'];
+    elseif(array_key_exists('lookup_token', $_POST)) $lookupToken = $_POST['lookup_token'];
+    changenow_public_json([
+      'error' => 0,
+      'status' => $Flow->_continueSwap($lookupToken, $loggedUserId, (is_null($loggedUserId) ? 'anonymous' : 'user'))
+    ]);
+  }
+
   changenow_public_error(2, 'Unknown ChangeNOW public swap action.', 'validation');
 } catch (ChangeNowApiException $e) {
   $errorCode = ($e instanceof ChangeNowApiValidationException ? 2 : 1);
