@@ -11,12 +11,14 @@ $ChangeNowInitialState = [
   'destinationAssets' => [],
   'supportEmail' => ''
 ];
+$ChangeNowUserLogged = (isset($User) && $User->_isLogged());
+$ChangeNowSignupAllowed = (!$ChangeNowUserLogged && $App->_allowSignup());
 
 try {
   $ChangeNowClient = ChangeNowApiClient::_fromApp($App);
   $ChangeNowMarketData = new ChangeNowMarketData($ChangeNowClient, null, $App);
   $ChangeNowRepository = new ChangeNowPublicSwapRepository();
-  $ChangeNowFlow = new ChangeNowPublicSwapFlow($ChangeNowClient, $ChangeNowMarketData, $ChangeNowRepository, $App, (isset($User) && $User->_isLogged() ? $User : null));
+  $ChangeNowFlow = new ChangeNowPublicSwapFlow($ChangeNowClient, $ChangeNowMarketData, $ChangeNowRepository, $App, ($ChangeNowUserLogged ? $User : null));
   $ChangeNowInitialState = $ChangeNowFlow->_getInitialState();
 } catch (Exception $e) {
   $ChangeNowInitialState['missingSettings'][] = $e->getMessage();
@@ -40,13 +42,15 @@ if(!function_exists('changenow_public_asset_options')){
 <section
   class="kr-public-swap-shell"
   data-action-url="<?php echo APP_URL; ?>/app/modules/kr-changenow/src/actions/publicSwap.php"
+  data-user-logged="<?php echo ($ChangeNowUserLogged ? '1' : '0'); ?>"
+  data-signup-allowed="<?php echo ($ChangeNowSignupAllowed ? '1' : '0'); ?>"
   data-status-token="<?php echo htmlspecialchars($ChangeNowStatusToken); ?>">
   <header class="kr-public-swap-topbar">
     <div class="kr-public-swap-logo">
       <img src="<?php echo APP_URL.$App->_getLogoBlackPath(); ?>" alt="<?php echo htmlspecialchars($App->_getAppTitle()); ?>">
     </div>
     <nav>
-      <?php if(isset($User) && $User->_isLogged()): ?>
+      <?php if($ChangeNowUserLogged): ?>
         <a href="<?php echo APP_URL; ?>/dashboard<?php echo ($App->_rewriteDashBoardName() ? '' : '.php'); ?>">Dashboard</a>
       <?php else: ?>
         <a href="#kr-account-access" class="kr-public-auth-jump">Login</a>

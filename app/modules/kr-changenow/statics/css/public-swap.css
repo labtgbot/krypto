@@ -6,10 +6,14 @@ body.kr-login.kr-public-swap-enabled {
   background-image: none;
   background-color: #f4f6f8;
   background-position: left 18% top 45%;
-  grid-template-columns: minmax(0, 760px) 340px;
+  grid-template-columns: minmax(0, 760px);
   gap: 24px;
   align-items: start;
   justify-content: center;
+}
+
+body.kr-login.kr-public-swap-enabled.kr-public-account-access-visible {
+  grid-template-columns: minmax(0, 760px) 340px;
 }
 
 body.kr-login.kr-public-swap-enabled.kr-public-swap-authenticated {
@@ -17,9 +21,14 @@ body.kr-login.kr-public-swap-enabled.kr-public-swap-authenticated {
 }
 
 body.kr-public-swap-enabled > form {
+  display: none;
   width: 340px;
   height: auto;
   min-height: 466px;
+}
+
+body.kr-public-swap-enabled.kr-public-account-access-visible > form {
+  display: block;
 }
 
 body.kr-public-swap-enabled.kr-public-swap-authenticated > form {
