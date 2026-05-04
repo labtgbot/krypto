@@ -151,6 +151,116 @@ CREATE TABLE `cache_krypto` (
   `last_update_cache` varchar(12) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `changenow_assets_krypto` (
+  `id_changenow_asset` int(11) NOT NULL,
+  `ticker_changenow_asset` varchar(32) NOT NULL,
+  `network_changenow_asset` varchar(32) NOT NULL,
+  `legacy_ticker_changenow_asset` varchar(32) DEFAULT NULL,
+  `name_changenow_asset` varchar(120) NOT NULL,
+  `image_changenow_asset` text,
+  `token_contract_changenow_asset` varchar(255) DEFAULT NULL,
+  `buy_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `sell_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `fiat_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `stable_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `featured_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `fixed_rate_changenow_asset` tinyint(1) NOT NULL DEFAULT '0',
+  `provider_active_changenow_asset` tinyint(1) NOT NULL DEFAULT '1',
+  `admin_enabled_changenow_asset` tinyint(1) NOT NULL DEFAULT '1',
+  `raw_changenow_asset` longtext,
+  `synced_at_changenow_asset` varchar(15) NOT NULL DEFAULT '0',
+  `updated_at_changenow_asset` varchar(15) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `changenow_pairs_krypto` (
+  `id_changenow_pair` int(11) NOT NULL,
+  `from_currency_changenow_pair` varchar(32) NOT NULL,
+  `from_network_changenow_pair` varchar(32) NOT NULL,
+  `to_currency_changenow_pair` varchar(32) NOT NULL,
+  `to_network_changenow_pair` varchar(32) NOT NULL,
+  `flow_changenow_pair` varchar(20) NOT NULL DEFAULT 'standard',
+  `provider_active_changenow_pair` tinyint(1) NOT NULL DEFAULT '1',
+  `admin_enabled_changenow_pair` tinyint(1) NOT NULL DEFAULT '1',
+  `min_amount_changenow_pair` varchar(40) NOT NULL DEFAULT '',
+  `max_amount_changenow_pair` varchar(40) NOT NULL DEFAULT '',
+  `last_limits_update_changenow_pair` varchar(15) NOT NULL DEFAULT '0',
+  `raw_changenow_pair` longtext,
+  `synced_at_changenow_pair` varchar(15) NOT NULL DEFAULT '0',
+  `updated_at_changenow_pair` varchar(15) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `changenow_quote_cache_krypto` (
+  `id_changenow_quote_cache` int(11) NOT NULL,
+  `cache_key_changenow_quote_cache` char(64) NOT NULL,
+  `from_currency_changenow_quote_cache` varchar(32) NOT NULL,
+  `from_network_changenow_quote_cache` varchar(32) NOT NULL,
+  `to_currency_changenow_quote_cache` varchar(32) NOT NULL,
+  `to_network_changenow_quote_cache` varchar(32) NOT NULL,
+  `flow_changenow_quote_cache` varchar(20) NOT NULL DEFAULT 'standard',
+  `amount_changenow_quote_cache` varchar(40) NOT NULL DEFAULT '',
+  `request_changenow_quote_cache` longtext NOT NULL,
+  `response_changenow_quote_cache` longtext NOT NULL,
+  `expires_at_changenow_quote_cache` varchar(15) NOT NULL,
+  `created_at_changenow_quote_cache` varchar(15) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `changenow_sync_status_krypto` (
+  `id_changenow_sync` int(11) NOT NULL,
+  `sync_key_changenow_sync` varchar(64) NOT NULL,
+  `status_changenow_sync` varchar(20) NOT NULL,
+  `message_changenow_sync` text,
+  `assets_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
+  `pairs_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
+  `started_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0',
+  `finished_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `changenow_transactions_krypto` (
+  `id_changenow_transaction` int(11) NOT NULL,
+  `provider_id_changenow_transaction` varchar(120) NOT NULL,
+  `lookup_token_hash_changenow_transaction` char(64) NOT NULL,
+  `session_key_changenow_transaction` char(64) NOT NULL,
+  `id_user` int(11) DEFAULT NULL,
+  `flow_changenow_transaction` varchar(20) NOT NULL DEFAULT 'standard',
+  `from_currency_changenow_transaction` varchar(32) NOT NULL,
+  `from_network_changenow_transaction` varchar(32) NOT NULL,
+  `to_currency_changenow_transaction` varchar(32) NOT NULL,
+  `to_network_changenow_transaction` varchar(32) NOT NULL,
+  `from_amount_changenow_transaction` varchar(40) NOT NULL,
+  `to_amount_changenow_transaction` varchar(40) DEFAULT NULL,
+  `payin_address_changenow_transaction` text,
+  `payin_extra_id_changenow_transaction` varchar(255) DEFAULT NULL,
+  `payout_address_changenow_transaction` text,
+  `payout_extra_id_changenow_transaction` varchar(255) DEFAULT NULL,
+  `payout_address_fingerprint_changenow_transaction` char(64) DEFAULT NULL,
+  `refund_address_changenow_transaction` text,
+  `refund_extra_id_changenow_transaction` varchar(255) DEFAULT NULL,
+  `status_changenow_transaction` varchar(40) NOT NULL DEFAULT 'waiting',
+  `refund_available_changenow_transaction` tinyint(1) NOT NULL DEFAULT '0',
+  `continue_available_changenow_transaction` tinyint(1) NOT NULL DEFAULT '0',
+  `referral_attribution_changenow_transaction` longtext,
+  `raw_create_changenow_transaction` longtext,
+  `raw_status_changenow_transaction` longtext,
+  `raw_actions_changenow_transaction` longtext,
+  `support_note_changenow_transaction` text,
+  `created_at_changenow_transaction` varchar(15) NOT NULL,
+  `updated_at_changenow_transaction` varchar(15) NOT NULL,
+  `expires_at_changenow_transaction` varchar(15) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `changenow_transaction_events_krypto` (
+  `id_changenow_transaction_event` int(11) NOT NULL,
+  `id_changenow_transaction` int(11) DEFAULT NULL,
+  `provider_id_changenow_transaction` varchar(120) NOT NULL,
+  `actor_user_id_changenow_transaction_event` int(11) DEFAULT NULL,
+  `actor_type_changenow_transaction_event` varchar(30) NOT NULL DEFAULT 'system',
+  `event_type_changenow_transaction_event` varchar(40) NOT NULL,
+  `event_status_changenow_transaction_event` varchar(40) NOT NULL,
+  `event_note_changenow_transaction_event` text,
+  `raw_event_changenow_transaction_event` longtext,
+  `created_at_changenow_transaction_event` varchar(15) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `cex_krypto` (
   `id_cex` int(11) NOT NULL,
   `id_user` int(11) NOT NULL,
@@ -4301,29 +4411,46 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (208, 'direct_deposit_enable', '0', 0),
 (209, 'automatic_crypto_withdraw', '0', 0),
 (210, 'enablenative_withoutexchange', '0', 0),
-(211, 'changenow_widget_enabled', '0', 0),
-(212, 'changenow_widget_amount', '0.1', 0),
-(213, 'changenow_widget_amount_fiat', '1500', 0),
-(214, 'changenow_widget_from', 'btc', 0),
-(215, 'changenow_widget_to', 'eth', 0),
-(216, 'changenow_widget_from_fiat', 'eur', 0),
-(217, 'changenow_widget_to_fiat', 'eth', 0),
-(218, 'changenow_widget_fiat_mode', '0', 0),
-(219, 'changenow_widget_lang', 'en-US', 0),
-(220, 'changenow_widget_dark_mode', '0', 0),
-(221, 'changenow_widget_logo', '1', 0),
-(222, 'changenow_widget_faq', '1', 0),
-(223, 'changenow_widget_locales', '1', 0),
-(224, 'changenow_widget_primary_color', '00C26F', 0),
-(225, 'changenow_widget_background_color', 'FFFFFF', 0),
-(226, 'changenow_widget_horizontal', '0', 0),
-(227, 'changenow_widget_link_id', '', 0),
-(228, 'changenow_widget_fallback_url', '', 0),
-(229, 'changenow_widget_place_landing', '0', 0),
-(230, 'changenow_widget_place_dashboard', '0', 0),
-(231, 'changenow_widget_place_coin', '0', 0),
-(232, 'changenow_widget_place_custom_page', '0', 0),
-(233, 'changenow_widget_to_the_moon', '1', 0);
+(211, 'changenow_provider_enabled', '0', 0),
+(212, 'legacy_exchange_connections_enabled', '1', 0),
+(213, 'changenow_public_api_key', '', 1),
+(214, 'changenow_private_api_key', '', 1),
+(215, 'changenow_callback_secret', '', 1),
+(216, 'changenow_referral_link_id', '', 0),
+(217, 'changenow_widget_link_id', '', 0),
+(218, 'changenow_enabled_flows', 'standard,fixed-rate', 0),
+(219, 'changenow_default_flow', 'standard', 0),
+(220, 'changenow_default_from_asset', 'btc', 0),
+(221, 'changenow_default_from_network', 'btc', 0),
+(222, 'changenow_default_to_asset', 'eth', 0),
+(223, 'changenow_default_to_network', 'eth', 0),
+(224, 'changenow_support_email', '', 0),
+(225, 'changenow_rate_limit_per_second', '30', 0),
+(226, 'changenow_rate_limit_per_minute', '1800', 0),
+(227, 'changenow_quote_cache_ttl', '30', 0),
+(228, 'changenow_widget_enabled', '0', 0),
+(229, 'changenow_widget_amount', '0.1', 0),
+(230, 'changenow_widget_amount_fiat', '1500', 0),
+(231, 'changenow_widget_from', 'btc', 0),
+(232, 'changenow_widget_to', 'eth', 0),
+(233, 'changenow_widget_from_fiat', 'eur', 0),
+(234, 'changenow_widget_to_fiat', 'eth', 0),
+(235, 'changenow_widget_fiat_mode', '0', 0),
+(236, 'changenow_widget_lang', 'en-US', 0),
+(237, 'changenow_widget_dark_mode', '0', 0),
+(238, 'changenow_widget_logo', '1', 0),
+(239, 'changenow_widget_faq', '1', 0),
+(240, 'changenow_widget_locales', '1', 0),
+(241, 'changenow_widget_primary_color', '00C26F', 0),
+(242, 'changenow_widget_background_color', 'FFFFFF', 0),
+(243, 'changenow_widget_horizontal', '0', 0),
+(244, 'changenow_widget_link_id', '', 0),
+(245, 'changenow_widget_fallback_url', '', 0),
+(246, 'changenow_widget_place_landing', '0', 0),
+(247, 'changenow_widget_place_dashboard', '0', 0),
+(248, 'changenow_widget_place_coin', '0', 0),
+(249, 'changenow_widget_place_custom_page', '0', 0),
+(250, 'changenow_widget_to_the_moon', '1', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -4522,6 +4649,46 @@ ALTER TABLE `btcmarket_krypto`
 
 ALTER TABLE `cache_krypto`
   ADD PRIMARY KEY (`id_cache`);
+
+ALTER TABLE `changenow_assets_krypto`
+  ADD PRIMARY KEY (`id_changenow_asset`),
+  ADD UNIQUE KEY `ticker_network_changenow_asset` (`ticker_changenow_asset`,`network_changenow_asset`),
+  ADD KEY `active_changenow_asset` (`provider_active_changenow_asset`,`admin_enabled_changenow_asset`);
+
+ALTER TABLE `changenow_pairs_krypto`
+  ADD PRIMARY KEY (`id_changenow_pair`),
+  ADD UNIQUE KEY `pair_flow_changenow_pair` (`from_currency_changenow_pair`,`from_network_changenow_pair`,`to_currency_changenow_pair`,`to_network_changenow_pair`,`flow_changenow_pair`),
+  ADD KEY `from_asset_changenow_pair` (`from_currency_changenow_pair`,`from_network_changenow_pair`,`flow_changenow_pair`),
+  ADD KEY `to_asset_changenow_pair` (`to_currency_changenow_pair`,`to_network_changenow_pair`,`flow_changenow_pair`),
+  ADD KEY `active_changenow_pair` (`provider_active_changenow_pair`,`admin_enabled_changenow_pair`);
+
+ALTER TABLE `changenow_quote_cache_krypto`
+  ADD PRIMARY KEY (`id_changenow_quote_cache`),
+  ADD UNIQUE KEY `cache_key_changenow_quote_cache` (`cache_key_changenow_quote_cache`),
+  ADD KEY `expires_at_changenow_quote_cache` (`expires_at_changenow_quote_cache`),
+  ADD KEY `pair_changenow_quote_cache` (`from_currency_changenow_quote_cache`,`from_network_changenow_quote_cache`,`to_currency_changenow_quote_cache`,`to_network_changenow_quote_cache`,`flow_changenow_quote_cache`);
+
+ALTER TABLE `changenow_sync_status_krypto`
+  ADD PRIMARY KEY (`id_changenow_sync`),
+  ADD UNIQUE KEY `sync_key_changenow_sync` (`sync_key_changenow_sync`),
+  ADD KEY `status_changenow_sync` (`status_changenow_sync`);
+
+ALTER TABLE `changenow_transactions_krypto`
+  ADD PRIMARY KEY (`id_changenow_transaction`),
+  ADD UNIQUE KEY `provider_id_changenow_transaction` (`provider_id_changenow_transaction`),
+  ADD UNIQUE KEY `lookup_token_hash_changenow_transaction` (`lookup_token_hash_changenow_transaction`),
+  ADD KEY `session_key_changenow_transaction` (`session_key_changenow_transaction`),
+  ADD KEY `user_changenow_transaction` (`id_user`),
+  ADD KEY `status_changenow_transaction` (`status_changenow_transaction`),
+  ADD KEY `action_changenow_transaction` (`refund_available_changenow_transaction`,`continue_available_changenow_transaction`),
+  ADD KEY `pair_changenow_transaction` (`from_currency_changenow_transaction`,`from_network_changenow_transaction`,`to_currency_changenow_transaction`,`to_network_changenow_transaction`);
+
+ALTER TABLE `changenow_transaction_events_krypto`
+  ADD PRIMARY KEY (`id_changenow_transaction_event`),
+  ADD KEY `transaction_changenow_transaction_event` (`id_changenow_transaction`),
+  ADD KEY `provider_changenow_transaction_event` (`provider_id_changenow_transaction`),
+  ADD KEY `actor_changenow_transaction_event` (`actor_user_id_changenow_transaction_event`,`actor_type_changenow_transaction_event`),
+  ADD KEY `type_changenow_transaction_event` (`event_type_changenow_transaction_event`,`event_status_changenow_transaction_event`);
 
 ALTER TABLE `cex_krypto`
   ADD PRIMARY KEY (`id_cex`);
@@ -4775,6 +4942,24 @@ ALTER TABLE `btcmarket_krypto`
 ALTER TABLE `cache_krypto`
   MODIFY `id_cache` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12644;
 
+ALTER TABLE `changenow_assets_krypto`
+  MODIFY `id_changenow_asset` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `changenow_pairs_krypto`
+  MODIFY `id_changenow_pair` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `changenow_quote_cache_krypto`
+  MODIFY `id_changenow_quote_cache` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `changenow_sync_status_krypto`
+  MODIFY `id_changenow_sync` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `changenow_transactions_krypto`
+  MODIFY `id_changenow_transaction` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `changenow_transaction_events_krypto`
+  MODIFY `id_changenow_transaction_event` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `cex_krypto`
   MODIFY `id_cex` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -4920,7 +5105,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=234;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=251;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
