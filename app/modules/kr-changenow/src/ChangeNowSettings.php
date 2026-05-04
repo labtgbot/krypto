@@ -39,6 +39,7 @@ class ChangeNowSettings {
       'changenow_debug_logging_enabled' => '0',
       'changenow_rate_limit_per_second' => '30',
       'changenow_rate_limit_per_minute' => '1800',
+      'changenow_quote_cache_ttl' => '30',
       'changenow_rate_limit_warning_state' => 'normal',
       'changenow_last_successful_sync' => '',
       'changenow_provider_health_status' => 'unknown',
@@ -87,6 +88,7 @@ class ChangeNowSettings {
     $sanitized['changenow_widget_language'] = self::_normalizeLanguage($sanitized['changenow_widget_language'], 'en-US');
     $sanitized['changenow_rate_limit_per_second'] = self::_normalizePositiveInteger($sanitized['changenow_rate_limit_per_second'], '30');
     $sanitized['changenow_rate_limit_per_minute'] = self::_normalizePositiveInteger($sanitized['changenow_rate_limit_per_minute'], '1800');
+    $sanitized['changenow_quote_cache_ttl'] = self::_normalizePositiveInteger($sanitized['changenow_quote_cache_ttl'], '30');
     $sanitized['changenow_rate_limit_warning_state'] = self::_normalizeChoice($sanitized['changenow_rate_limit_warning_state'], ['normal', 'warning', 'limited'], 'normal');
     $sanitized['changenow_provider_health_status'] = self::_normalizeChoice($sanitized['changenow_provider_health_status'], ['unknown', 'healthy', 'degraded', 'outage'], 'unknown');
 
@@ -135,6 +137,7 @@ class ChangeNowSettings {
       'changenow_debug_logging_enabled' => self::_checkbox($post, 'kr-adm-chk-changenowdebuglogging'),
       'changenow_rate_limit_per_second' => self::_postString($post, 'kr-adm-changenowratelimitsecond'),
       'changenow_rate_limit_per_minute' => self::_postString($post, 'kr-adm-changenowratelimitminute'),
+      'changenow_quote_cache_ttl' => self::_postString($post, 'kr-adm-changenowquotecachettl'),
       'changenow_rate_limit_warning_state' => self::_postString($post, 'kr-adm-changenowratelimitwarning'),
       'changenow_provider_health_status' => self::_postString($post, 'kr-adm-changenowproviderhealth'),
       'changenow_provider_health_message' => self::_postString($post, 'kr-adm-changenowproviderhealthmessage'),

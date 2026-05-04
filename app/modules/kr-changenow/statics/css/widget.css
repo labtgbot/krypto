@@ -1,0 +1,227 @@
+.kr-changenow-widget {
+  display        : flex;
+  position       : relative;
+  min-height     : 356px;
+  background     : #f7f9fc;
+  border         : 1px solid #d8dee9;
+  border-radius  : 5px;
+  overflow       : hidden;
+  flex-direction : column;
+}
+
+.kr-changenow-widget iframe {
+  display : block;
+  width   : 100%;
+  height  : 356px;
+  border  : 0;
+}
+
+.kr-changenow-widget-fallback {
+  display         : none;
+  position        : absolute;
+  top             : 0;
+  right           : 0;
+  bottom          : 0;
+  left            : 0;
+  padding         : 20px;
+  background      : rgba(247, 249, 252, 0.96);
+  color           : #2d3544;
+  align-items     : center;
+  flex-direction  : column;
+  justify-content : center;
+  text-align      : center;
+}
+
+.kr-changenow-widget-failed .kr-changenow-widget-fallback {
+  display : flex;
+}
+
+.kr-changenow-widget-fallback span {
+  margin-bottom : 12px;
+  font-size     : 14px;
+  font-weight   : 500;
+}
+
+.kr-changenow-widget-fallback a,
+.kr-changenow-admin-preview a {
+  display         : inline-flex;
+  height          : 36px;
+  padding         : 0 16px;
+  border-radius   : 3px;
+  background      : #ff7700;
+  color           : #fff;
+  align-items     : center;
+  justify-content : center;
+  text-decoration : none;
+  font-size       : 13px;
+  font-weight     : 700;
+}
+
+body > form.kr-login-widget-enabled {
+  width : 1180px;
+}
+
+body > form > section.kr-changenow-login-widget {
+  display    : flex;
+  width      : 380px;
+  min-width  : 380px;
+  padding    : 18px;
+  background : #eef2f8;
+}
+
+body > form > section.kr-changenow-login-widget .kr-changenow-widget {
+  width      : 100%;
+  min-height : 430px;
+}
+
+body > form > section.kr-changenow-login-widget .kr-changenow-widget iframe {
+  height : 430px;
+}
+
+section.kr-dashboard > aside.kr-changenow-dashboard-panel {
+  display    : flex;
+  width      : 372px;
+  min-width  : 340px;
+  height     : 100%;
+  padding    : 9px 6px 9px 9px;
+  overflow-y : auto;
+  flex       : none;
+}
+
+section.kr-dashboard > aside.kr-changenow-dashboard-panel .kr-changenow-widget {
+  width      : 100%;
+  align-self : flex-start;
+}
+
+section.kr-dashboard > aside.kr-changenow-dashboard-panel .kr-changenow-widget iframe {
+  height : 386px;
+}
+
+section.kr-dashboard > div.kr-changenow-page {
+  display    : flex;
+  width      : 100%;
+  height     : 100%;
+  padding    : 12px;
+  overflow-y : auto;
+}
+
+section.kr-dashboard > div.kr-changenow-page .kr-changenow-widget {
+  width      : 100%;
+  max-width  : 960px;
+  margin     : 0 auto;
+  align-self : flex-start;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow > div {
+  width : 55%;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow.kr-coin-with-changenow-only > div {
+  width : 70%;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow > section.kr-changenow-coin-placement {
+  display     : flex;
+  width       : 30%;
+  min-width   : 340px;
+  padding     : 10px;
+  overflow-y  : auto;
+  border-left : 1px solid #343c4e;
+  background  : #20283a;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow.kr-coin-with-changenow-only > section.kr-changenow-coin-placement {
+  width : 30%;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow > section.kr-changenow-coin-placement .kr-changenow-widget {
+  width      : 100%;
+  align-self : flex-start;
+}
+
+section.kr-coin-inf > section.kr-coin-with-changenow > section:not(.kr-changenow-coin-placement) {
+  width : 15%;
+}
+
+.kr-admin-line-changenow .kr-admin-field input[type="color"] {
+  width   : 70px;
+  height  : 34px;
+  padding : 0;
+}
+
+.kr-changenow-admin-preview {
+  width     : 100%;
+  max-width : 780px;
+}
+
+.kr-changenow-admin-preview .kr-changenow-widget iframe {
+  height : 420px;
+}
+
+@media (max-width: 1180px) {
+  body > form.kr-login-widget-enabled {
+    width  : calc(100% - 30px);
+    height : auto;
+  }
+
+  body > form.kr-login-widget-enabled > section.kr-app-overview {
+    display : none;
+  }
+
+  body > form > section.kr-changenow-login-widget {
+    flex : 1;
+  }
+}
+
+@media (max-width: 760px) {
+  body > form.kr-login-widget-enabled {
+    flex-direction : column;
+  }
+
+  body > form.kr-login-widget-enabled > section.kr-login-view,
+  body > form > section.kr-changenow-login-widget {
+    width     : 100%;
+    min-width : 0;
+  }
+
+  body > form > section.kr-changenow-login-widget {
+    padding : 12px;
+  }
+
+  section.kr-coin-inf > section.kr-coin-with-changenow {
+    overflow-y     : auto;
+    flex-direction : column;
+  }
+
+  section.kr-coin-inf > section.kr-coin-with-changenow > div,
+  section.kr-coin-inf > section.kr-coin-with-changenow.kr-coin-with-changenow-only > div,
+  section.kr-coin-inf > section.kr-coin-with-changenow > section.kr-changenow-coin-placement,
+  section.kr-coin-inf > section.kr-coin-with-changenow > section:not(.kr-changenow-coin-placement) {
+    width     : 100% !important;
+    min-width : 0;
+  }
+
+  section.kr-coin-inf > section.kr-coin-with-changenow > section.kr-changenow-coin-placement {
+    border-top  : 1px solid #343c4e;
+    border-left : 0;
+  }
+}
+
+@media (max-width: 900px) {
+  section.kr-dashboard > aside.kr-changenow-dashboard-panel {
+    position  : absolute;
+    z-index   : 5;
+    top       : 0;
+    right     : 0;
+    left      : 0;
+    width     : 100%;
+    min-width : 0;
+    height    : 420px;
+    padding   : 8px;
+  }
+
+  section.kr-dashboard > aside.kr-changenow-dashboard-panel + div.kr-dash-pannel {
+    padding-top : 430px;
+    overflow-y  : auto;
+  }
+}

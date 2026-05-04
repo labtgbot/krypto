@@ -45,6 +45,15 @@ try {
 
     $Balance = new Balance($User, $App, 'real');
     $TransactionsHistory = $Balance->_getTransactionsHistory();
+    $ChangeNowTransactions = [];
+    if(class_exists('ChangeNowPublicSwapRepository')){
+      try {
+        $ChangeNowRepository = new ChangeNowPublicSwapRepository();
+        $ChangeNowTransactions = $ChangeNowRepository->_listByUser($User->_getUserID(), 50);
+      } catch (\Exception $e) {
+        $ChangeNowTransactions = [];
+      }
+    }
 
 } catch (\Exception $e) {
     die(json_encode([
@@ -55,12 +64,31 @@ try {
 
 ?>
 
-<?php if(count($TransactionsHistory) == 0): ?>
+<?php if(count($TransactionsHistory) == 0 && count($ChangeNowTransactions) == 0): ?>
 <section class="kr-balance-trhistory-empty">
   <span><?php echo $Lang->tr('Transactions history is empty.'); ?></span>
 </section>
 <?php else: ?>
 <section class="kr-balance-trhistory-histo">
+  <?php foreach ($ChangeNowTransactions as $ChangeNowTransaction) {
+    $changeNowCreatedAt = $ChangeNowTransaction['createdAt'];
+    if(is_numeric($changeNowCreatedAt)) $changeNowCreatedAt = date('d/m/Y H:i:s', $changeNowCreatedAt);
+  ?>
+  <div>
+    <div>
+      <span>changenow</span>
+    </div>
+    <div>
+      <span><?php echo htmlspecialchars($changeNowCreatedAt); ?></span>
+    </div>
+    <div>
+      <?php echo htmlspecialchars($ChangeNowTransaction['providerId'].' - '.$ChangeNowTransaction['status']); ?>
+    </div>
+    <div>
+      <span><?php echo htmlspecialchars($ChangeNowTransaction['fromAmount'].' '.strtoupper($ChangeNowTransaction['fromCurrency']).' / '.$ChangeNowTransaction['toAmount'].' '.strtoupper($ChangeNowTransaction['toCurrency'])); ?></span>
+    </div>
+  </div>
+  <?php } ?>
   <?php foreach ($TransactionsHistory as $dataHisto) {
 
     $Decimal = 8;

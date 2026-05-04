@@ -23,6 +23,11 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/CryptoApi/CryptoApi.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+if(!$App->_legacyExchangeConnectionsEnabled()){
+  http_response_code(404);
+  die('Legacy exchange connections are disabled');
+}
+
 $User = new User();
 if(!$User->_isLogged()) die('Error : User not logged');
 

@@ -381,6 +381,14 @@ try {
       </div>
       <div class="kr-admin-field">
         <div>
+          <label><?php echo $Lang->tr('Quote cache TTL'); ?></label>
+        </div>
+        <div>
+          <input type="text" name="kr-adm-changenowquotecachettl" value="<?php echo changenow_admin_escape($changeNowSettings['changenow_quote_cache_ttl']); ?>">
+        </div>
+      </div>
+      <div class="kr-admin-field">
+        <div>
           <label><?php echo $Lang->tr('Debug logging'); ?></label>
         </div>
         <div>

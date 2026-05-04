@@ -639,6 +639,12 @@ try {
             <?php
           }
           ?>
+          <?php if($App->_changeNowWidgetEnabled('custom_page')): ?>
+            <li type="module" kr-modules-hleft="true" kr-module="dashboard" kr-view="changenowwidget">
+              <svg class="lnr lnr-sync"><use xlink:href="#lnr-sync"></use></svg>
+              <span><?php echo $Lang->tr('Exchange'); ?></span>
+            </li>
+          <?php endif; ?>
           <?php
           if($User->_isManager()):
             $Manager = new Manager($App);
