@@ -136,6 +136,13 @@ Verification:
 - PHP syntax validation covers all touched first-party PHP files.
 - Manual review confirms no API secret is added to client-rendered templates.
 
+CN-01 boundary decision:
+
+- Architecture decision record: [ADR 0001: ChangeNOW Provider Boundary](adr-0001-changenow-provider-boundary.md).
+- Provider boundary location: `app/modules/kr-changenow/src/`.
+- Feature flags: `changenow_provider_enabled` defaults off, and `legacy_exchange_connections_enabled` defaults on.
+- Legacy direct exchange flows remain callable only while the legacy flag is enabled. After ChangeNOW routing is complete, old exchange classes, user credential tables, balances, and order history are retained for rollback, support, audit, and data access, not for new public swap routing.
+
 ## Task CN-02: Add ChangeNOW Settings And Secure Configuration
 
 Suggested issue title: Add secure ChangeNOW provider settings
@@ -176,6 +183,12 @@ Verification:
 - PHP syntax validation of touched files.
 - Manual admin form review in a browser when a runnable local environment is available.
 
+CN-02 settings note:
+
+- ChangeNOW credentials and operational defaults are documented in [ChangeNOW Provider Settings](changenow-provider-settings.md).
+- Public API key, private API key, and callback secret are saved as encrypted settings and preserved when the admin mask value is submitted.
+- Live swap creation should call `App::_validateChangeNowLiveSwapSettings()` so disabled or incomplete provider configuration fails with an admin-facing message before any ChangeNOW API call is attempted.
+
 ## Task CN-03: Implement The ChangeNOW API Client
 
 Suggested issue title: Implement a server-side ChangeNOW API client
@@ -210,6 +223,12 @@ Verification:
 - Mocked unit tests for successful quotes, create transaction, status, validation errors, rate limit errors, and malformed responses.
 - Static grep confirms no API key setting is printed into HTML or JavaScript.
 - PHP syntax validation of touched files.
+
+CN-03 API client note:
+
+- Server-side client: [ChangeNOW API Client](changenow-api-client.md).
+- Client location: `app/modules/kr-changenow/src/ChangeNowApiClient.php`.
+- Errors map to `ChangeNowApiException` subclasses; transaction creation is not automatically retried; debug logging is off by default and redacts keys, addresses, user IDs, forwarded IPs, and payload values.
 
 ## Task CN-04: Sync ChangeNOW Assets, Networks, Pairs, And Quotes
 
