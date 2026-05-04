@@ -256,7 +256,7 @@ $validationException = assertExceptionClass('ChangeNowApiValidationException', f
 assertSameValue('validation', $validationException->_getType(), 'Validation exception type should be predictable');
 assertSameValue('ChangeNOW rejected the request. Please check the swap parameters.', $validationException->_getUserMessage(), 'Validation exception should expose a user-safe message');
 
-$rateLimitClient = new ChangeNowApiClient(['public_api_key' => 'public-key', 'retry_count' => 2], function() {
+$rateLimitClient = new ChangeNowApiClient(['public_api_key' => 'public-key', 'retry_count' => 0], function() {
     return [
         'status' => 429,
         'headers' => ['Retry-After' => '3'],
@@ -272,6 +272,70 @@ $rateLimitException = assertExceptionClass('ChangeNowApiRateLimitException', fun
 }, 'HTTP 429 should map to a rate-limit exception');
 assertSameValue('rate_limit', $rateLimitException->_getType(), 'Rate-limit exception type should be predictable');
 assertSameValue('3', $rateLimitException->_getDebugContext()['retryAfter'], 'Retry-After should be captured for callers');
+
+$rateLimitRetryAttempts = 0;
+$rateLimitRetryDelays = [];
+$rateLimitRetryClient = new ChangeNowApiClient([
+    'public_api_key' => 'public-key',
+    'retry_count' => 2,
+    'retry_delay_ms' => 25,
+    'retry_sleep_callback' => function($delayMs, $attempt) use (&$rateLimitRetryDelays) {
+        $rateLimitRetryDelays[] = [$delayMs, $attempt];
+    },
+], function() use (&$rateLimitRetryAttempts) {
+    $rateLimitRetryAttempts++;
+    if ($rateLimitRetryAttempts < 3) {
+        return [
+            'status' => 429,
+            'headers' => $rateLimitRetryAttempts === 1 ? ['Retry-After' => '1'] : [],
+            'body' => json_encode(['error' => 'too_many_requests', 'message' => 'Too many requests'])
+        ];
+    }
+
+    return [
+        'status' => 200,
+        'headers' => [],
+        'body' => json_encode(['fromCurrency' => 'btc', 'fromNetwork' => 'btc', 'toCurrency' => 'eth', 'toNetwork' => 'eth', 'flow' => 'standard', 'minAmount' => 0.01, 'maxAmount' => 2.5])
+    ];
+});
+$retriedRange = $rateLimitRetryClient->_getRange([
+    'fromCurrency' => 'btc',
+    'toCurrency' => 'eth',
+    'flow' => 'standard'
+]);
+assertSameValue(3, $rateLimitRetryAttempts, 'HTTP 429 GET responses should be retried before surfacing rate limits');
+assertSameValue([[1000, 1], [50, 2]], $rateLimitRetryDelays, 'Retry delay should honor Retry-After and use exponential backoff between 429 attempts');
+assertSameValue(2.5, $retriedRange['maxAmount'], 'Retried rate-limited range response should be parsed');
+
+$serverRetryAttempts = 0;
+$serverRetryClient = new ChangeNowApiClient([
+    'public_api_key' => 'public-key',
+    'retry_count' => 1,
+    'retry_delay_ms' => 0,
+], function() use (&$serverRetryAttempts) {
+    $serverRetryAttempts++;
+    if ($serverRetryAttempts === 1) {
+        return [
+            'status' => 503,
+            'headers' => [],
+            'body' => json_encode(['error' => 'temporarily_unavailable', 'message' => 'Service unavailable'])
+        ];
+    }
+
+    return [
+        'status' => 200,
+        'headers' => [],
+        'body' => json_encode(['estimatedFee' => 0.0003])
+    ];
+});
+$retriedNetworkFee = $serverRetryClient->_getNetworkFee([
+    'fromCurrency' => 'btc',
+    'toCurrency' => 'eth',
+    'fromAmount' => '0.01',
+    'flow' => 'standard'
+]);
+assertSameValue(2, $serverRetryAttempts, 'HTTP 5xx GET responses should be retried before surfacing provider outages');
+assertSameValue(0.0003, $retriedNetworkFee['estimatedFee'], 'Retried network fee response should be parsed');
 
 $malformedClient = new ChangeNowApiClient(['public_api_key' => 'public-key', 'retry_count' => 0], function() {
     return [

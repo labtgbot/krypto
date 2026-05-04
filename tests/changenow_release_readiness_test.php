@@ -49,6 +49,7 @@ $ciWorkflow = read_required_file($root.'/.github/workflows/ci.yml', 'GitHub Acti
 $testRunner = read_required_file($root.'/scripts/run_tests.php', 'Lightweight test runner');
 $phpLint = read_required_file($root.'/scripts/lint_php.php', 'PHP syntax lint runner');
 $releaseDocs = read_required_file($root.'/docs/changenow-release-checks.md', 'ChangeNOW release checks documentation');
+$stagingAuditDocs = read_required_file($root.'/docs/changenow-staging-audit-checklist.md', 'ChangeNOW staging audit checklist');
 
 assert_contains_text($ciWorkflow, 'php scripts/lint_php.php', 'CI should validate first-party PHP syntax.');
 assert_contains_text($ciWorkflow, 'php scripts/run_tests.php', 'CI should run the automated test suite.');
@@ -67,6 +68,32 @@ foreach ([
     'Provider tests must not call live ChangeNOW APIs',
 ] as $requiredSection) {
     assert_contains_text($releaseDocs, $requiredSection, 'Release docs should cover CN-15 readiness.');
+}
+
+foreach ([
+    'Preconditions',
+    'P1 Integration And Data Flow',
+    'P2 Security And Privacy',
+    'P3 Resilience And Rollback',
+    'Current Automated Coverage',
+    'Known Limitations To Record',
+] as $requiredSection) {
+    assert_contains_text($stagingAuditDocs, $requiredSection, 'Staging audit checklist should cover issue 37 verification.');
+}
+
+foreach ([
+    'Currency/network mapping',
+    'Network error handling',
+    'Quote cache expiry',
+    'Webhook or callback handling',
+    'Redacted logging',
+    'Widget URL sanitization',
+    'Access control',
+    'Feature flag off',
+    'Database compatibility',
+    'Rollback simulation',
+] as $requiredChecklistItem) {
+    assert_contains_text($stagingAuditDocs, $requiredChecklistItem, 'Staging audit checklist should include issue 37 audit item.');
 }
 
 $fixtureDirectory = $root.'/tests/fixtures/changenow';

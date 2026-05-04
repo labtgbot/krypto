@@ -27,6 +27,8 @@ When fixed-rate, refund, continue, network-fee, or transaction-list behavior lan
 
 ChangeNOW does not provide a dedicated test environment in the migration plan, so maintainers should run live verification only after mocked CI checks pass and partner credentials are available.
 
+Use `docs/changenow-staging-audit-checklist.md` for the full P1-P3 staging audit. It includes evidence prompts for integration/data flow, security/privacy, resilience/rollback, current automated coverage, and known limitations.
+
 Use low-fee pairs such as XRP to XLM or another currently low-cost pair approved by the maintainer. Keep amounts minimal, record the provider transaction id, and verify the complete flow without exposing credentials in browser source, logs, screenshots, or PR comments.
 
 Manual live verification should cover:

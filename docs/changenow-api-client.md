@@ -30,9 +30,9 @@ $Client = ChangeNowApiClient::_fromApp($App);
 
 ## Retries And Rate Limits
 
-The default retry policy retries idempotent `GET` requests on transport failures and HTTP `408`, `500`, `502`, `503`, and `504`. Transaction creation is never retried automatically because ChangeNOW does not document idempotency for `POST /v2/exchange`.
+The default retry policy retries idempotent `GET` requests on transport failures and HTTP `408`, `429`, `500`, `502`, `503`, and `504`. Backoff is exponential from `retry_delay_ms`, capped by `retry_max_delay_ms`, and honors `Retry-After` when ChangeNOW sends it. Transaction creation is never retried automatically because ChangeNOW does not document idempotency for `POST /v2/exchange`.
 
-HTTP `429` is mapped to `ChangeNowApiRateLimitException` without an automatic retry. The exception debug context captures `Retry-After` when ChangeNOW sends it. Current ChangeNOW partner documentation lists the default limit as 1800 requests per minute and 30 requests per second per API key.
+If retries are exhausted, HTTP `429` is mapped to `ChangeNowApiRateLimitException`. The exception debug context captures `Retry-After` when ChangeNOW sends it. Current ChangeNOW partner documentation lists the default limit as 1800 requests per minute and 30 requests per second per API key.
 
 ## Debug Logging
 
