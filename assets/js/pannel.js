@@ -70,7 +70,8 @@ $(document).ready(function(){
 let moduleConstruct = {
   'dashboard': {
     'dashboard': initDashboard,
-    'custompage': initCustomPage
+    'custompage': initCustomPage,
+    'changenowwidget': initCustomPage
   },
   'marketanalysis': {
     'dashboard': initHeatmap,
@@ -92,9 +93,13 @@ let moduleConstruct = {
     'withdraw': initAdmin,
     'cron': initAdmin,
     'additionalpages': initAdmin,
+    'changenowwidget': initAdmin,
     'bankaccounts': initAdmin,
     'identity': initAdmin,
-    'templates': initAdmin
+    'templates': initAdmin,
+    'changenowswaps': initAdmin,
+    'walletaddress': initAdmin,
+    'autowithdrawconfigure': initAdmin
   },
   'blockfolio': {
     'blockfolio': initBlockFolio
@@ -111,7 +116,8 @@ let moduleConstruct = {
     'users': initManager,
     'userinfos': initManager,
     'orders': initManager,
-    'subscriptions': initManager
+    'subscriptions': initManager,
+    'changenowswaps': initManager
   },
   'trade': {
     'balances': initBalanceView,

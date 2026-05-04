@@ -40,8 +40,15 @@ $nchartShown = $Dashboard->_getGraphPos();
 
 $Balance = new Balance($User, $App);
 
+$showChangeNowDashboardWidget = $App->_changeNowWidgetEnabled('dashboard');
+
 
 ?>
+<?php if($showChangeNowDashboardWidget): ?>
+  <aside class="kr-changenow-dashboard-panel">
+    <?php echo ChangeNowWidget::_renderFromApp($App, 'dashboard'); ?>
+  </aside>
+<?php endif; ?>
 <div class="kr-dash-pannel kr-dash-chart-n" nchart="<?php echo $nchartShown; ?>">
   <?php
 
