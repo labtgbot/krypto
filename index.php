@@ -74,8 +74,9 @@ try {
     <link rel="stylesheet" href="assets/css/responsive-tablet.css">
     <link rel="stylesheet" href="assets/css/responsive-mobile.css">
     <link rel="stylesheet" href="assets/css/responsive-global.css">
+    <link rel="stylesheet" href="app/modules/kr-changenow/statics/css/swap.css?v=<?php echo App::_getVersion(); ?>">
   </head>
-  <body class="kr-login <?php if(isset($_GET['a'])) echo 'kr-ac-'.$_GET['a']; ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.$_GET['token'].'"'; ?>>
+  <body class="kr-login kr-swap-first <?php if(isset($_GET['a'])) echo 'kr-ac-'.$_GET['a']; ?>" hrefapp="<?php echo APP_URL; ?>" <?php if(isset($_GET['a']) && $_GET['a'] == "pwdr") echo 'kr-pwdr="'.$_GET['token'].'"'; ?>>
 
     <section class="kr-page-view">
       <section>
@@ -113,28 +114,13 @@ try {
 
     <form action="" method="post">
 
-      <section class="kr-login-view">
-
+      <section class="kr-public-swap-panel">
+        <?php
+        $changeNowSwapContext = 'public';
+        require 'app/views/changenow/swap_panel.php';
+        ?>
       </section>
-      <section class="kr-app-overview" nov="1">
-
-        <div class="kr-app-ovrview-infos">
-          <div>
-            <h2>Mobile ready !</h2>
-          </div>
-          <ul>
-            <li class="kr-app-ovrview-selected"></li>
-            <li></li>
-            <li></li>
-            <li></li>
-          </ul>
-        </div>
-
-        <section kr-ov-title="Mobile ready !" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/1.jpg')"></section>
-        <section kr-ov-title="10 technical indicators" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/2.jpg')"></section>
-        <section kr-ov-title="Be alerted !" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/3.jpg')"></section>
-        <section kr-ov-title="All news at the same place" style="background-image:url('<?php echo APP_URL; ?>/assets/img/login/overview/4.jpg')"></section>
-
+      <section class="kr-login-view">
       </section>
     </form>
     <footer>
@@ -188,6 +174,7 @@ try {
 
   <script src="<?php echo APP_URL; ?>/assets/js/login.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/app/modules/kr-changenow/statics/js/swap.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <?php
   if($App->_getUserActivationRequire()){

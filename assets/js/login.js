@@ -37,6 +37,7 @@ function loadTermsPage(pageName){
 
 let overviewSlide = null;
 function startAutooverview(){
+  if($('.kr-app-overview').length == 0) return false;
   clearTimeout(overviewSlide); overviewSlide = null;
   overviewSlide = setTimeout(function(){
     nextOverview();
@@ -45,6 +46,7 @@ function startAutooverview(){
 }
 
 function nextOverview(){
+  if($('.kr-app-overview').length == 0) return false;
   let currentSlide = $('.kr-app-overview').attr('nov');
   let nextSlide = parseInt(currentSlide) + 1;
   if(nextSlide > $('.kr-app-overview').find('section').length) nextSlide = 1;
