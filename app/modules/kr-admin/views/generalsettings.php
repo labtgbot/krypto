@@ -33,6 +33,9 @@ $Lang = new Lang($User->_getLang(), $App);
 $Admin = new Admin();
 
 $Trade = new Trade($User, $App);
+$changeNowCopy = $App->_getChangeNowComplianceCopy();
+$changeNowRateLimits = $App->_getChangeNowRateLimitConfig();
+$changeNowUnsupportedCountries = $App->_getChangeNowUnsupportedCountries();
 ?>
 <form class="kr-admin kr-adm-post-evs" action="<?php echo APP_URL; ?>/app/modules/kr-admin/src/actions/saveGeneralsettings.php" enctype="multipart/form-data">
   <nav class="kr-admin-nav">
@@ -459,6 +462,135 @@ $Trade = new Trade($User, $App);
       <script type="text/javascript">
       $('#select-blacklisted-countries').selectize();
       </script>
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW unsupported countries'); ?></label><br/>
+        <span><?php echo $Lang->tr('Applies provider and local policy checks before quote or transaction creation'); ?></span>
+      </div>
+      <div>
+        <select id="select-changenow-unsupported-countries" name="changenow_unsupported_countries[]" multiple class="demo-default" placeholder="Select unsupported countries">
+          <?php
+
+          foreach ($App->_getListCountries() as $key => $value) {
+            ?>
+            <option <?php if(count($changeNowUnsupportedCountries) > 0 && in_array($value['iso_country'], $changeNowUnsupportedCountries)) echo 'selected'; ?> value="<?php echo $value['iso_country']; ?>"><?php echo $value['name_country']; ?></option>
+            <?php
+          }
+          ?>
+      </select>
+      <script type="text/javascript">
+      $('#select-changenow-unsupported-countries').selectize();
+      </script>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW debug logging'); ?></label><br/>
+        <span><?php echo $Lang->tr('Debug logs are redacted and should stay disabled unless support needs them'); ?></span>
+      </div>
+      <div>
+        <div class="ckbx-style-14">
+            <input type="checkbox" id="kr-adm-chk-changenowdebuglogging" <?php echo ($App->_changeNowDebugLoggingEnabled() ? 'checked' : ''); ?> name="kr-adm-chk-changenowdebuglogging">
+            <label for="kr-adm-chk-changenowdebuglogging"></label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW quote rate limit'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-quote-limit" value="<?php echo intval($changeNowRateLimits['quote']['limit']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW quote window seconds'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-quote-window" value="<?php echo intval($changeNowRateLimits['quote']['window_seconds']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW transaction rate limit'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-transaction-limit" value="<?php echo intval($changeNowRateLimits['transaction']['limit']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW transaction window seconds'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-transaction-window" value="<?php echo intval($changeNowRateLimits['transaction']['window_seconds']); ?>">
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW non-custodial warning'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-noncustodial"><?php echo htmlspecialchars($changeNowCopy['non_custodial_warning'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW unsupported region message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-unsupportedregion"><?php echo htmlspecialchars($changeNowCopy['unsupported_region'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW unsupported pair message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-unsupportedpair"><?php echo htmlspecialchars($changeNowCopy['unsupported_pair'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW provider outage message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-providerdown"><?php echo htmlspecialchars($changeNowCopy['provider_down'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW expired quote message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-expiredquote"><?php echo htmlspecialchars($changeNowCopy['expired_quote'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW address validation message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-addressvalidationfailed"><?php echo htmlspecialchars($changeNowCopy['address_validation_failed'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW rate-limit message'); ?></label>
+      </div>
+      <div>
+        <textarea name="kr-adm-changenow-copy-ratelimited"><?php echo htmlspecialchars($changeNowCopy['rate_limited'], ENT_QUOTES, 'UTF-8'); ?></textarea>
       </div>
     </div>
   </div>

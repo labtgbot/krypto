@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/../ChangeNow/ChangeNowGuardrails.php';
+
 /**
  * Main application class
  *
@@ -190,6 +192,16 @@ class App extends MySQL {
 
     // Return associate value
     return $this->settingsData[$key];
+  }
+
+  private function _getSettingsJsonAttribute($key, $default = []){
+    $value = $this->_getSettingsAttribute($key);
+    if(is_null($value) || strlen($value) == 0) return $default;
+
+    $decoded = json_decode($value, true);
+    if(!is_array($decoded)) return $default;
+
+    return $decoded;
   }
 
   /**
@@ -1698,6 +1710,53 @@ class App extends MySQL {
     $listBlackedlisted = json_decode($this->_getSettingsAttribute('blacklisted_countries'), true);
     if(count($listBlackedlisted) == 0) return [];
     return array_values($listBlackedlisted);
+  }
+
+  public function _getChangeNowUnsupportedCountries(){
+    return ChangeNowEligibility::normalizeCountryList($this->_getSettingsJsonAttribute('changenow_unsupported_countries', []));
+  }
+
+  public function _getChangeNowBlockedCountries(){
+    return ChangeNowEligibility::normalizeCountryList(array_merge($this->_getBlacklistedCountries(), $this->_getChangeNowUnsupportedCountries()));
+  }
+
+  public function _getChangeNowComplianceCopy($key = null){
+    $copy = ChangeNowGuardrails::mergeComplianceCopy($this->_getSettingsJsonAttribute('changenow_compliance_copy', []));
+    if(is_null($key)) return $copy;
+    return (array_key_exists($key, $copy) ? $copy[$key] : null);
+  }
+
+  public function _getChangeNowNonCustodialWarning(){
+    return $this->_getChangeNowComplianceCopy('non_custodial_warning');
+  }
+
+  public function _getChangeNowRateLimitConfig($bucket = null){
+    $config = ChangeNowGuardrails::normalizeRateLimitConfig($this->_getSettingsJsonAttribute('changenow_rate_limits', []));
+    if(is_null($bucket)) return $config;
+    return (array_key_exists($bucket, $config) ? $config[$bucket] : null);
+  }
+
+  public function _changeNowDebugLoggingEnabled(){
+    return $this->_getSettingsAttribute('changenow_debug_logging') == 1;
+  }
+
+  public function _getChangeNowLogger($enabled = true){
+    return new ChangeNowLogger($enabled, $this->_changeNowDebugLoggingEnabled());
+  }
+
+  public function _getChangeNowRateLimiter($storagePath = null){
+    return new ChangeNowRateLimiter($storagePath);
+  }
+
+  public function _getChangeNowEligibilityForCountry($countryCode){
+    return ChangeNowEligibility::countryState($countryCode, $this->_getChangeNowBlockedCountries(), $this->_getChangeNowComplianceCopy());
+  }
+
+  public function _saveChangeNowGuardrailSettings($unsupportedCountries, $complianceCopy, $rateLimitConfig, $debugLogging){
+    $this->_saveSettingsAttribute('changenow_unsupported_countries', json_encode(ChangeNowEligibility::normalizeCountryList($unsupportedCountries)));
+    $this->_saveSettingsAttribute('changenow_compliance_copy', json_encode(ChangeNowGuardrails::mergeComplianceCopy($complianceCopy)));
+    $this->_saveSettingsAttribute('changenow_rate_limits', json_encode(ChangeNowGuardrails::normalizeRateLimitConfig($rateLimitConfig)));
+    $this->_saveSettingsAttribute('changenow_debug_logging', ($debugLogging ? 1 : 0));
   }
 
   public static function _getVisitorIP(){

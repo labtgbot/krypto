@@ -93,6 +93,30 @@ try {
       (array_key_exists('kr-adm-chk-rewritedashboard', $_POST) && $_POST['kr-adm-chk-rewritedashboard'] == "on" ? 1 : 0)
     );
 
+    $App->_saveChangeNowGuardrailSettings(
+      (isset($_POST['changenow_unsupported_countries']) ? $_POST['changenow_unsupported_countries'] : []),
+      [
+        'non_custodial_warning' => (isset($_POST['kr-adm-changenow-copy-noncustodial']) ? $_POST['kr-adm-changenow-copy-noncustodial'] : ''),
+        'unsupported_region' => (isset($_POST['kr-adm-changenow-copy-unsupportedregion']) ? $_POST['kr-adm-changenow-copy-unsupportedregion'] : ''),
+        'unsupported_pair' => (isset($_POST['kr-adm-changenow-copy-unsupportedpair']) ? $_POST['kr-adm-changenow-copy-unsupportedpair'] : ''),
+        'provider_down' => (isset($_POST['kr-adm-changenow-copy-providerdown']) ? $_POST['kr-adm-changenow-copy-providerdown'] : ''),
+        'expired_quote' => (isset($_POST['kr-adm-changenow-copy-expiredquote']) ? $_POST['kr-adm-changenow-copy-expiredquote'] : ''),
+        'address_validation_failed' => (isset($_POST['kr-adm-changenow-copy-addressvalidationfailed']) ? $_POST['kr-adm-changenow-copy-addressvalidationfailed'] : ''),
+        'rate_limited' => (isset($_POST['kr-adm-changenow-copy-ratelimited']) ? $_POST['kr-adm-changenow-copy-ratelimited'] : '')
+      ],
+      [
+        'quote' => [
+          'limit' => (isset($_POST['kr-adm-changenow-quote-limit']) ? $_POST['kr-adm-changenow-quote-limit'] : 30),
+          'window_seconds' => (isset($_POST['kr-adm-changenow-quote-window']) ? $_POST['kr-adm-changenow-quote-window'] : 60)
+        ],
+        'transaction' => [
+          'limit' => (isset($_POST['kr-adm-changenow-transaction-limit']) ? $_POST['kr-adm-changenow-transaction-limit'] : 6),
+          'window_seconds' => (isset($_POST['kr-adm-changenow-transaction-window']) ? $_POST['kr-adm-changenow-transaction-window'] : 60)
+        ]
+      ],
+      (array_key_exists('kr-adm-chk-changenowdebuglogging', $_POST) && $_POST['kr-adm-chk-changenowdebuglogging'] == "on" ? 1 : 0)
+    );
+
     // Return success message
     die(json_encode([
       'error' => 0,
