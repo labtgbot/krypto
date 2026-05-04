@@ -4302,7 +4302,21 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (209, 'automatic_crypto_withdraw', '0', 0),
 (210, 'enablenative_withoutexchange', '0', 0),
 (211, 'changenow_provider_enabled', '0', 0),
-(212, 'legacy_exchange_connections_enabled', '1', 0);
+(212, 'legacy_exchange_connections_enabled', '1', 0),
+(213, 'changenow_public_api_key', '', 1),
+(214, 'changenow_private_api_key', '', 1),
+(215, 'changenow_callback_secret', '', 1),
+(216, 'changenow_referral_link_id', '', 0),
+(217, 'changenow_widget_link_id', '', 0),
+(218, 'changenow_enabled_flows', 'standard,fixed-rate', 0),
+(219, 'changenow_default_flow', 'standard', 0),
+(220, 'changenow_default_from_asset', 'btc', 0),
+(221, 'changenow_default_from_network', 'btc', 0),
+(222, 'changenow_default_to_asset', 'eth', 0),
+(223, 'changenow_default_to_network', 'eth', 0),
+(224, 'changenow_support_email', '', 0),
+(225, 'changenow_rate_limit_per_second', '30', 0),
+(226, 'changenow_rate_limit_per_minute', '1800', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -4899,7 +4913,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=227;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
