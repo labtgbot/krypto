@@ -224,6 +224,12 @@ Verification:
 - Static grep confirms no API key setting is printed into HTML or JavaScript.
 - PHP syntax validation of touched files.
 
+CN-03 API client note:
+
+- Server-side client: [ChangeNOW API Client](changenow-api-client.md).
+- Client location: `app/modules/kr-changenow/src/ChangeNowApiClient.php`.
+- Errors map to `ChangeNowApiException` subclasses; transaction creation is not automatically retried; debug logging is off by default and redacts keys, addresses, user IDs, forwarded IPs, and payload values.
+
 ## Task CN-04: Sync ChangeNOW Assets, Networks, Pairs, And Quotes
 
 Suggested issue title: Sync ChangeNOW assets, networks, pairs, limits, and quote data
