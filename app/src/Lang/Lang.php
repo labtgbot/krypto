@@ -35,7 +35,7 @@ class Lang {
    * @param String  $lang Lang used
    * @param App     $App  App object for get default language
    */
-  public function __construct($lang = null, $App){
+  public function __construct($lang, $App){
     $this->App = $App;
     if(is_null($lang) && !is_null($App)){
       if(isset($_COOKIE["krypto_lang"]) && !empty($_COOKIE["krypto_lang"])){

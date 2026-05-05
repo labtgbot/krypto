@@ -49,7 +49,10 @@ try {
   // //
   // //
   //die();
-  if(!$User->_isLogged()) header('Location: '.APP_URL);
+  if(!$User->_isLogged()){
+    header('Location: '.APP_URL);
+    exit;
+  }
 
   // Init lang object
   $Lang = new Lang($User->_getLang(), $App);

@@ -737,7 +737,7 @@ class User extends MySQL {
    * @param App $App         App object
    * @param String $password New password
    */
-  public function _validResetPassword($token, $App = null, $password){
+  public function _validResetPassword($token, $App, $password){
 
     // Check token given
     $tokenParsed = $this->_parseToken($App, $token, true);
