@@ -55,6 +55,23 @@ class App extends MySQL {
       ini_set('display_startup_errors', 1);
       error_reporting(-1);
     }
+
+    // Always log uncaught Throwables and fatal shutdown errors so a "silent 500"
+    // never leaves the operator without a clue about the cause.
+    if(!defined('KRYPTO_ERROR_HANDLERS_REGISTERED')){
+      define('KRYPTO_ERROR_HANDLERS_REGISTERED', true);
+
+      set_exception_handler(function($e){
+        error_log('[krypto] uncaught '.get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+      });
+
+      register_shutdown_function(function(){
+        $err = error_get_last();
+        if(is_array($err) && in_array($err['type'] ?? 0, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR], true)){
+          error_log('[krypto] fatal shutdown: '.$err['message'].' in '.($err['file'] ?? '?').':'.($err['line'] ?? '?'));
+        }
+      });
+    }
   }
 
   public static function _getVersion(){ return base64_encode("4.1.0"); }

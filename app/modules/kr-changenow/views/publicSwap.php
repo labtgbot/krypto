@@ -20,7 +20,8 @@ try {
   $ChangeNowRepository = new ChangeNowPublicSwapRepository();
   $ChangeNowFlow = new ChangeNowPublicSwapFlow($ChangeNowClient, $ChangeNowMarketData, $ChangeNowRepository, $App, ($ChangeNowUserLogged ? $User : null));
   $ChangeNowInitialState = $ChangeNowFlow->_getInitialState();
-} catch (Exception $e) {
+} catch (Throwable $e) {
+  error_log('[krypto] publicSwap init failure: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
   $ChangeNowInitialState['missingSettings'][] = $e->getMessage();
 }
 
