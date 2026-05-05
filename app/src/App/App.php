@@ -31,7 +31,10 @@ class App extends MySQL {
     $this->_loadPlatform();
 
 
-    if(!defined('MYSQL_HOST') && file_exists('install')) header('Location: '.(defined('FILE_PATH') ? APP_URL : '').'/install/');
+    if(!defined('MYSQL_HOST') && file_exists('install')){
+      header('Location: '.(defined('FILE_PATH') ? APP_URL : '').'/install/');
+      exit;
+    }
 
     // If loadmodule, load modules
     if($loadmodules) $this->_loadModules();
@@ -129,7 +132,7 @@ class App extends MySQL {
       foreach ($moduleObject->_loadControllers() as $controlers) {
         // Require controllers class
         if($controlers == "error_log") continue;
-        require $moduleObject->_getModulePath().'/src/'.$controlers;
+        require_once $moduleObject->_getModulePath().'/src/'.$controlers;
       }
     }
 

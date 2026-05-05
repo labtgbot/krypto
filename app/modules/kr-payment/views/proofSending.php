@@ -25,7 +25,10 @@ try {
 
   // Check if user is logged
   $User = new User();
-  if(!$User->_isLogged()) header('Location: '.APP_URL);
+  if(!$User->_isLogged()){
+    header('Location: '.APP_URL);
+    exit;
+  }
 
   if(empty($_GET) || !isset($_GET['s'])) throw new Exception("Permission denied", 1);
 

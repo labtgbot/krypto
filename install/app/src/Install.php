@@ -98,7 +98,8 @@ class Install {
   public function _generateBDD(){
 
     try {
-      $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
+      $sqlPort = !empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306';
+      $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';port='.$sqlPort.';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
 
       $sqlStructure = file_get_contents('assets/sql/krypto.sql');
 
@@ -165,7 +166,8 @@ class Install {
   }
 
   public function _createAdmin(){
-    $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
+    $sqlPort = !empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306';
+    $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';port='.$sqlPort.';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
     $req = $bdd->prepare('INSERT INTO user_krypto (email_user, name_user, password_user, created_date_user, admin_user)
                             VALUES (:email_user, :name_user, :password_user, :created_date_user, :admin_user)');
 
@@ -185,7 +187,8 @@ class Install {
 
   public function _saveSettings(){
 
-    $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
+    $sqlPort = !empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306';
+    $bdd = new PDO('mysql:host='.$_SESSION['bdd']['sql_host'].';port='.$sqlPort.';dbname='.$_SESSION['bdd']['sql_database_name'], $_SESSION['bdd']['sql_user'], $_SESSION['bdd']['sql_password'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'));
     $req = $bdd->prepare('UPDATE settings_krypto SET value_settings=:value_settings WHERE key_settings=:key_settings');
 
     $status = $req->execute([
@@ -204,7 +207,7 @@ class Install {
     define('MYSQL_HOST', '".$_SESSION['bdd']['sql_host']."');  // MySQL Database host (localhost, 127.0.0.1, X.X.X.X, domain.tld)
     define('MYSQL_USER', '".$_SESSION['bdd']['sql_user']."');   // MySQL User (Please not use 'root', create a dedicated user with full permision user --> go doc)
     define('MYSQL_PASSWD', '".$_SESSION['bdd']['sql_password']."'); // MySQL Password
-    define('MYSQL_PORT', '3306');        // MySQL Port (Set empty for not specify port)
+    define('MYSQL_PORT', '".(!empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306')."');        // MySQL Port (Set empty for not specify port)
     define('MYSQL_DATABASE', '".$_SESSION['bdd']['sql_database_name']."');        // MySQL Database (Use the file sql.sql for create sql requirement)
 
     define('CRYPTED_KEY', '".$this->generateScretkey()."');
