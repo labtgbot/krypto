@@ -52,7 +52,7 @@ class Coinex extends Exchange {
       $order['filled'] = $price;
     }
 
-    parent::_saveOrder($symbol, $type, $side, $order['filled'], $params, $Balance, $order);
+    parent::_saveOrder($symbol, $type, $side, $order, $order['filled'], $params, $Balance);
   }
 
   public function _getFormatedBalance(){

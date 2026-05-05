@@ -98,7 +98,7 @@ class Exchange extends MySQL {
     }
 
     if(is_null($InternalOrderID)) {
-      $this->_saveOrder($symbol, $type, $side, $price, $params, $Balance, $order, $Type, $order_price);
+      $this->_saveOrder($symbol, $type, $side, $order, $price, $params, $Balance, $Type, $order_price);
     } else {
       $this->_updateOrder($InternalOrderID, $order, $Balance);
     }
@@ -114,7 +114,7 @@ class Exchange extends MySQL {
                                                                                       $this->_getExchange()->_getApi()->price_to_precision($symbol, $price_limit));
   }
 
-  public function _saveOrder($symbol, $type, $side, $price = null, $params = [], $Balance = null, $order, $typeBuy = "market", $ordered_price = null){
+  public function _saveOrder($symbol, $type, $side, $order, $price = null, $params = [], $Balance = null, $typeBuy = "market", $ordered_price = null){
     $symbol = $this->_getFormatedSymbol($symbol);
     $Trade = new Trade($this->_getUser(), $this->_getApp());
     $symbolInfos = explode('/', $symbol);

@@ -31,7 +31,7 @@ class CryptoOrder extends MySQL {
     return $this->CryptoCoin;
   }
 
-  public function _getOrderList($User = null, $Currency){
+  public function _getOrderList($Currency, $User = null){
 
     $orderList = null;
     if(!is_null($User)){

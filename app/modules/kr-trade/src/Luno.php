@@ -51,7 +51,7 @@ class Luno extends Exchange {
       $order = $this->_getExchange()->_getApi()->create_order($symbol, 'market', strtolower($side), $priceUnit * $price, null, $params);
     }
     
-    parent::_saveOrder($symbol, $type, $side, $price, $params, $Balance, $order);
+    parent::_saveOrder($symbol, $type, $side, $order, $price, $params, $Balance);
   }
 
   public function _getFormatedBalance(){

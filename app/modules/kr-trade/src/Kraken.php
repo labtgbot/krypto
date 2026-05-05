@@ -51,7 +51,7 @@ class Kraken extends Exchange {
       $order['amount'] = $price;
     }
 
-    parent::_saveOrder($symbol, $type, $side, $order['amount'], $params, $Balance, $order);
+    parent::_saveOrder($symbol, $type, $side, $order, $order['amount'], $params, $Balance);
   }
 
   public function _getFormatedBalance(){

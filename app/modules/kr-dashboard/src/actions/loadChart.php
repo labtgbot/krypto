@@ -82,7 +82,7 @@ try {
           $CryptoNotification = new CryptoNotification($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_GET['market'], $User);
           $listNotification = $CryptoNotification->_getListCryptoNotifications();
           $CryptoOrder = new CryptoOrder($Coin);
-          $listOrder = $CryptoOrder->_getOrderList($User, $CryptoApi->_getCurrency());
+          $listOrder = $CryptoOrder->_getOrderList($CryptoApi->_getCurrency(), $User);
         }
 
     } else { // Only update graph (only last 5 data will be sent)
