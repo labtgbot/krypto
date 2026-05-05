@@ -211,7 +211,9 @@ class Install {
     define('MYSQL_DATABASE', '".addslashes($_SESSION['bdd']['sql_database_name'])."');        // MySQL Database (Use the file sql.sql for create sql requirement)
 
     define('CRYPTED_KEY', '".$this->generateScretkey()."');
-?>";
+
+    require_once __DIR__.'/../app/src/bootstrap_paths.php';
+	?>";
 
     file_put_contents('../config/config.settings.php', $fileConfig);
 
