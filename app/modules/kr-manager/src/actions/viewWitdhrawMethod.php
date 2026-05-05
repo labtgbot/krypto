@@ -4,6 +4,8 @@ session_start();
 
 require "../../../../../config/config.settings.php";
 
+require_once "../../../../../app/src/bootstrap_paths.php";
+
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/vendor/autoload.php";
 
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/MySQL/MySQL.php";

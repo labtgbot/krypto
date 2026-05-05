@@ -11,4 +11,6 @@
     // define('MYSQL_DATABASE', '');        // MySQL Database (Use the file sql.sql for create sql requirement)
     //
     // define('CRYPTED_KEY', '');
+
+    require_once __DIR__.'/../app/src/bootstrap_paths.php';
 ?>

@@ -10,6 +10,8 @@
 session_start();
 
 require "config/config.settings.php";
+
+require_once "app/src/bootstrap_paths.php";
 require "vendor/autoload.php";
 require "app/src/MySQL/MySQL.php";
 require "app/src/App/App.php";
