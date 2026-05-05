@@ -13,7 +13,7 @@ $_SESSION['bdd'] = [
 ];
 $_SESSION['configure'] = [
   'website_url' => 'http://localhost:8000',
-  'website_path' => ''
+  'website_path' => '/'
 ];
 $_SESSION['admin'] = [
   'admin_email' => 'admin@localhost',

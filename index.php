@@ -44,7 +44,8 @@ try {
 
   $App->_checkReferalSource();
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+  error_log('[krypto] index.php bootstrap failure: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
   define('ERROR_SOFTWARE', $e->getMessage());
 }
 
