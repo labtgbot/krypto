@@ -18,6 +18,8 @@ class ChangeNowApiClient {
   private $ConnectTimeout = 5;
   private $RetryCount = 2;
   private $RetryDelayMs = 250;
+  private $RetryMaxDelayMs = 5000;
+  private $RetrySleeper = null;
   private $Debug = false;
   private $DebugLogger = null;
   private $UserIp = null;
@@ -31,6 +33,8 @@ class ChangeNowApiClient {
     $this->ConnectTimeout = $this->_positiveInteger($this->_configValue($config, ['connect_timeout', 'connectTimeout'], 5), 5);
     $this->RetryCount = max(0, intval($this->_configValue($config, ['retry_count', 'retryCount'], 2)));
     $this->RetryDelayMs = max(0, intval($this->_configValue($config, ['retry_delay_ms', 'retryDelayMs'], 250)));
+    $this->RetryMaxDelayMs = max(0, intval($this->_configValue($config, ['retry_max_delay_ms', 'retryMaxDelayMs'], 5000)));
+    $this->RetrySleeper = $this->_configValue($config, ['retry_sleep_callback', 'retrySleepCallback', 'retry_sleeper', 'retrySleeper'], null);
     $this->Debug = $this->_toBoolean($this->_configValue($config, ['debug'], false));
     $this->DebugLogger = $this->_configValue($config, ['debug_logger', 'debugLogger'], null);
     $this->UserIp = $this->_configValue($config, ['user_ip', 'userIp'], null);
@@ -226,7 +230,7 @@ class ChangeNowApiClient {
       }
 
       if($retry && $attempt < $maxAttempts && $this->_isRetryableStatus($status)){
-        $this->_sleepBeforeRetry($attempt);
+        $this->_sleepBeforeRetry($attempt, $this->_retryAfterDelayMs($responseHeaders));
         continue;
       }
 
@@ -659,12 +663,42 @@ class ChangeNowApiClient {
   }
 
   private function _isRetryableStatus($status){
-    return in_array(intval($status), [408, 500, 502, 503, 504], true);
+    return in_array(intval($status), [408, 429, 500, 502, 503, 504], true);
   }
 
-  private function _sleepBeforeRetry($attempt){
-    if($this->RetryDelayMs < 1) return;
-    usleep($this->RetryDelayMs * $attempt * 1000);
+  private function _sleepBeforeRetry($attempt, $retryAfterMs = null){
+    $delayMs = $this->_retryDelayMs($attempt, $retryAfterMs);
+    if($delayMs < 1) return;
+    if(is_callable($this->RetrySleeper)){
+      call_user_func($this->RetrySleeper, $delayMs, $attempt);
+      return;
+    }
+    usleep($delayMs * 1000);
+  }
+
+  private function _retryDelayMs($attempt, $retryAfterMs = null){
+    $delayMs = 0;
+    if($this->RetryDelayMs > 0){
+      $delayMs = $this->RetryDelayMs * pow(2, max(0, intval($attempt) - 1));
+    }
+
+    if(!is_null($retryAfterMs)) $delayMs = max($delayMs, intval($retryAfterMs));
+    if($this->RetryMaxDelayMs > 0 && $delayMs > $this->RetryMaxDelayMs) $delayMs = $this->RetryMaxDelayMs;
+    return intval($delayMs);
+  }
+
+  private function _retryAfterDelayMs($headers){
+    $retryAfter = $this->_headerValue($headers, 'Retry-After');
+    if(is_null($retryAfter) || trim((string) $retryAfter) == '') return null;
+    $retryAfter = trim((string) $retryAfter);
+
+    if(is_numeric($retryAfter)){
+      return max(0, intval(ceil(floatval($retryAfter) * 1000)));
+    }
+
+    $timestamp = strtotime($retryAfter);
+    if($timestamp === false) return null;
+    return max(0, ($timestamp - time()) * 1000);
   }
 
   private function _debugLog($event, $context){
