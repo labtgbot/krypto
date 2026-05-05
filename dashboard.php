@@ -130,7 +130,7 @@ try {
 
     <link rel="stylesheet" href="assets/css/themes/light.css">
   </head>
-  <body kr-hm="<?php echo ($App->_getHideMarket() ? "1" : "0"); ?>" logopath-black="<?php echo $App->_getLogoBlackPath(); ?>" logopath="<?php echo $App->_getLogoPath(); ?>" hrefapp="<?php echo APP_URL; ?>" kr-timestamp="<?php echo time(); ?>" mbill="<?php echo ($mobileDetected->isMobile() || $mobileDetected->isTablet() ? 'true' : 'false'); ?>" sintro="<?php echo (!$Dashboard->_isNew() ? '1' : '0'); ?>" <?php echo ($User->_whiteMode() ? 'kr-theme="light"' : ''); ?> kr-numformat='<?php echo str_replace('"', '', $App->_getNumberFormat()); ?>' class="kr-view-changenow-swap <?php if($Dashboard->_isNew() || ($App->_getNewsPopup() && $User->_showNewsPopupNeeded($App))) echo 'kr-nblr'; ?> " activeabo="<?php echo ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled() ? '1' : '0'); ?>">
+  <body kr-hm="<?php echo ($App->_getHideMarket() ? "1" : "0"); ?>" logopath-black="<?php echo $App->_getLogoBlackPath(); ?>" logopath="<?php echo $App->_getLogoPath(); ?>" hrefapp="<?php echo APP_URL; ?>" kr-timestamp="<?php echo time(); ?>" mbill="<?php echo ($mobileDetected->isMobile() || $mobileDetected->isTablet() ? 'true' : 'false'); ?>" sintro="<?php echo (!$Dashboard->_isNew() ? '1' : '0'); ?>" <?php echo ($User->_whiteMode() ? 'kr-theme="light"' : ''); ?> kr-numformat='<?php echo str_replace('"', '', $App->_getNumberFormat()); ?>' class="kr-view-changenow-swap <?php if(($Dashboard->_isNew() && ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled())) || ($App->_getNewsPopup() && $User->_showNewsPopupNeeded($App))) echo 'kr-nblr'; ?> " activeabo="<?php echo ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled() ? '1' : '0'); ?>">
   <!--    <section class="kr-search">
       <header>
         <input type="text" name="" value="">
@@ -160,13 +160,15 @@ try {
   <?php endif; ?>
 
     <?php $UserIsNew = false; if($Dashboard->_isNew() && ($Charge->_activeAbo() || $Charge->_isTrial() || $User->_isAdmin() || $User->_isManager() || !$App->_subscriptionEnabled())){
-      $DashboardTopList = new DashboardTopList($CryptoApi, $User);
-      $DashboardTopList->_addItem($App->_getInfosStartingPair()['symbol'], $App->_getInfosStartingPair()['currency'], $App->_getInfosStartingPair()['market']);
+      try {
+        $DashboardTopList = new DashboardTopList($CryptoApi, $User);
+        $DashboardTopList->_addItem($App->_getInfosStartingPair()['symbol'], $App->_getInfosStartingPair()['currency'], $App->_getInfosStartingPair()['market']);
 
-      $WatchingList = new WatchingList($CryptoApi, $User);
-      foreach ($App->_getInfosStartingWatchingList() as $key => $infosWatchingItem) {
-        $WatchingList->_addItem($infosWatchingItem['symbol'], $infosWatchingItem['currency'], $infosWatchingItem['market']);
-      }
+        $WatchingList = new WatchingList($CryptoApi, $User);
+        foreach ($App->_getInfosStartingWatchingList() as $key => $infosWatchingItem) {
+          $WatchingList->_addItem($infosWatchingItem['symbol'], $infosWatchingItem['currency'], $infosWatchingItem['market']);
+        }
+      } catch (\Throwable $e) { /* non-fatal: default pair/watchlist seeding failed, proceed to welcome */ }
       $UserIsNew = true;
       require('app/modules/kr-user/views/welcome.php');
 
