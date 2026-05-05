@@ -38,8 +38,8 @@ class Install {
     return [
       "php_version" => [
         "title" => "PHP Version",
-        "description" => "Need to be 7.0.0 or more",
-        "valid" => version_compare(PHP_VERSION, '7.0.0') >= 0
+        "description" => "Need to be 7.4.0 or more",
+        "valid" => version_compare(PHP_VERSION, '7.4.0') >= 0
       ],
       "curl_extension" => [
         "title" => "CURL Available",
@@ -105,7 +105,7 @@ class Install {
 
       $status = $bdd->exec($sqlStructure);
 
-      if($status == 1) throw new Exception("Error : Fail to create database structure", 1);
+      if($status === false) throw new Exception("Error : Fail to create database structure", 1);
 
       return true;
     } catch (\Exception $e) {
@@ -199,16 +199,16 @@ class Install {
     $req->closeCursor();
 
     $fileConfig = "<?php
-    define('APP_URL', '".$_SESSION['configure']['website_url']."');
+    define('APP_URL', '".addslashes($_SESSION['configure']['website_url'])."');
     define('APP_URL_FORCE', false);
 
-    define('FILE_PATH', '".$_SESSION['configure']['website_path']."');
+    define('FILE_PATH', '".addslashes($_SESSION['configure']['website_path'])."');
 
-    define('MYSQL_HOST', '".$_SESSION['bdd']['sql_host']."');  // MySQL Database host (localhost, 127.0.0.1, X.X.X.X, domain.tld)
-    define('MYSQL_USER', '".$_SESSION['bdd']['sql_user']."');   // MySQL User (Please not use 'root', create a dedicated user with full permision user --> go doc)
-    define('MYSQL_PASSWD', '".$_SESSION['bdd']['sql_password']."'); // MySQL Password
-    define('MYSQL_PORT', '".(!empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306')."');        // MySQL Port (Set empty for not specify port)
-    define('MYSQL_DATABASE', '".$_SESSION['bdd']['sql_database_name']."');        // MySQL Database (Use the file sql.sql for create sql requirement)
+    define('MYSQL_HOST', '".addslashes($_SESSION['bdd']['sql_host'])."');  // MySQL Database host (localhost, 127.0.0.1, X.X.X.X, domain.tld)
+    define('MYSQL_USER', '".addslashes($_SESSION['bdd']['sql_user'])."');   // MySQL User (Please not use 'root', create a dedicated user with full permision user --> go doc)
+    define('MYSQL_PASSWD', '".addslashes($_SESSION['bdd']['sql_password'])."'); // MySQL Password
+    define('MYSQL_PORT', '".addslashes(!empty($_SESSION['bdd']['sql_port']) ? $_SESSION['bdd']['sql_port'] : '3306')."');        // MySQL Port (Set empty for not specify port)
+    define('MYSQL_DATABASE', '".addslashes($_SESSION['bdd']['sql_database_name'])."');        // MySQL Database (Use the file sql.sql for create sql requirement)
 
     define('CRYPTED_KEY', '".$this->generateScretkey()."');
 ?>";

@@ -49,7 +49,7 @@ class Livecoin extends Exchange {
       throw new Exception(json_encode($order), 1);
     }
 
-    parent::_saveOrder($symbol, $type, $side, $price, $params, $Balance, $order);
+    parent::_saveOrder($symbol, $type, $side, $order, $price, $params, $Balance);
   }
 
   public function _getFormatedBalance(){

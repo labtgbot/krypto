@@ -48,7 +48,7 @@ class Exmo extends Exchange {
       $order = $this->_getExchange()->_getApi()->create_order($symbol, $type, $side, $price, null, $params);
     }
 
-    parent::_saveOrder($symbol, $type, $side, $price, $params, $Balance, $order);
+    parent::_saveOrder($symbol, $type, $side, $order, $price, $params, $Balance);
   }
 
   public function _getFormatedBalance(){

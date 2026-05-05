@@ -41,11 +41,11 @@ try {
 
     $Banktransfert = new Banktransfert($User, $App);
     $Banktransfert->_addNewAccount($_POST['bank_name'],
-                                   $_POST['bank_currency'],
                                    $_POST['bank_iban'],
                                    $_POST['bank_bic'],
                                    $_POST['bank_address'],
-                                   $_POST['bank_accountowner']);
+                                   $_POST['bank_accountowner'],
+                                   $_POST['bank_currency']);
 
     // Return success message
     die(json_encode([

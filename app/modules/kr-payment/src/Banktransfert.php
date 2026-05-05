@@ -306,7 +306,7 @@ class Banktransfert extends MySQL {
 
   }
 
-  public function _addNewAccount($bank_name, $bank_currency = null, $bank_iban, $bank_bic, $bank_address, $bank_owner){
+  public function _addNewAccount($bank_name, $bank_iban, $bank_bic, $bank_address, $bank_owner, $bank_currency = null){
 
     $r = parent::execSqlRequest("INSERT INTO banktransfert_accountavailable_krypto (bank_name__banktransfert_accountavailable,
                                                                                     currency_banktransfert_accountavailable,
