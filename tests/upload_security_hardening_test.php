@@ -94,6 +94,45 @@ $publicHtaccessSource = file_get_contents($publicHtaccess);
 assertTrueUploadSecurity(strpos($publicHtaccessSource, 'FilesMatch') !== false, 'public/.htaccess must declare a FilesMatch guard.');
 assertTrueUploadSecurity(stripos($publicHtaccessSource, 'php') !== false, 'public/.htaccess must explicitly cover PHP-like extensions.');
 
+$deploymentDoc = $root.'/docs/upload-storage-deployment.md';
+assertTrueUploadSecurity(file_exists($deploymentDoc), 'Deployment docs must describe upload execution guards for non-Apache environments.');
+$deploymentDocSource = file_get_contents($deploymentDoc);
+
+foreach ([
+    'public/user',
+    'public/logo',
+    'public/chat',
+    'public/identity',
+    'public/proof',
+    'public/bank-proof',
+] as $uploadDirectory) {
+    assertTrueUploadSecurity(
+        strpos($deploymentDocSource, $uploadDirectory) !== false,
+        'Deployment docs must list current public upload directory: '.$uploadDirectory
+    );
+}
+
+foreach ([
+    'Apache',
+    'public/.htaccess',
+    'Nginx',
+    'autoindex off',
+    'try_files $uri =404',
+    'php[0-9]?|phtml|phar',
+    'IIS',
+    'directoryBrowse enabled="false"',
+    'requestFiltering',
+    'fileExtension=".php" allowed="false"',
+    'Reverse Proxy',
+    'PHP-FPM',
+    'Allowed Upload Reads',
+] as $needle) {
+    assertTrueUploadSecurity(
+        strpos($deploymentDocSource, $needle) !== false,
+        'Deployment docs missing upload execution guard detail: '.$needle
+    );
+}
+
 $auditDoc = $root.'/docs/system-audit-2026-05-09.md';
 assertTrueUploadSecurity(file_exists($auditDoc), 'System audit report should document issue #51 scope and findings.');
 $auditDocSource = file_get_contents($auditDoc);
