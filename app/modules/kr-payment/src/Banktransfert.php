@@ -224,10 +224,9 @@ class Banktransfert extends MySQL {
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof', 0777);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert), 0777);
 
-    $fileName = App::encrypt_decrypt('encrypt', uniqid()).'-'.$file['name'];
+    App::_assertUploadedFileIsSafe($file, ['pdf', 'jpg', 'jpeg', 'png'], 'Bank transfer proof');
 
-    if(!App::_getFileExtensionAllowed($file)) throw new Exception("Error : File not accepted", 1);
-
+    $fileName = App::_getSafeUploadedFileName($file, uniqid());
 
     move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert).'/'.$fileName);
 

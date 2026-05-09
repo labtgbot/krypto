@@ -48,7 +48,8 @@ try {
         }
       }
       //error_log(json_encode($_FILES));
-      $pictureName = time().'-'.basename($_FILES['file']['name']);
+      App::_assertUploadedFileIsSafe($_FILES['file'], ['pdf', 'jpg', 'jpeg', 'png', 'gif'], 'Chat attachment');
+      $pictureName = App::_getSafeUploadedFileName($_FILES['file'], time());
       if (!move_uploaded_file($_FILES['file']['tmp_name'], '../../../../../public/chat/'.$Room->_getRoomID(true).'/'.$pictureName)) throw new Exception("Error : Fail to upload picture", 1);
 
       $fileNameInfos = explode('.', $pictureName);

@@ -585,12 +585,11 @@ class User extends MySQL {
       if(!mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/user/'.$this->_getUserID())) throw new Exception("Error : Fail to create user directory 'public/user/".$this->_getUserID()."'", 1);
     }
 
-    // Generate new filename
-    $filename = basename(uniqid(true).'-'.$picture['name']);
-
     // Check if picture is an valid format
-    if(!in_array(pathinfo($picture['name'], PATHINFO_EXTENSION), [
-        'jpeg', 'jpg', 'gif', 'png'])) throw new Exception("Error : Image not accepted (jpeg, jpg, gif, png) only", 1);
+    App::_assertUploadedFileIsSafe($picture, ['jpeg', 'jpg', 'gif', 'png'], 'Image');
+
+    // Generate new filename
+    $filename = App::_getSafeUploadedFileName($picture, uniqid(true));
 
     // Try to upload file to public directory
     if (!move_uploaded_file($picture['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/user/'.$this->_getUserID().'/'.$filename)) throw new Exception("Error : Fail to upload user picture (permissions error)", 1);

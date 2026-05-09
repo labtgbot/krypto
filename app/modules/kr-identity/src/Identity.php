@@ -122,7 +122,8 @@ class Identity extends MySQL {
 
     if($stepInformation['type_identity_step'] == 'document'){
 
-      $fileName = $App::encrypt_decrypt('encrypt', uniqid()).'-'.$content['name'];
+      $App::_assertUploadedFileIsSafe($content, ['pdf', 'jpg', 'jpeg', 'png'], 'Identity document');
+      $fileName = $App::_getSafeUploadedFileName($content, uniqid());
 
       $this->_checkUserIdentityDirectory($App);
 

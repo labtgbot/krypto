@@ -139,7 +139,8 @@ class Manager extends MySQL {
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof', 0777);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking), 0777);
 
-    $fileName = App::encrypt_decrypt('encrypt', uniqid()).'-'.$file['name'];
+    App::_assertUploadedFileIsSafe($file, ['pdf', 'jpg', 'jpeg', 'png'], 'Payment proof');
+    $fileName = App::_getSafeUploadedFileName($file, uniqid());
 
     move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking).'/'.$fileName);
 
