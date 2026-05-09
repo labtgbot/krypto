@@ -42,6 +42,7 @@ try {
 <html>
   <head>
     <meta charset="utf-8">
+    <?php echo Krypto_Csrf::metaTag(); ?>
     <title static-title="<?php echo $App->_getAppTitle(); ?>"><?php echo $App->_getAppTitle(); ?></title>
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-payment/statics/css/banktransfert.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/style.css">
@@ -57,6 +58,7 @@ try {
 
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/dropzone/dist/min/dropzone.min.css">
     <script src="<?php echo APP_URL; ?>/assets/bower/jquery/dist/jquery.min.js" charset="utf-8"></script>
+    <script src="<?php echo APP_URL; ?>/assets/js/csrf.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
     <script src="<?php echo APP_URL; ?>/assets/bower/dropzone/dist/min/dropzone.min.js" charset="utf-8"></script>
 
 
@@ -71,7 +73,7 @@ try {
     </div>
     <footer>
       <input type="button" onclick="window.close();" class="btn btn-big btn-autowidth btn-red" name="" value="<?php echo $Lang->tr('Decline'); ?>">
-      <a class="btn btn-big btn-autowidth btn-green" href="<?php echo APP_URL; ?>/app/modules/kr-payment/views/banktransfert.php?s=new_confirm"><?php echo $Lang->tr('Agree'); ?></a>
+      <a class="btn btn-big btn-autowidth btn-green" href="<?php echo APP_URL; ?>/app/modules/kr-payment/views/banktransfert.php?s=new_confirm&<?php echo Krypto_Csrf::queryParameter(); ?>"><?php echo $Lang->tr('Agree'); ?></a>
     </footer>
   </body>
 

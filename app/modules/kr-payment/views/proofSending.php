@@ -59,6 +59,7 @@ try {
 <html>
   <head>
     <meta charset="utf-8">
+    <?php echo Krypto_Csrf::metaTag(); ?>
     <title static-title="<?php echo $App->_getAppTitle(); ?>"><?php echo $App->_getAppTitle(); ?></title>
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-payment/statics/css/proofsending.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/style.css">
@@ -100,6 +101,7 @@ try {
   </body>
 
   <script src="<?php echo APP_URL; ?>/assets/bower/jquery/dist/jquery.min.js" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/assets/js/csrf.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/dropzone/dist/min/dropzone.min.css">
   <script src="<?php echo APP_URL; ?>/assets/bower/chosen/chosen.jquery.min.js" charset="utf-8"></script>

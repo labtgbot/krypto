@@ -23,6 +23,8 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/Lang/Lang.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
 
     // Check if user is logged

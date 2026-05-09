@@ -26,6 +26,8 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
     // Init lang object
     $Lang = new Lang(null, $App);
 

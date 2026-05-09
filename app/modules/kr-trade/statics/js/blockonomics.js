@@ -3,7 +3,7 @@ $(document).ready(function(){
 });
 
 function _loadUserAddrBL(){
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/getBlockonomicsAddrUser.php').done(function(data){
+  $.post($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/getBlockonomicsAddrUser.php').done(function(data){
     let jsonRes = jQuery.parseJSON(data);
     if(jsonRes.error == 1){
       showAlert('Oops', jsonRes.msg, 'error');

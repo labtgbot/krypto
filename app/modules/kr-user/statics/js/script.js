@@ -97,7 +97,9 @@ function initUsercontrollers() {
     // Logout button
     if ($(this).attr('kr-user-v') == "logout") {
       // Redirect to logout page
-      window.location.replace($('body').attr('hrefapp') + '/app/modules/kr-user/src/actions/logout.php');
+      var logoutUrl = $('body').attr('hrefapp') + '/app/modules/kr-user/src/actions/logout.php';
+      if(window.KryptoCsrf) logoutUrl = window.KryptoCsrf.appendToUrl(logoutUrl);
+      window.location.replace(logoutUrl);
       return false;
     }
 

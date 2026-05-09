@@ -83,6 +83,8 @@ function _initIdentityWizard(step = 0){
       $('.identity-uploadprogress').show();
       formData.append('step', step);
       formData.append('document_type', documentSelectedTypeSelected);
+      formData.append('krypto_csrf_token', window.KryptoCsrf ? window.KryptoCsrf.token() : $('meta[name="krypto-csrf-token"]').attr('content'));
+      if(xhr && window.KryptoCsrf) xhr.setRequestHeader('X-CSRF-Token', window.KryptoCsrf.token());
   });
 
   myDropzone.on("totaluploadprogress", function(progress) {

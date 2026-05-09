@@ -34,6 +34,8 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/CryptoApi/CryptoApi.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
 
     $Trade = new Trade(null, $App);

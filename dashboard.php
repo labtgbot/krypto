@@ -96,6 +96,7 @@ try {
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta charset="utf-8">
+    <?php echo Krypto_Csrf::metaTag(); ?>
     <title static-title="<?php echo $App->_getAppTitle(); ?>"><?php echo $App->_getAppTitle(); ?></title>
     <meta name="description" content="<?php echo $App->_getAppDescription(); ?>">
 
@@ -901,6 +902,7 @@ try {
 
   </body>
   <script src="<?php echo APP_URL; ?>/assets/bower/jquery/dist/jquery.min.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/assets/js/csrf.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/bower/jquery-ui/jquery-ui.min.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <script src="https://cdn.linearicons.com/free/1.0.0/svgembedder.min.js"></script>

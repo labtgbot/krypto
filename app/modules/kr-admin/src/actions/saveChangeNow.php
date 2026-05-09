@@ -20,6 +20,8 @@ header('Content-Type: application/json');
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
   $User = new User();
   if(!$User->_isLogged()) throw new Exception("Your are not logged", 1);

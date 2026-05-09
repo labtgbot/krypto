@@ -18,6 +18,7 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/User/User.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/modules/kr-search/src/Search.php";
 
 $App = new App();
+Krypto_Csrf::validateRequest();
 
 try {
 

@@ -24,13 +24,17 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
+    if($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Error : Invalid request method", 1);
+
     // Check if user is logged
     $User = new User();
     if (!$User->_isLogged()) {
         throw new Exception("User is not logged", 1);
     }
 
-    $User->_updateUserStatus((!empty($_GET) && isset($_GET['chat_user_status']) && !empty($_GET['chat_user_status']) ? $_GET['chat_user_status'] : null ));
+    $User->_updateUserStatus((!empty($_POST) && isset($_POST['chat_user_status']) && !empty($_POST['chat_user_status']) ? $_POST['chat_user_status'] : null ));
 
     $Chat = new Chat($User);
     $RoomList = $Chat->_getListRoom();

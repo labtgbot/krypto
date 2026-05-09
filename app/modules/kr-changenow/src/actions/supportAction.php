@@ -26,6 +26,8 @@ function changenow_support_json($payload){
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
   $User = new User();
   if(!$User->_isLogged() || (!$User->_isAdmin() && !$User->_isManager())){

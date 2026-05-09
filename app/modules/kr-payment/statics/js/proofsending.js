@@ -20,6 +20,8 @@ $(document).ready(function(){
 
     dz.on('sending', function(file, xhr, formData){
         formData.append('proof_id', $('body').attr('kr-proof-s'));
+        formData.append('krypto_csrf_token', window.KryptoCsrf ? window.KryptoCsrf.token() : $('meta[name="krypto-csrf-token"]').attr('content'));
+        if(xhr && window.KryptoCsrf) xhr.setRequestHeader('X-CSRF-Token', window.KryptoCsrf.token());
     });
   }
 
