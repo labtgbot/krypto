@@ -40,11 +40,24 @@ Implemented mitigations:
 - Deployment documentation lists public upload directories and includes non-Apache web-server guards.
 - This audit report remains present for issue #51 traceability.
 
+`tests/authenticated_encryption_test.php` verifies the issue #55 encryption
+migration controls:
+
+- New secret writes produce versioned AEAD ciphertext.
+- Tampered AEAD ciphertext and ciphertext encrypted with another `CRYPTED_KEY`
+  fail before plaintext is returned.
+- Existing AES-CBC values remain readable through the compatibility path.
+- Payment credentials, exchange credentials, 2FA secrets, reset links,
+  activation links, and withdraw confirmation links do not newly write secrets
+  through the legacy CBC helper.
+- `docs/authenticated-encryption-migration.md` documents inventory, migration,
+  rollback, and token-storage follow-up notes.
+
 ## Remaining Audit Backlog
 
 - Run `composer validate` and `composer audit` in an environment with Composer installed, then update or replace vulnerable dependencies.
 - Verify the documented upload execution guards in each production web-server configuration before enabling public uploads.
-- Replace deterministic AES-CBC helper usage with authenticated encryption for newly written secrets and tokens, with a migration plan for existing encrypted rows.
+- Complete the follow-up token-storage migration from reversible encrypted links to HMAC/hash-backed one-time tokens where plaintext recovery is not required.
 - Review every AJAX/action endpoint for CSRF coverage and add a shared token check where state changes occur.
 - Add content validation for images and PDFs, including MIME sniffing and image decoding, rather than relying only on extensions.
 - Review direct public access to `install/`, `config/`, `vendor/`, and mutable upload directories in deployment documentation.

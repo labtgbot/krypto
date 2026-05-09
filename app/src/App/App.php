@@ -170,7 +170,14 @@ class App extends MySQL {
     foreach ($r as $key => $vSettings) {
 
       // If settings was en encrypted settings ==> decrypt
-      if($vSettings['encrypted_settings'] == 1) $vSettings['value_settings'] = App::encrypt_decrypt('decrypt', $vSettings['value_settings']);
+      if($vSettings['encrypted_settings'] == 1){
+        if($vSettings['value_settings'] == ''){
+          $vSettings['value_settings'] = '';
+        } else {
+          $decryptedValue = App::_decryptSecret($vSettings['value_settings']);
+          $vSettings['value_settings'] = (is_null($decryptedValue) ? '' : $decryptedValue);
+        }
+      }
 
       // Save settings in object
       $this->settingsData[$vSettings['key_settings']] = $vSettings['value_settings'];
@@ -183,8 +190,8 @@ class App extends MySQL {
    * @param  String $val Settings value
    */
   private function _saveSettingsAttribute($key, $val, $encrypt = false){
-    if($encrypt) $val = App::encrypt_decrypt('encrypt', $val);
-    if(!$encrypt && strlen(App::encrypt_decrypt('decrypt', $val)) > 0) $encrypt = true;
+    if($encrypt) $val = App::_encryptSecret($val);
+    if(!$encrypt && App::_isEncryptedSecretValue($val)) $encrypt = true;
     if(!array_key_exists($key, $this->settingsData)){
       $r = parent::execSqlRequest("INSERT INTO settings_krypto (key_settings, value_settings, encrypted_settings)
                                   VALUES (:key_settings, :value_settings, :encrypted_settings)",
@@ -194,7 +201,11 @@ class App extends MySQL {
                                     'encrypted_settings' => ($encrypt ? 1 : 0)
                                   ]);
     } else {
-      $r = parent::execSqlRequest("UPDATE settings_krypto SET value_settings=:nval WHERE key_settings=:key_settings", ['nval' => $val, 'key_settings' => $key]);
+      $r = parent::execSqlRequest("UPDATE settings_krypto SET value_settings=:nval, encrypted_settings=:encrypted_settings WHERE key_settings=:key_settings", [
+                                    'nval' => $val,
+                                    'encrypted_settings' => ($encrypt ? 1 : 0),
+                                    'key_settings' => $key
+                                  ]);
     }
 
     if(!$r) throw new Exception("Error : Fail to update settings key : ".$key, 1);
@@ -1674,33 +1685,173 @@ class App extends MySQL {
   }
 
   /**
-   * Encrypt / Decrypt data with key
+   * Encrypt a secret or token with a versioned AEAD envelope.
+   * @param  String $string Plaintext secret
+   * @return String         Versioned ciphertext
+   */
+  public static function _encryptSecret($string) {
+    $plaintext = (string) $string;
+
+    if(function_exists('sodium_crypto_aead_xchacha20poly1305_ietf_encrypt')){
+      $cipher = 'sodium-xchacha20poly1305';
+      $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
+      $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
+        $plaintext,
+        self::_secretEncryptionAssociatedData($cipher),
+        $nonce,
+        self::_secretEncryptionKey($cipher)
+      );
+
+      return self::_secretEncryptionPrefix().$cipher.':'.self::_base64UrlEncode($nonce.$ciphertext);
+    }
+
+    if(function_exists('openssl_encrypt') && in_array('aes-256-gcm', openssl_get_cipher_methods(), true)){
+      $cipher = 'aes-256-gcm';
+      $nonce = random_bytes(12);
+      $tag = '';
+      $ciphertext = openssl_encrypt(
+        $plaintext,
+        'aes-256-gcm',
+        self::_secretEncryptionKey($cipher),
+        OPENSSL_RAW_DATA,
+        $nonce,
+        $tag,
+        self::_secretEncryptionAssociatedData($cipher),
+        16
+      );
+
+      if($ciphertext === false || strlen($tag) != 16) throw new Exception("Authenticated encryption failed.", 1);
+      return self::_secretEncryptionPrefix().$cipher.':'.self::_base64UrlEncode($nonce.$tag.$ciphertext);
+    }
+
+    throw new Exception("Authenticated encryption requires Sodium or OpenSSL AES-256-GCM.", 1);
+  }
+
+  /**
+   * Decrypt a versioned secret, or a legacy CBC value during migration.
+   * @param  String $string Ciphertext
+   * @return String|null    Plaintext or null when authenticity/decrypt fails
+   */
+  public static function _decryptSecret($string) {
+    if(!is_string($string)) $string = (string) $string;
+    if($string == '') return null;
+    if(self::_isVersionedSecretValue($string)) return self::_decryptVersionedSecret($string);
+    return self::_decryptLegacyValue($string);
+  }
+
+  public static function _isEncryptedSecretValue($string){
+    if(!is_string($string)) $string = (string) $string;
+    if($string == '') return false;
+    return !is_null(self::_decryptSecret($string));
+  }
+
+  /**
+   * Legacy deterministic CBC helper. Keep encryption for opaque UI identifiers;
+   * decryption also routes versioned secret values for backward-compatible reads.
    * @param  String $action Type (encrypt or decrypt)
    * @param  String $string Value to encrypt or decrypt
-   * @return Stirng         Value decrypted / Encrypted
+   * @return String|null    Value decrypted / encrypted
    */
   public static function encrypt_decrypt($action, $string) {
+    if($action == 'encrypt') return self::_encryptLegacyValue($string);
+    if($action == 'decrypt') return self::_decryptSecret($string);
+    return null;
+  }
 
-      $output = null;
+  private static function _secretEncryptionPrefix(){
+    return 'krypto:v2:';
+  }
 
+  private static function _secretEncryptionKey($cipher){
+    return hash('sha256', 'krypto-authenticated-encryption|'.$cipher.'|'.CRYPTED_KEY, true);
+  }
 
-      $encrypt_method = "AES-256-CBC"; // Crypt method
-      $secret_key = CRYPTED_KEY; // Crypt key
-      $secret_iv = strrev(CRYPTED_KEY);
+  private static function _secretEncryptionAssociatedData($cipher){
+    return self::_secretEncryptionPrefix().$cipher;
+  }
 
-      // Hash method to crypt key
-      $key = hash('sha256', $secret_key);
-      $iv = substr(hash('sha256', $secret_iv), 0, 16);
+  private static function _isVersionedSecretValue($string){
+    return is_string($string) && strpos($string, self::_secretEncryptionPrefix()) === 0;
+  }
 
-      // If encrypt
-      if( $action == 'encrypt' ) {
-        // Crypt string
-        $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
-        $output = base64_encode($output);
-      }
-      else if( $action == 'decrypt' ) $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv); // Decrypt string
+  private static function _decryptVersionedSecret($string){
+    $parts = explode(':', $string, 4);
+    if(count($parts) != 4 || $parts[0].':'.$parts[1].':' != self::_secretEncryptionPrefix()) return null;
 
-      return $output;
+    $cipher = $parts[2];
+    $payload = self::_base64UrlDecode($parts[3]);
+    if($payload === false) return null;
+
+    if($cipher == 'sodium-xchacha20poly1305'){
+      if(!function_exists('sodium_crypto_aead_xchacha20poly1305_ietf_decrypt')) return null;
+      $nonceLength = SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES;
+      if(strlen($payload) <= $nonceLength) return null;
+
+      $nonce = substr($payload, 0, $nonceLength);
+      $ciphertext = substr($payload, $nonceLength);
+      $plaintext = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt(
+        $ciphertext,
+        self::_secretEncryptionAssociatedData($cipher),
+        $nonce,
+        self::_secretEncryptionKey($cipher)
+      );
+
+      return ($plaintext === false ? null : $plaintext);
+    }
+
+    if($cipher == 'aes-256-gcm'){
+      if(!function_exists('openssl_decrypt')) return null;
+      if(strlen($payload) < 28) return null;
+
+      $nonce = substr($payload, 0, 12);
+      $tag = substr($payload, 12, 16);
+      $ciphertext = substr($payload, 28);
+      $plaintext = openssl_decrypt(
+        $ciphertext,
+        'aes-256-gcm',
+        self::_secretEncryptionKey($cipher),
+        OPENSSL_RAW_DATA,
+        $nonce,
+        $tag,
+        self::_secretEncryptionAssociatedData($cipher)
+      );
+
+      return ($plaintext === false ? null : $plaintext);
+    }
+
+    return null;
+  }
+
+  private static function _encryptLegacyValue($string){
+    $encrypt_method = "AES-256-CBC";
+    $key = hash('sha256', CRYPTED_KEY);
+    $iv = substr(hash('sha256', strrev(CRYPTED_KEY)), 0, 16);
+
+    $output = openssl_encrypt((string) $string, $encrypt_method, $key, 0, $iv);
+    return ($output === false ? null : base64_encode($output));
+  }
+
+  private static function _decryptLegacyValue($string){
+    $encrypt_method = "AES-256-CBC";
+    $key = hash('sha256', CRYPTED_KEY);
+    $iv = substr(hash('sha256', strrev(CRYPTED_KEY)), 0, 16);
+
+    $decoded = base64_decode((string) $string, true);
+    if($decoded === false) return null;
+
+    $output = openssl_decrypt($decoded, $encrypt_method, $key, 0, $iv);
+    return ($output === false ? null : $output);
+  }
+
+  private static function _base64UrlEncode($string){
+    return rtrim(strtr(base64_encode($string), '+/', '-_'), '=');
+  }
+
+  private static function _base64UrlDecode($string){
+    if(!is_string($string) || preg_match('/[^A-Za-z0-9\\-_]/', $string)) return false;
+    $padding = strlen($string) % 4;
+    if($padding > 0) $string .= str_repeat('=', 4 - $padding);
+    return base64_decode(strtr($string, '-_', '+/'), true);
   }
 
   /**

@@ -77,7 +77,7 @@ try {
         if(!array_key_exists($configFieldKey, $_POST)){
           $GlobalTradingConfiguration[$Exchange->_getExchangeName()][$configFieldKey] = null;
         } else {
-          $GlobalTradingConfiguration[$Exchange->_getExchangeName()][$configFieldKey] = ($configFieldKey == "sandbox" ? $_POST[$configFieldKey] : App::encrypt_decrypt('encrypt', $_POST[$configFieldKey]));
+          $GlobalTradingConfiguration[$Exchange->_getExchangeName()][$configFieldKey] = ($configFieldKey == "sandbox" ? $_POST[$configFieldKey] : App::_encryptSecret($_POST[$configFieldKey]));
         }
       }
 
@@ -115,7 +115,7 @@ try {
           ]));
           $requestString .= ", ".$settingsKey;
           $requestArgsString .= ", :".$settingsKey;
-          $requestArgs[$settingsKey] = App::encrypt_decrypt('encrypt', $_POST[$settingsKey]);
+          $requestArgs[$settingsKey] = App::_encryptSecret($_POST[$settingsKey]);
           if(!empty($updateString)) $updateString .= ", ";
           $updateString .= $settingsKey."=:".$settingsKey;
         }
