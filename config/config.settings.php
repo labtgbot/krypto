@@ -1,4 +1,26 @@
 <?php
+    if(!function_exists('krypto_env_config_value')){
+      function krypto_env_config_value($key, $default = ''){
+        $value = getenv($key);
+        return ($value === false || $value === '' ? $default : $value);
+      }
+    }
+
+    if(getenv('KRYPTO_ENV_CONFIG') === '1'){
+      if(!defined('APP_URL')) define('APP_URL', krypto_env_config_value('KRYPTO_APP_URL', 'http://localhost:8080'));
+      if(!defined('APP_URL_FORCE')) define('APP_URL_FORCE', krypto_env_config_value('KRYPTO_APP_URL_FORCE', 'true') === 'true');
+
+      if(!defined('FILE_PATH')) define('FILE_PATH', krypto_env_config_value('KRYPTO_FILE_PATH', ''));
+
+      if(!defined('MYSQL_HOST')) define('MYSQL_HOST', krypto_env_config_value('KRYPTO_DB_HOST', krypto_env_config_value('KRYPTO_TEST_DB_HOST', 'db')));
+      if(!defined('MYSQL_USER')) define('MYSQL_USER', krypto_env_config_value('KRYPTO_DB_USER', krypto_env_config_value('KRYPTO_TEST_DB_USER', 'krypto')));
+      if(!defined('MYSQL_PASSWD')) define('MYSQL_PASSWD', krypto_env_config_value('KRYPTO_DB_PASSWORD', krypto_env_config_value('KRYPTO_TEST_DB_PASSWORD', 'krypto')));
+      if(!defined('MYSQL_PORT')) define('MYSQL_PORT', krypto_env_config_value('KRYPTO_DB_PORT', krypto_env_config_value('KRYPTO_TEST_DB_PORT', '3306')));
+      if(!defined('MYSQL_DATABASE')) define('MYSQL_DATABASE', krypto_env_config_value('KRYPTO_DB_NAME', krypto_env_config_value('KRYPTO_TEST_DB_NAME', 'krypto')));
+
+      if(!defined('CRYPTED_KEY')) define('CRYPTED_KEY', krypto_env_config_value('KRYPTO_CRYPTED_KEY', 'local-dev-only-change-me'));
+    }
+
     // define('APP_URL', '');
     // define('APP_URL_FORCE', false);
     //

@@ -9,4 +9,6 @@ See [docs/upload-storage-deployment.md](docs/upload-storage-deployment.md) for A
 
 See [docs/authenticated-encryption-migration.md](docs/authenticated-encryption-migration.md) for the versioned secret encryption migration plan and rollback notes.
 
+See [docs/local-db-tests.md](docs/local-db-tests.md) for the reproducible PHP/MariaDB environment, schema bootstrap, DB-backed smoke tests, reset commands, logs, and troubleshooting notes.
+
 See [docs/changenow-migration-tasks.md](docs/changenow-migration-tasks.md) for the proposed task breakdown to migrate Krypto into an open ChangeNOW-powered swap application.

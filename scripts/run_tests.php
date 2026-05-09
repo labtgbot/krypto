@@ -3,6 +3,20 @@
 $root = dirname(__DIR__);
 $testsRoot = $root.'/tests';
 $patterns = ['*_test.php', '*.sh'];
+$runDbTests = in_array('--db', $argv, true) || in_array('--only-db', $argv, true);
+$onlyDbTests = in_array('--only-db', $argv, true);
+
+if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {
+    echo "Usage: php scripts/run_tests.php [--db] [--only-db]\n";
+    echo "  --db       Run the normal suite with opt-in DB-backed tests enabled.\n";
+    echo "  --only-db  Run only *_db_test.php checks with DB-backed tests enabled.\n";
+    exit(0);
+}
+
+if ($runDbTests) {
+    putenv('KRYPTO_RUN_DB_TESTS=1');
+    $_ENV['KRYPTO_RUN_DB_TESTS'] = '1';
+}
 
 if (!is_dir($testsRoot)) {
     fwrite(STDERR, "Missing tests directory.\n");
@@ -27,6 +41,11 @@ foreach ($iterator as $file) {
     }
 
     if (strpos($relativePath, 'support'.DIRECTORY_SEPARATOR) === 0) {
+        continue;
+    }
+
+    $isDbBackedTest = substr($file->getFilename(), -12) === '_db_test.php';
+    if ($onlyDbTests && !$isDbBackedTest) {
         continue;
     }
 
