@@ -5,4 +5,6 @@ See [docs/platform-analysis.md](docs/platform-analysis.md) for a full analysis o
 
 See [docs/upload-storage-deployment.md](docs/upload-storage-deployment.md) for Apache, Nginx, IIS, and reverse proxy guards that keep public upload storage static-only.
 
+See [docs/authenticated-encryption-migration.md](docs/authenticated-encryption-migration.md) for the versioned secret encryption migration plan and rollback notes.
+
 See [docs/changenow-migration-tasks.md](docs/changenow-migration-tasks.md) for the proposed task breakdown to migrate Krypto into an open ChangeNOW-powered swap application.

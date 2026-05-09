@@ -772,13 +772,13 @@ class Balance extends MySQL {
         'LOGO_BLACK' => $this->_getApp()->_getLogoBlackPath(),
         'USER_NAME' => $this->_getUser()->_getName(),
         'CURRENCY' => $symbol,
-        'CONFIRM_LINK' => APP_URL.'/app/modules/kr-trade/src/actions/askWidthdrawApprove.php?token='.App::encrypt_decrypt('encrypt', $token),
+        'CONFIRM_LINK' => APP_URL.'/app/modules/kr-trade/src/actions/askWidthdrawApprove.php?token='.rawurlencode(App::_encryptSecret($token)),
         'AMOUNT' => $this->_getApp()->_formatNumber($amount, ($IsRealMoney ? 2 : 8)).' '.$symbol,
         'TYPE' => ucfirst($InfosWithdraw['type_user_widthdraw']),
         'INFOS_WITHDRAW' => $infosWithdrawText,
         'DATE' => date('d/m/Y H:i:s', time())
       ]));
-      throw new Exception(APP_URL.'/app/modules/kr-trade/src/actions/askWidthdrawApprove.php?token='.App::encrypt_decrypt('encrypt', $token));
+      throw new Exception(APP_URL.'/app/modules/kr-trade/src/actions/askWidthdrawApprove.php?token='.rawurlencode(App::_encryptSecret($token)));
   }
 
   public function _getAskWidthdrawEmail(){
@@ -793,11 +793,15 @@ class Balance extends MySQL {
   }
 
   public function _askWidthdrawApprove($token){
+    $token = str_replace(' ', '+', rawurldecode((string) $token));
+    $decryptedToken = App::_decryptSecret($token);
+    if(is_null($decryptedToken)) throw new Exception("Error : Wrong token", 1);
+
     $r = parent::querySqlRequest("SELECT * FROM widthdraw_history_krypto WHERE id_user=:id_user AND id_balance=:id_balance AND token_widthdraw_history=:token_widthdraw_history",
                                 [
                                   'id_user' => $this->_getUser()->_getUserID(),
                                   'id_balance' => $this->_getBalanceID(),
-                                  'token_widthdraw_history' => App::encrypt_decrypt('decrypt', $token)
+                                  'token_widthdraw_history' => $decryptedToken
                                 ]);
 
     if(count($r) == 0) throw new Exception("Error : Wrong token", 1);
@@ -810,7 +814,7 @@ class Balance extends MySQL {
                                   'status_widthdraw_history' => 1,
                                   'id_user' => $this->_getUser()->_getUserID(),
                                   'id_balance' => $this->_getBalanceID(),
-                                  'token_widthdraw_history' => App::encrypt_decrypt('decrypt', $token)
+                                  'token_widthdraw_history' => $decryptedToken
                                 ]);
 
     if(!$rv) throw new Exception("Error : Fail to change widthdraw status (contact support)", 1);

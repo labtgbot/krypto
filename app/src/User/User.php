@@ -671,7 +671,7 @@ class User extends MySQL {
       'LOGO_BLACK' => $App->_getLogoBlackPath(),
       'SUBJECT' => 'Password reset',
       'USER_NAME' => (count($infosUser) > 0 ? $infosUser[0]['name_user'] : ''),
-      'USER_RESET_LINK' => APP_URL.'/?a=pwdr&token='.base64_encode(App::encrypt_decrypt('encrypt', $Email.'||--||'.$generateResetToken))
+      'USER_RESET_LINK' => APP_URL.'/?a=pwdr&token='.rawurlencode(App::_encryptSecret($Email.'||--||'.$generateResetToken))
     ]));
 
     return true;
@@ -693,7 +693,13 @@ class User extends MySQL {
     if(is_null($token)) return false;
 
     // Decrypt token given
-    $tokenDecode = $App::encrypt_decrypt('decrypt', base64_decode($token));
+    $tokenCiphertext = str_replace(' ', '+', rawurldecode((string) $token));
+    $tokenDecode = $App::_decryptSecret($tokenCiphertext);
+    if(is_null($tokenDecode)){
+      $legacyTokenCiphertext = base64_decode($tokenCiphertext, true);
+      if($legacyTokenCiphertext !== false) $tokenDecode = $App::_decryptSecret($legacyTokenCiphertext);
+    }
+    if(is_null($tokenDecode)) return false;
 
     // Get token data
     $tokenDecode = explode('||--||', $tokenDecode);
@@ -1020,7 +1026,7 @@ class User extends MySQL {
                                   [
                                     'id_user' => $this->_getUserID(),
                                     'date_googletfs' => time(),
-                                    'secret_googletfs' => App::encrypt_decrypt('encrypt', $secret)
+                                    'secret_googletfs' => App::_encryptSecret($secret)
                                   ]);
 
     if(!$r) throw new Exception("Error : Fail to save user google authentification", 1);
@@ -1039,7 +1045,7 @@ class User extends MySQL {
                                   ]);
 
     if(count($r) == 0) return null;
-    return App::encrypt_decrypt('decrypt', $r[0]['secret_googletfs']);
+    return App::_decryptSecret($r[0]['secret_googletfs']);
 
   }
 
@@ -1107,7 +1113,7 @@ class User extends MySQL {
                                               'oauth_user' => 'standard'
                                             ]);
     if(count($getInfosUser) == 0) throw new Exception("Error SQL : Fail to retreive create user for check email", 1);
-    $activationCode = App::encrypt_decrypt('encrypt', $email.'||--||'.$getInfosUser[0]['id_user']);
+    $activationCode = App::_encryptSecret($email.'||--||'.$getInfosUser[0]['id_user']);
 
     $template = new Liquid\Template();
     $template->parse(file_get_contents(APP_URL.'/app/modules/kr-user/templates/activeAccount.tpl'));
@@ -1118,7 +1124,7 @@ class User extends MySQL {
       'APP_TITLE' => $App->_getAppTitle(),
       'LOGO_BLACK' => $App->_getLogoBlackPath(),
       'SUBJECT' => $App->_getAppTitle().' - Account activation',
-      'USER_ACTIVE_LINK' => APP_URL.'/?active='.$activationCode,
+      'USER_ACTIVE_LINK' => APP_URL.'/?active='.rawurlencode($activationCode),
       'USER_NAME' => $getInfosUser[0]['name_user']
     ]));
 
@@ -1126,7 +1132,8 @@ class User extends MySQL {
 
   public function _checkParseActivationAccount(){
     if(empty($_GET) || !isset($_GET['active']) || empty($_GET['active'])) return false;
-    $activeCode = App::encrypt_decrypt('decrypt', $_GET['active']);
+    $activeCode = App::_decryptSecret(str_replace(' ', '+', rawurldecode((string) $_GET['active'])));
+    if(is_null($activeCode)) return false;
     $activeCode = explode('||--||', $activeCode);
     if(count($activeCode) != 2) return false;
     $r = parent::querySqlRequest("SELECT * FROM user_krypto WHERE email_user=:email_user AND oauth_user=:oauth_user AND id_user=:id_user AND status_user=:status_user",
