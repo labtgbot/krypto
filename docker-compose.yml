@@ -1,0 +1,67 @@
+name: krypto-dev
+
+x-krypto-app-env: &krypto-app-env
+  KRYPTO_ENV_CONFIG: "1"
+  KRYPTO_APP_URL: "http://localhost:8080"
+  KRYPTO_FILE_PATH: ""
+  KRYPTO_TEST_DB_HOST: "db"
+  KRYPTO_TEST_DB_PORT: "3306"
+  KRYPTO_TEST_DB_NAME: "krypto"
+  KRYPTO_TEST_DB_USER: "krypto"
+  KRYPTO_TEST_DB_PASSWORD: "krypto"
+  KRYPTO_CRYPTED_KEY: "local-dev-only-change-me"
+
+services:
+  db:
+    image: mariadb:10.11
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MARIADB_DATABASE: krypto
+      MARIADB_USER: krypto
+      MARIADB_PASSWORD: krypto
+      MARIADB_ROOT_PASSWORD: krypto_root
+    ports:
+      - "3307:3306"
+    volumes:
+      - krypto-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -ukrypto -pkrypto --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  db-bootstrap:
+    build:
+      context: .
+      dockerfile: docker/dev/php/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      <<: *krypto-app-env
+    command: php scripts/db_bootstrap.php --wait --seed-fixtures
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/dev/php/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      db-bootstrap:
+        condition: service_completed_successfully
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      <<: *krypto-app-env
+    ports:
+      - "8080:8080"
+    command: php -S 0.0.0.0:8080 -t /var/www/html
+
+volumes:
+  krypto-mysql-data:
