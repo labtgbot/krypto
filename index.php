@@ -59,6 +59,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta charset="utf-8">
+    <?php echo Krypto_Csrf::metaTag(); ?>
     <title><?php echo (!is_null($App) ? $App->_getAppTitle() : ERROR_SOFTWARE); ?></title>
     <meta name="description" content="<?php echo (!is_null($App) ? $App->_getAppDescription() : ERROR_SOFTWARE); ?>">
 
@@ -208,6 +209,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
 
   </body>
   <script src="<?php echo APP_URL; ?>/assets/bower/jquery/dist/jquery.min.js" charset="utf-8"></script>
+  <script src="<?php echo APP_URL; ?>/assets/js/csrf.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <script src="<?php echo APP_URL; ?>/assets/js/login.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/../ChangeNow/ChangeNowGuardrails.php';
+require_once __DIR__.'/Csrf.php';
 
 /**
  * Main application class
@@ -74,7 +75,7 @@ class App extends MySQL {
     }
   }
 
-  public static function _getVersion(){ return base64_encode("4.1.0"); }
+  public static function _getVersion(){ return base64_encode("4.1.1"); }
 
   public function _installDirectoryExist(){
     return file_exists('install');

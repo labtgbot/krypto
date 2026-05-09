@@ -33,7 +33,13 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/CryptoApi/CryptoApi.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
+
+    if($_SERVER['REQUEST_METHOD'] !== 'POST'){
+        throw new Exception("Error : Invalid request method", 1);
+    }
 
     // Check if user is logged
     $User = new User();

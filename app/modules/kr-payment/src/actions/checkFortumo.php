@@ -24,6 +24,8 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
     if(empty($_GET) || !isset($_GET['cuid']) || empty($_GET['cuid'])) throw new Exception("Error : Args missing", 1);
 
     // Check if user is logged

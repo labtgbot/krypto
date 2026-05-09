@@ -97,12 +97,14 @@ function addWatchingListItem(symbol, currency, type = "load", first = false, mar
   $('.kr-dash-pan-cry-select-lst-tdn[symbol="' + symbol + '"]').addClass('watching-list-present');
 
   // Get watching list item data
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-watchinglist/src/actions/getWatchingItem.php', {
+  var watchingListRequest = {
     symb: symbol,
     currency:currency,
     market:market,
     t: type
-  }).done(function(data) {
+  };
+  var watchingListAction = (type === "add" ? $.post : $.get);
+  watchingListAction($('body').attr('hrefapp') + '/app/modules/kr-watchinglist/src/actions/getWatchingItem.php', watchingListRequest).done(function(data) {
 
     // Try to parse respond to json = success = error
     try {

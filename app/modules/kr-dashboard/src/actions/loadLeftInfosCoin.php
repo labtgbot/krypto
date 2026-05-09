@@ -33,6 +33,7 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/CryptoApi/CryptoApi.php";
 try {
 
   $App = new App();
+  Krypto_Csrf::validateRequest();
 
   $User = new User();
   if (!$User->_isLogged()) {

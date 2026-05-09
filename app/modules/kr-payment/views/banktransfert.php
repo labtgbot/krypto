@@ -35,6 +35,14 @@ try {
   $BankTransfert = new Banktransfert($User, $App);
 
   $BankTransfertItem = null;
+  $BankTransfertMutatingGet = (!empty($_GET) && (
+    isset($_GET['d']) ||
+    (isset($_GET['s']) && $_GET['s'] == "new_confirm") ||
+    (isset($_GET['a']) && $_GET['a'] == "cancel") ||
+    isset($_GET['sacc'])
+  ));
+  if($BankTransfertMutatingGet) Krypto_Csrf::validateRequest(['methods' => ['GET']]);
+
   if(!empty($_GET) && isset($_GET['t'])){
     $BankTransfertID = explode('-', App::encrypt_decrypt('decrypt', $_GET['t']));
     if(count($BankTransfertID) != 2) throw new Exception("Permission denied", 1);
@@ -80,6 +88,7 @@ try {
 <html>
   <head>
     <meta charset="utf-8">
+    <?php echo Krypto_Csrf::metaTag(); ?>
     <title static-title="<?php echo $App->_getAppTitle(); ?>"><?php echo $App->_getAppTitle(); ?></title>
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/app/modules/kr-payment/statics/css/banktransfert.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/style.css">
@@ -95,6 +104,7 @@ try {
 
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/dropzone/dist/min/dropzone.min.css">
     <script src="<?php echo APP_URL; ?>/assets/bower/jquery/dist/jquery.min.js" charset="utf-8"></script>
+    <script src="<?php echo APP_URL; ?>/assets/js/csrf.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
     <script src="<?php echo APP_URL; ?>/assets/bower/dropzone/dist/min/dropzone.min.js" charset="utf-8"></script>
 
 
@@ -107,7 +117,7 @@ try {
       <div class="kr-transfert-actionlist">
         <div>
           <?php if($BankTransfertItem['status_banktransfert'] != "3"): ?>
-            <a href="banktransfert.php?t=<?php echo strip_tags($_GET['t']); ?>&a=cancel" class="btn btn-autowidth btn-small btn-orange">Cancel this bank transfert</a>
+            <a href="banktransfert.php?t=<?php echo strip_tags($_GET['t']); ?>&a=cancel&<?php echo Krypto_Csrf::queryParameter(); ?>" class="btn btn-autowidth btn-small btn-orange">Cancel this bank transfert</a>
           <?php endif; ?>
         </div>
       </div>
@@ -147,7 +157,7 @@ try {
         foreach ($BankAccountList as $key => $infosBankAccount) {
           if(!is_null($BankTransfertItem['bankaccount_banktransfert']) && $infosBankAccount['id_banktransfert_accountavailable'] != $BankTransfertItem['bankaccount_banktransfert']) continue;
         ?>
-        <a class="<?php echo (!is_null($BankTransfertItem['bankaccount_banktransfert']) ? "kr-baccacc-selected" : ""); ?>" href="?t=<?php echo $_GET['t']; ?>&sacc=<?php echo App::encrypt_decrypt('encrypt', time().'-'.$infosBankAccount['id_banktransfert_accountavailable']); ?>">
+        <a class="<?php echo (!is_null($BankTransfertItem['bankaccount_banktransfert']) ? "kr-baccacc-selected" : ""); ?>" href="?t=<?php echo $_GET['t']; ?>&sacc=<?php echo App::encrypt_decrypt('encrypt', time().'-'.$infosBankAccount['id_banktransfert_accountavailable']); ?>&<?php echo Krypto_Csrf::queryParameter(); ?>">
           <header>
             <span><?php echo $infosBankAccount['bank_name__banktransfert_accountavailable']; ?></span>
             <div>
@@ -256,7 +266,7 @@ try {
                 </div>
               </div>
               <div>
-                <a href="banktransfert.php?t=<?php echo $_GET['t']; ?>&d=<?php echo App::encrypt_decrypt('encrypt', $proofInformation['id_banktransfert_proof']); ?>" class="btn btn-small btn-orange btn-autowidth">Delete</a>
+                <a href="banktransfert.php?t=<?php echo $_GET['t']; ?>&d=<?php echo App::encrypt_decrypt('encrypt', $proofInformation['id_banktransfert_proof']); ?>&<?php echo Krypto_Csrf::queryParameter(); ?>" class="btn btn-small btn-orange btn-autowidth">Delete</a>
               </div>
             </li>
         <?php } ?>
@@ -303,6 +313,8 @@ try {
 
       dz.on('sending', function(file, xhr, formData){
           formData.append('banktransfert_id', $('body').attr('kr-banktransfert-i'));
+          formData.append('krypto_csrf_token', window.KryptoCsrf ? window.KryptoCsrf.token() : $('meta[name="krypto-csrf-token"]').attr('content'));
+          if(xhr && window.KryptoCsrf) xhr.setRequestHeader('X-CSRF-Token', window.KryptoCsrf.token());
       });
 
     }

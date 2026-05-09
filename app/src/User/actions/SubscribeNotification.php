@@ -25,6 +25,8 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/User/User.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 
 $User = new User();
 var_dump($User->_getListUserSubscribeNotification($App));

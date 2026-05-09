@@ -55,7 +55,7 @@ function _syncChatBar(){
 
   if($('.kr-chat-right').length == 0) return false;
 
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-chat/src/actions/syncRightBar.php', {chat_user_status:chatUserStatus}).done(function(data){
+  $.post($('body').attr('hrefapp') + '/app/modules/kr-chat/src/actions/syncRightBar.php', {chat_user_status:chatUserStatus}).done(function(data){
 
     let dataJson = jQuery.parseJSON(data);
     if(dataJson.error == 1){

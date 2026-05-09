@@ -29,25 +29,31 @@ $App->_loadModulesControllers();
 
 try {
 
+  $Request = ($_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET);
+  if(!empty($Request['t']) && $Request['t'] == "add"){
+    if($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Error : Invalid request method", 1);
+    Krypto_Csrf::validateRequest();
+  }
+
   // Check if user is logged
   $User = new User();
   if(!$User->_isLogged()) throw new Exception("User are not logged", 1);
 
   // Check args
-  if(empty($_GET) || empty($_GET['symb'])) throw new Exception("Error : Args missing", 1);
+  if(empty($Request) || empty($Request['symb'])) throw new Exception("Error : Args missing", 1);
 
   // Init CryptoApi object
-  $CryptoApi = new CryptoApi(null, [$_GET['currency'], $_GET['currency']], $App, (isset($_GET['market']) ? $_GET['market'] : 'CCCAGG'));
+  $CryptoApi = new CryptoApi(null, [$Request['currency'], $Request['currency']], $App, (isset($Request['market']) ? $Request['market'] : 'CCCAGG'));
 
   // Get coin data
-  $Coin = $CryptoApi->_getCoin($_GET['symb']);
+  $Coin = $CryptoApi->_getCoin($Request['symb']);
 
 
   // If item need to be added --> add
-  if(!empty($_GET['t']) && $_GET['t'] == "add"){
+  if(!empty($Request['t']) && $Request['t'] == "add"){
     // Init watching list
     $WatchingList = new WatchingList($CryptoApi, $User);
-    $WatchingList->_addItem($Coin->_getSymbol(), $_GET['currency'], (isset($_GET['market']) ? $_GET['market'] : 'CCCAGG'));
+    $WatchingList->_addItem($Coin->_getSymbol(), $Request['currency'], (isset($Request['market']) ? $Request['market'] : 'CCCAGG'));
   }
 
 } catch (Exception $e) { // If error detected, show error

@@ -26,6 +26,8 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
     // Check if app allow signup
     if(!$App->_allowSignup()) throw new Exception("Error : Permission denied", 1);
 

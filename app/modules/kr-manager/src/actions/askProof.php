@@ -23,16 +23,19 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/Lang/Lang.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+Krypto_Csrf::validateRequest();
+
 try {
 
   $User = new User();
   if(!$User->_isLogged()) throw new Exception("User are not logged", 1);
   if(!$User->_isAdmin() && !$User->_isManager()) throw new Exception("Permission denied", 1);
+  if($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Permission denied", 1);
 
-  if(empty($_GET) || !isset($_GET['id_deposit_history'])) throw new Exception("Permission denied", 1);
+  if(empty($_POST) || !isset($_POST['id_deposit_history'])) throw new Exception("Permission denied", 1);
 
   $Manager = new Manager($App);
-  $PaymentInfos = $Manager->_askPaymentProof($_GET['id_deposit_history'], 'Hello, please scan us your credit card recto verso');
+  $PaymentInfos = $Manager->_askPaymentProof($_POST['id_deposit_history'], 'Hello, please scan us your credit card recto verso');
 
 
 } catch (\Exception $e) {
