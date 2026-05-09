@@ -2185,11 +2185,155 @@ class App extends MySQL {
     return true;
   }
 
+  public static function _getUploadMimeTypeMap(){
+    return [
+      'jpg' => ['image/jpeg', 'image/pjpeg'],
+      'jpeg' => ['image/jpeg', 'image/pjpeg'],
+      'png' => ['image/png', 'image/x-png'],
+      'gif' => ['image/gif'],
+      'pdf' => ['application/pdf', 'application/x-pdf']
+    ];
+  }
+
+  public static function _getAllowedUploadMimeTypes($extensionAllowed = ['pdf', 'jpg', 'jpeg', 'png']){
+    $mimeMap = App::_getUploadMimeTypeMap();
+    $mimeTypes = [];
+
+    foreach ($extensionAllowed as $extension) {
+      $extension = strtolower(preg_replace('/[^a-z0-9]/', '', (string) $extension));
+      if(!array_key_exists($extension, $mimeMap)) continue;
+      foreach ($mimeMap[$extension] as $mimeType) {
+        $mimeTypes[] = $mimeType;
+      }
+    }
+
+    return array_values(array_unique($mimeTypes));
+  }
+
+  public static function _getUploadedFileMimeType($file){
+    if(!is_array($file) || !isset($file['tmp_name']) || strlen($file['tmp_name']) == 0) return '';
+    if(!is_file($file['tmp_name']) || !is_readable($file['tmp_name'])) return '';
+
+    if(function_exists('finfo_open')){
+      $finfo = finfo_open(FILEINFO_MIME_TYPE);
+      if($finfo !== false){
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        if(is_string($mimeType) && strlen(trim($mimeType)) > 0) return strtolower(trim($mimeType));
+      }
+    }
+
+    if(function_exists('mime_content_type')){
+      $mimeType = mime_content_type($file['tmp_name']);
+      if(is_string($mimeType) && strlen(trim($mimeType)) > 0) return strtolower(trim($mimeType));
+    }
+
+    return '';
+  }
+
+  private static function _assertUploadedImageContentIsSafe($file, $extension, $label){
+    $imageTypeJpeg = (defined('IMAGETYPE_JPEG') ? IMAGETYPE_JPEG : 2);
+    $imageTypePng = (defined('IMAGETYPE_PNG') ? IMAGETYPE_PNG : 3);
+    $imageTypeGif = (defined('IMAGETYPE_GIF') ? IMAGETYPE_GIF : 1);
+
+    $imageTypeMap = [
+      'jpg' => $imageTypeJpeg,
+      'jpeg' => $imageTypeJpeg,
+      'png' => $imageTypePng,
+      'gif' => $imageTypeGif
+    ];
+
+    if(!array_key_exists($extension, $imageTypeMap)) return;
+
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if($imageInfo === false || !isset($imageInfo[0], $imageInfo[1], $imageInfo[2])){
+      throw new Exception("Error : ".$label." image content is not valid", 1);
+    }
+
+    if((int) $imageInfo[2] !== $imageTypeMap[$extension]){
+      throw new Exception("Error : ".$label." image content does not match the file extension", 1);
+    }
+
+    $width = (int) $imageInfo[0];
+    $height = (int) $imageInfo[1];
+    if($width <= 0 || $height <= 0){
+      throw new Exception("Error : ".$label." image dimensions are invalid", 1);
+    }
+
+    $maxDimension = 12000;
+    if($width > $maxDimension || $height > $maxDimension){
+      throw new Exception("Error : ".$label." image dimensions exceed ".$maxDimension."px", 1);
+    }
+  }
+
+  private static function _assertUploadedPdfContentIsSafe($file, $label){
+    $fileSize = filesize($file['tmp_name']);
+    if($fileSize === false || $fileSize < 8){
+      throw new Exception("Error : ".$label." PDF content is not valid", 1);
+    }
+
+    $handle = fopen($file['tmp_name'], 'rb');
+    if($handle === false){
+      throw new Exception("Error : ".$label." upload temporary file cannot be read", 1);
+    }
+
+    $magicBytes = fread($handle, 5);
+    fclose($handle);
+
+    if($magicBytes !== '%PDF-'){
+      throw new Exception("Error : ".$label." PDF content is not valid", 1);
+    }
+
+    $tailLength = min(2048, $fileSize);
+    $tailOffset = max(0, $fileSize - $tailLength);
+    $tail = file_get_contents($file['tmp_name'], false, null, $tailOffset, $tailLength);
+    if($tail === false || strpos($tail, '%%EOF') === false){
+      throw new Exception("Error : ".$label." PDF EOF marker is missing", 1);
+    }
+  }
+
+  private static function _assertUploadedFileContentIsSafe($file, $label){
+    if(!is_file($file['tmp_name']) || !is_readable($file['tmp_name'])){
+      throw new Exception("Error : ".$label." upload temporary file cannot be read", 1);
+    }
+
+    $fileSize = filesize($file['tmp_name']);
+    if($fileSize === false || $fileSize <= 0){
+      throw new Exception("Error : ".$label." upload is empty", 1);
+    }
+
+    $extension = App::_getUploadedFileExtension($file);
+    $mimeMap = App::_getUploadMimeTypeMap();
+    if(!array_key_exists($extension, $mimeMap)){
+      throw new Exception("Error : ".$label." content validation is not configured for .".$extension, 1);
+    }
+
+    $mimeType = App::_getUploadedFileMimeType($file);
+    if(strlen($mimeType) == 0){
+      throw new Exception("Error : ".$label." content type could not be detected", 1);
+    }
+
+    if(!in_array($mimeType, $mimeMap[$extension], true)){
+      throw new Exception("Error : ".$label." content type does not match the file extension", 1);
+    }
+
+    if(in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true)){
+      App::_assertUploadedImageContentIsSafe($file, $extension, $label);
+    }
+
+    if($extension == 'pdf'){
+      App::_assertUploadedPdfContentIsSafe($file, $label);
+    }
+
+    return true;
+  }
+
   public static function _assertUploadedFileIsSafe($file, $extensionAllowed = ['pdf', 'jpg', 'jpeg', 'png'], $label = 'File'){
     if(!is_array($file) || !isset($file['name']) || strlen($file['name']) == 0) throw new Exception("Error : ".$label." is missing", 1);
     if(!isset($file['tmp_name']) || strlen($file['tmp_name']) == 0) throw new Exception("Error : ".$label." upload temporary file is missing", 1);
     if(isset($file['error']) && (int) $file['error'] !== UPLOAD_ERR_OK) throw new Exception("Error : ".$label." upload failed", 1);
     if(!App::_getFileExtensionAllowed($file, $extensionAllowed)) throw new Exception("Error : ".$label." not accepted (".join(', ', $extensionAllowed).") only", 1);
+    App::_assertUploadedFileContentIsSafe($file, $label);
     return true;
   }
 
