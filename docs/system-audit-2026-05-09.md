@@ -26,6 +26,7 @@ Implemented mitigations:
 - Updated profile pictures, admin logos, chat attachments, identity documents, payment proofs, and bank-transfer proofs to use the shared upload guard.
 - Removed SVG from admin logo uploads until an SVG sanitizer exists. Existing checked-in SVG assets are unchanged.
 - Added `public/.htaccess` to deny PHP-like files and directory listings under public upload storage on Apache-compatible deployments.
+- Added `docs/upload-storage-deployment.md` with Apache, Nginx, IIS, and reverse proxy guards for public upload storage.
 
 ## Automated Verification
 
@@ -36,12 +37,13 @@ Implemented mitigations:
 - PHP-like uploads are rejected before file movement.
 - Each first-party upload path using `move_uploaded_file()` also calls the shared validator and safe filename helper.
 - Public upload storage has an Apache `.htaccess` guard for PHP-like extensions.
+- Deployment documentation lists public upload directories and includes non-Apache web-server guards.
 - This audit report remains present for issue #51 traceability.
 
 ## Remaining Audit Backlog
 
 - Run `composer validate` and `composer audit` in an environment with Composer installed, then update or replace vulnerable dependencies.
-- Add server-level Nginx/IIS equivalents for the Apache upload execution guard.
+- Verify the documented upload execution guards in each production web-server configuration before enabling public uploads.
 - Replace deterministic AES-CBC helper usage with authenticated encryption for newly written secrets and tokens, with a migration plan for existing encrypted rows.
 - Review every AJAX/action endpoint for CSRF coverage and add a shared token check where state changes occur.
 - Add content validation for images and PDFs, including MIME sniffing and image decoding, rather than relying only on extensions.
