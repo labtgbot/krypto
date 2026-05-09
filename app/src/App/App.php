@@ -1317,18 +1317,12 @@ class App extends MySQL {
       $directoryCreate = mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/logo');
       if(!$directoryCreate) throw new Exception("Error : Fail to create public logo directory (public directory need to be writable)", 1);
     }
-    $file_name = $file['name'];
-    $file_size = $file['size'];
     $file_tmp = $file['tmp_name'];
-    $file_type= $file['type'];
-    $file_infos = pathinfo($file['name']);
-    $file_ext = strtolower($file_infos['extension']);
 
-    $expensions= array("jpeg","jpg","png","svg","gif");
+    $expensions= array("jpeg","jpg","png","gif");
 
-    if(in_array($file_ext,$expensions)=== false) throw new Exception("Error : Logo is not a picture, please choose a picture with : ".join(', ', $expensions).' extension', 1);
-
-    $file_nameS = uniqid().'-'.rand(1000,9999).'-'.$file_name;
+    App::_assertUploadedFileIsSafe($file, $expensions, 'Logo');
+    $file_nameS = App::_getSafeUploadedFileName($file, uniqid().'-'.rand(1000,9999));
 
     try {
       $infoupload = move_uploaded_file($file_tmp,$_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/logo/'.$file_nameS);
@@ -1998,8 +1992,52 @@ class App extends MySQL {
     return parent::querySqlRequest("SELECT * FROM banktransfert_accountavailable_krypto");
   }
 
+  public static function _getUploadedFileExtension($file){
+    if(!is_array($file) || !isset($file['name'])) return '';
+    $filename = basename(str_replace('\\', '/', $file['name']));
+    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    return preg_replace('/[^a-z0-9]/', '', $extension);
+  }
+
+  public static function _getSafeUploadedFileName($file, $prefix = null){
+    $filename = 'upload';
+    if(is_array($file) && isset($file['name']) && strlen($file['name']) > 0){
+      $filename = basename(str_replace('\\', '/', $file['name']));
+    }
+
+    $extension = App::_getUploadedFileExtension($file);
+    $baseName = $filename;
+    if(strlen($extension) > 0 && strtolower(substr($filename, -1 * (strlen($extension) + 1))) === '.'.$extension){
+      $baseName = substr($filename, 0, -1 * (strlen($extension) + 1));
+    }
+
+    $baseName = preg_replace('/[^A-Za-z0-9_-]+/', '-', $baseName);
+    $baseName = trim($baseName, '-_');
+    if(strlen($baseName) == 0) $baseName = 'upload';
+
+    $safePrefix = '';
+    if(!is_null($prefix) && strlen((string) $prefix) > 0){
+      $safePrefix = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) $prefix);
+      $safePrefix = trim($safePrefix, '-_');
+    }
+
+    $safeName = (strlen($safePrefix) > 0 ? $safePrefix.'-' : '').$baseName;
+    if(strlen($extension) > 0) $safeName .= '.'.$extension;
+    return $safeName;
+  }
+
   public static function _getFileExtensionAllowed($file, $extensionAllowed = ['pdf', 'jpg', 'jpeg', 'png']){
-    if(!in_array(pathinfo($file['name'], PATHINFO_EXTENSION), $extensionAllowed)) return false;
+    $extension = App::_getUploadedFileExtension($file);
+    $extensionAllowed = array_map('strtolower', $extensionAllowed);
+    if(strlen($extension) == 0 || !in_array($extension, $extensionAllowed)) return false;
+    return true;
+  }
+
+  public static function _assertUploadedFileIsSafe($file, $extensionAllowed = ['pdf', 'jpg', 'jpeg', 'png'], $label = 'File'){
+    if(!is_array($file) || !isset($file['name']) || strlen($file['name']) == 0) throw new Exception("Error : ".$label." is missing", 1);
+    if(!isset($file['tmp_name']) || strlen($file['tmp_name']) == 0) throw new Exception("Error : ".$label." upload temporary file is missing", 1);
+    if(isset($file['error']) && (int) $file['error'] !== UPLOAD_ERR_OK) throw new Exception("Error : ".$label." upload failed", 1);
+    if(!App::_getFileExtensionAllowed($file, $extensionAllowed)) throw new Exception("Error : ".$label." not accepted (".join(', ', $extensionAllowed).") only", 1);
     return true;
   }
 
