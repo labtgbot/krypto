@@ -322,19 +322,22 @@ try {
               <input type="button" onclick="_showIdentityWizard();" class="btn btn-big btn-green btn-autowidth" name="" value="<?php echo $Lang->tr('Verify your identiy'); ?>">
             </div>
           <?php endif; ?>
-          <?php $listThirdParty = null; if(!$App->_hiddenThirdpartyActive()):
-            $Trade = new Trade($User, $App);
-            $listThirdParty = $Trade->_getThirdPartyListAvailable();
-            if(count($listThirdParty) > 0){
-            $selectedThirdParty = $listThirdParty[0];
-            $balanceList = $selectedThirdParty->_getBalance(true);
-            $balanceSelectedSymbol = null;
-            $balanceSelectedAmount = null;
-            foreach ($balanceList as $key => $value) {
-              if(!is_null($balanceSelectedSymbol)) continue;
-              $balanceSelectedSymbol = $key;
-              $balanceSelectedAmount = $value['free'];
-            }
+          <?php
+          $listThirdParty = null;
+          if(!$App->_hiddenThirdpartyActive() && $App->_legacyExchangeConnectionsEnabled()):
+            try {
+              $Trade = new Trade($User, $App);
+              $listThirdParty = $Trade->_getThirdPartyListAvailable();
+              if(count($listThirdParty) > 0){
+                $selectedThirdParty = $listThirdParty[0];
+                $balanceList = $selectedThirdParty->_getBalance(true);
+                $balanceSelectedSymbol = null;
+                $balanceSelectedAmount = null;
+                foreach ($balanceList as $key => $value) {
+                  if(!is_null($balanceSelectedSymbol)) continue;
+                  $balanceSelectedSymbol = $key;
+                  $balanceSelectedAmount = $value['free'];
+                }
 
             ?>
             <div class="kr-wallet-top">
@@ -387,8 +390,12 @@ try {
                 </div>
               </section>
             </div>
-          <?php }
-          endif; ?>
+	          <?php }
+            } catch (\Throwable $e) {
+              error_log('[krypto] dashboard legacy exchange header unavailable: '.$e->getMessage());
+              $listThirdParty = [];
+            }
+	          endif; ?>
           <?php if($App->_hiddenThirdpartyActive() && ($App->_getTradingEnablePracticeAccount() || $App->_getTradingEnableRealAccount())): ?>
           <div class="kr-wallet-top">
             <div class="kr-wallet-top-<?php echo $CurrentBalance->_getBalanceType(); ?>">
