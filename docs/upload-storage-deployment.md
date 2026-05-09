@@ -29,6 +29,25 @@ it is still covered by the repository-level Apache guard because it lives below
 - Reverse Proxy before PHP-FPM: supported when the proxy applies the same deny
   rule before forwarding PHP requests upstream.
 
+## Application Content Validation
+
+The shared upload guard validates both the extension and the detected content
+before files are moved below `public/*`.
+
+- Extension allowlists are synchronized with the application MIME map for
+  `jpg`, `jpeg`, `png`, `gif`, and `pdf`.
+- MIME Sniffing uses `finfo_file()` with `mime_content_type()` as a fallback.
+- Images must also decode through `getimagesize()`, match their final
+  extension, have non-zero dimensions, and stay within the 12000px dimension
+  ceiling.
+- PDFs must sniff as PDF content, start with `%PDF-`, and include a `%%EOF`
+  marker near the end of the file.
+
+The PDF check is intentionally a minimal content validation boundary. It is not
+a PDF sanitizer, JavaScript remover, malware scanner, OCR verifier, or deep
+parser. Add a separate sanitizer/scanning pipeline before accepting untrusted
+PDFs in deployments that require that level of assurance.
+
 ## Apache
 
 The repository includes `public/.htaccess`. It disables directory listing,

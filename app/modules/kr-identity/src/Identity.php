@@ -156,9 +156,25 @@ class Identity extends MySQL {
       $fileName = $App::encrypt_decrypt('encrypt', uniqid()).'-'.$App::encrypt_decrypt('encrypt', uniqid()).'.png';
       $img = str_replace('data:image/png;base64,', '', $content);
       $img = str_replace(' ', '+', $img);
-      $data = base64_decode($img);
+      $data = base64_decode($img, true);
+      if($data === false || strlen($data) == 0) throw new Exception("Error : Identity camera image content is not valid", 1);
 
-        $this->_checkUserIdentityDirectory($App);
+      $cameraTmpFile = tempnam(sys_get_temp_dir(), 'krypto-camera-');
+      if($cameraTmpFile === false) throw new Exception("Error : Fail to create temporary identity camera file", 1);
+
+      try {
+        if(file_put_contents($cameraTmpFile, $data) === false) throw new Exception("Error : Fail to validate identity camera image", 1);
+        $App::_assertUploadedFileIsSafe([
+          'name' => 'camera.png',
+          'tmp_name' => $cameraTmpFile,
+          'error' => UPLOAD_ERR_OK,
+          'size' => strlen($data)
+        ], ['png'], 'Identity camera image');
+      } finally {
+        if(is_file($cameraTmpFile)) unlink($cameraTmpFile);
+      }
+
+      $this->_checkUserIdentityDirectory($App);
 
       $infosCameraUpload = file_put_contents($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()).'/'.$fileName, $data);
 

@@ -46,6 +46,36 @@ function assertThrowsUploadSecurity($callable, $message) {
     throw new Exception($message);
 }
 
+$uploadSecurityTempFiles = [];
+function createUploadSecurityTempFile($name, $contents) {
+    global $uploadSecurityTempFiles;
+
+    $path = tempnam(sys_get_temp_dir(), 'krypto-upload-');
+    if ($path === false) {
+        throw new Exception('Cannot create temporary upload fixture.');
+    }
+
+    if (file_put_contents($path, $contents) === false) {
+        throw new Exception('Cannot write temporary upload fixture.');
+    }
+
+    $uploadSecurityTempFiles[] = $path;
+    return [
+        'name' => $name,
+        'tmp_name' => $path,
+        'error' => UPLOAD_ERR_OK,
+        'size' => strlen($contents),
+    ];
+}
+
+register_shutdown_function(function() use (&$uploadSecurityTempFiles) {
+    foreach ($uploadSecurityTempFiles as $path) {
+        if (is_file($path)) {
+            unlink($path);
+        }
+    }
+});
+
 $safeName = App::_getSafeUploadedFileName(['name' => '../avatar.php.jpg'], 'prefix.with.dot');
 assertTrueUploadSecurity(strpos($safeName, '/') === false, 'Safe upload name must not contain path separators.');
 assertTrueUploadSecurity(strpos($safeName, '..') === false, 'Safe upload name must not contain parent path fragments.');
@@ -64,6 +94,56 @@ assertTrueUploadSecurity(
 assertThrowsUploadSecurity(function() {
     App::_assertUploadedFileIsSafe(['name' => 'payload.php', 'tmp_name' => '/tmp/payload', 'error' => UPLOAD_ERR_OK], ['jpg']);
 }, 'Unsafe executable upload should be rejected before move_uploaded_file().');
+
+$uploadMimeMap = App::_getUploadMimeTypeMap();
+foreach ([
+    'avatar/logo/chat image uploads' => ['jpg', 'jpeg', 'png', 'gif'],
+    'identity/proof/bank-proof uploads' => ['pdf', 'jpg', 'jpeg', 'png'],
+] as $flow => $extensions) {
+    foreach ($extensions as $extension) {
+        assertTrueUploadSecurity(
+            array_key_exists($extension, $uploadMimeMap),
+            $flow.' must have a MIME/content rule for .'.$extension
+        );
+    }
+}
+foreach (['application/pdf', 'image/jpeg', 'image/png'] as $mimeType) {
+    assertTrueUploadSecurity(
+        in_array($mimeType, App::_getAllowedUploadMimeTypes(['pdf', 'jpg', 'jpeg', 'png']), true),
+        'Shared MIME allowlist must include '.$mimeType
+    );
+}
+
+$validPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=');
+$validJpeg = base64_decode('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9k=');
+$validPdf = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
+$phpPayload = "<?php echo 'owned'; ?>\n";
+
+assertTrueUploadSecurity(
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('avatar.png', $validPng), ['png', 'jpg', 'jpeg', 'gif'], 'Image'),
+    'Valid PNG images must pass upload content validation.'
+);
+assertTrueUploadSecurity(
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('logo.jpg', $validJpeg), ['png', 'jpg', 'jpeg', 'gif'], 'Logo'),
+    'Valid JPEG images must pass upload content validation.'
+);
+assertTrueUploadSecurity(
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('identity.pdf', $validPdf), ['pdf', 'jpg', 'jpeg', 'png'], 'Identity document'),
+    'Valid PDF documents must pass upload content validation.'
+);
+
+assertThrowsUploadSecurity(function() use ($phpPayload) {
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('payload.jpg', $phpPayload), ['jpg', 'jpeg', 'png'], 'Image');
+}, 'PHP payload with a .jpg extension must be rejected by content validation.');
+assertThrowsUploadSecurity(function() use ($phpPayload) {
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('payload.pdf', $phpPayload), ['pdf'], 'PDF');
+}, 'PHP payload with a .pdf extension must be rejected by content validation.');
+assertThrowsUploadSecurity(function() use ($validPng) {
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('mismatch.jpg', $validPng), ['jpg', 'jpeg', 'png'], 'Image');
+}, 'Upload guard must reject content whose MIME type does not match its extension.');
+assertThrowsUploadSecurity(function() use ($validPdf) {
+    App::_assertUploadedFileIsSafe(createUploadSecurityTempFile('mismatch.png', $validPdf), ['pdf', 'jpg', 'jpeg', 'png'], 'Identity document');
+}, 'Upload guard must reject PDFs uploaded with image extensions.');
 
 foreach ([
     'app/src/User/User.php',
@@ -87,6 +167,12 @@ foreach ([
         );
     }
 }
+
+$identitySource = file_get_contents($root.'/app/modules/kr-identity/src/Identity.php');
+assertTrueUploadSecurity(
+    strpos($identitySource, 'Identity camera image') !== false && strpos($identitySource, '_assertUploadedFileIsSafe') !== false,
+    'Identity webcam PNG writes must use the shared upload content validator.'
+);
 
 $publicHtaccess = $root.'/public/.htaccess';
 assertTrueUploadSecurity(file_exists($publicHtaccess), 'public/.htaccess must exist to block script execution in upload storage.');
@@ -126,6 +212,12 @@ foreach ([
     'Reverse Proxy',
     'PHP-FPM',
     'Allowed Upload Reads',
+    'MIME Sniffing',
+    'finfo_file()',
+    'getimagesize()',
+    '%PDF-',
+    '%%EOF',
+    'PDF sanitizer',
 ] as $needle) {
     assertTrueUploadSecurity(
         strpos($deploymentDocSource, $needle) !== false,
