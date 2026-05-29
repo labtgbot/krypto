@@ -6,18 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Binance\\API' => $vendorDir . '/jaggedsoft/php-binance-api/php-binance-api.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
-    'Feed' => $vendorDir . '/dg/rss-php/src/Feed.php',
-    'FeedException' => $vendorDir . '/dg/rss-php/src/Feed.php',
     'Mobile_Detect' => $vendorDir . '/mobiledetect/mobiledetectlib/Mobile_Detect.php',
-    'Normalizer' => $vendorDir . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
-    'Omnipay\\Omnipay' => $vendorDir . '/omnipay/common/src/Omnipay/Omnipay.php',
-    'SomePHP\\Hydrator' => $vendorDir . '/mrteye/gdax/test/src/Example/Hydrator.php',
-    'SomePHP\\Test\\Example' => $vendorDir . '/mrteye/gdax/test/src/Example/Example.php',
-    'SomePHP\\Test\\Result' => $vendorDir . '/mrteye/gdax/test/src/Example/Result.php',
-    'mrteye\\Gdax\\Api' => $vendorDir . '/mrteye/gdax/src/Api.php',
-    'mrteye\\Gdax\\ApiInterface' => $vendorDir . '/mrteye/gdax/src/ApiInterface.php',
-    'mrteye\\Gdax\\AppCurl' => $vendorDir . '/mrteye/gdax/src/AppCurl.php',
-    'mrteye\\Gdax\\Auth' => $vendorDir . '/mrteye/gdax/src/Auth.php',
 );

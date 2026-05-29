@@ -74,16 +74,6 @@ class Definition extends AbstractEntity
 		$this->fuzzy = $fuzzy;
 	}
 
-	protected $updated = null;
-
-	public function setUpdated($updated){
-            	$this->updated = $updated;
-        }
-
-	public function getUpdated(){
-		return $this->updated;
-	}
-
 	public function toArray()
 	{
 	    return array(

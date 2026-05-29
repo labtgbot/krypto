@@ -74,7 +74,7 @@ class Regexp
 
 		array_shift($matches);
 
-		$result = array();
+		$result = [];
 
 		foreach ($matches as $matchKey => $subMatches) {
 			foreach ($subMatches as $subMatchKey => $subMatch) {
@@ -117,8 +117,18 @@ class Regexp
 	 *
 	 * @return array
 	 */
-	public function split($string, $limit = null)
+	public function split($string, $limit = -1)
 	{
 		return preg_split($this->pattern, $string, $limit);
+	}
+
+	/**
+	 * Returns the original pattern primarily for debugging purposes
+	 *
+	 * @return string
+	 */
+	public function __toString()
+	{
+		return $this->pattern;
 	}
 }

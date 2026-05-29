@@ -35,19 +35,28 @@ abstract class AbstractTag
 	 *
 	 * @var array
 	 */
-	protected $attributes = array();
+	protected $attributes = [];
+
+	/**
+	 * A cached instance of the config array, for performance reasons.
+	 *
+	 * @var array
+	 */
+	protected $config = [];
 
 	/**
 	 * Constructor.
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
 		$this->markup = $markup;
 		$this->fileSystem = $fileSystem;
+		$this->config = &Liquid::$config;
+
 		$this->parse($tokens);
 	}
 
@@ -77,7 +86,7 @@ abstract class AbstractTag
 	 */
 	protected function extractAttributes($markup)
 	{
-		$this->attributes = array();
+		$this->attributes = [];
 
 		$attributeRegexp = new Regexp(Liquid::get('TAG_ATTRIBUTES'));
 

@@ -51,6 +51,11 @@ class TagFor extends AbstractBlock
 	private $name;
 
 	/**
+	 * @var string
+	 */
+	private $start;
+
+	/**
 	 * @var string The type of the loop (collection or digit)
 	 */
 	private $type = 'collection';
@@ -60,11 +65,11 @@ class TagFor extends AbstractBlock
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 *
 	 * @throws \Liquid\Exception\ParseException
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
 		parent::__construct($markup, $tokens, $fileSystem);
 
@@ -100,7 +105,7 @@ class TagFor extends AbstractBlock
 	public function render(Context $context)
 	{
 		if (!isset($context->registers['for'])) {
-			$context->registers['for'] = array();
+			$context->registers['for'] = [];
 		}
 
 		if ($this->type == 'digit') {
@@ -115,6 +120,10 @@ class TagFor extends AbstractBlock
 	{
 		$collection = $context->get($this->collectionName);
 
+		if ($collection instanceof \Generator && !$collection->valid()) {
+			return '';
+		}
+
 		if ($collection instanceof \Traversable) {
 			$collection = iterator_to_array($collection);
 		}
@@ -123,7 +132,7 @@ class TagFor extends AbstractBlock
 			return '';
 		}
 
-		$range = array(0, count($collection));
+		$range = [0, count($collection)];
 
 		if (isset($this->attributes['limit']) || isset($this->attributes['offset'])) {
 			$offset = 0;
@@ -134,7 +143,7 @@ class TagFor extends AbstractBlock
 
 			$limit = (isset($this->attributes['limit'])) ? $context->get($this->attributes['limit']) : null;
 			$rangeEnd = $limit ? $limit : count($collection) - $offset;
-			$range = array($offset, $rangeEnd);
+			$range = [$offset, $rangeEnd];
 
 			$context->registers['for'][$this->name] = $rangeEnd + $offset;
 		}
@@ -150,9 +159,9 @@ class TagFor extends AbstractBlock
 
 		$index = 0;
 		foreach ($segment as $key => $item) {
-			$value = is_numeric($key) ? $item : array($key, $item);
+			$value = is_numeric($key) ? $item : [$key, $item];
 			$context->set($this->variableName, $value);
-			$context->set('forloop', array(
+			$context->set('forloop', [
 					'name' => $this->name,
 					'length' => $length,
 					'index' => $index + 1,
@@ -160,8 +169,8 @@ class TagFor extends AbstractBlock
 					'rindex' => $length - $index,
 					'rindex0' => $length - $index - 1,
 					'first' => (int)($index == 0),
-					'last' => (int)($index == $length - 1)
-			));
+					'last' => (int)($index == $length - 1),
+			]);
 
 			$result .= $this->renderAll($this->nodelist, $context);
 
@@ -193,7 +202,7 @@ class TagFor extends AbstractBlock
 			$end = $context->get($this->collectionName);
 		}
 
-		$range = array($start, $end);
+		$range = [$start, $end];
 
 		$context->push();
 		$result = '';
@@ -201,7 +210,7 @@ class TagFor extends AbstractBlock
 		$length = $range[1] - $range[0];
 		for ($i = $range[0]; $i <= $range[1]; $i++) {
 			$context->set($this->variableName, $i);
-			$context->set('forloop', array(
+			$context->set('forloop', [
 				'name'		=> $this->name,
 				'length'	=> $length,
 				'index'		=> $index + 1,
@@ -209,8 +218,8 @@ class TagFor extends AbstractBlock
 				'rindex'	=> $length - $index,
 				'rindex0'	=> $length - $index - 1,
 				'first'		=> (int)($index == 0),
-				'last'		=> (int)($index == $length - 1)
-			));
+				'last'		=> (int)($index == $length - 1),
+			]);
 
 			$result .= $this->renderAll($this->nodelist, $context);
 

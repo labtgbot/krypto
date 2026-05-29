@@ -1,9 +1,11 @@
 {
     "name": "sonata-project/google-authenticator",
-    "description": "Library to integrate Google Authenticator into a PHP project",
-    "keywords": ["google authenticator"],
-    "homepage": "https://github.com/sonata-project/GoogleAuthenticator",
     "type": "library",
+    "description": "Library to integrate Google Authenticator into a PHP project",
+    "keywords": [
+        "google authenticator"
+    ],
+    "homepage": "https://github.com/sonata-project/GoogleAuthenticator",
     "license": "MIT",
     "authors": [
         {
@@ -18,24 +20,31 @@
             "name": "Andre DeMarre",
             "homepage": "http://www.devnetwork.net/viewtopic.php?f=50&t=94989"
         }
-
     ],
     "require": {
-        "php": "^7.0"
+        "php": "^7.3 || ^8.0"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "~3.2",
-        "sllh/php-cs-fixer-styleci-bridge": "^2.1"
+        "symfony/phpunit-bridge": "^5.1.8"
     },
-    "autoload": {
-        "psr-4": { "Google\\Authenticator\\": "src/" }
+    "config": {
+        "sort-packages": true
     },
-    "autoload-dev": {
-        "psr-4": { "Google\\Authenticator\\Tests\\": "tests/" }
-     },
     "extra": {
         "branch-alias": {
             "dev-master": "2.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Google\\Authenticator\\": "src/",
+            "Sonata\\GoogleAuthenticator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Google\\Authenticator\\Tests\\": "tests/",
+            "Sonata\\GoogleAuthenticator\\Tests\\": "tests/"
         }
     }
 }

@@ -1,4 +1,4 @@
-# Liquid template engine for PHP [![Build Status](https://travis-ci.org/kalimatas/php-liquid.svg?branch=master)](https://travis-ci.org/kalimatas/php-liquid) [![Coverage Status](https://coveralls.io/repos/github/kalimatas/php-liquid/badge.svg?branch=master)](https://coveralls.io/github/kalimatas/php-liquid?branch=master) [![Total Downloads](https://poser.pugx.org/liquid/liquid/downloads.svg)](https://packagist.org/packages/liquid/liquid)
+# Liquid template engine for PHP [![CI](https://github.com/kalimatas/php-liquid/actions/workflows/tests.yaml/badge.svg)](https://github.com/kalimatas/php-liquid/actions/workflows/tests.yaml) [![Coverage Status](https://coveralls.io/repos/github/kalimatas/php-liquid/badge.svg?branch=master)](https://coveralls.io/github/kalimatas/php-liquid?branch=master) [![Total Downloads](https://poser.pugx.org/liquid/liquid/downloads.svg)](https://packagist.org/packages/liquid/liquid)
 
 Liquid is a PHP port of the [Liquid template engine for Ruby](https://github.com/Shopify/liquid), which was written by Tobias Lutke. Although there are many other templating engines for PHP, including Smarty (from which Liquid was partially inspired), Liquid had some advantages that made porting worthwhile:
 
@@ -115,9 +115,9 @@ Adding filters has never been easier.
 
 ## Requirements
 
- * PHP 5.6+
+ * PHP 7.4+
 
-Package versions below 1.4 could be used with PHP 5.3/5.4/5.5.
+Some earlier versions could be used with PHP 5.3/5.4/5.5/5.6, though they're not supported anymore.
 
 ## Issues
 

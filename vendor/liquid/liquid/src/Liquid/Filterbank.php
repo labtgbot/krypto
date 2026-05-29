@@ -62,7 +62,7 @@ class Filterbank
 	 * @throws \Liquid\Exception\WrongArgumentException
 	 * @return bool
 	 */
-	public function addFilter($filter, callable $callback = null)
+	public function addFilter($filter, ?callable $callback = null)
 	{
 		// If it is a callback, save it as it is
 		if (is_string($filter) && $callback) {
@@ -98,6 +98,9 @@ class Filterbank
 
 		// Then register all public static and not methods as filters
 		foreach (get_class_methods($filter) as $method) {
+			if (strtolower($method) === '__construct') {
+				continue;
+			}
 			$this->methodMap[$method] = $className;
 		}
 
@@ -113,7 +116,7 @@ class Filterbank
 	 *
 	 * @return string
 	 */
-	public function invoke($name, $value, array $args = array())
+	public function invoke($name, $value, array $args = [])
 	{
 		// workaround for a single standard filter being a reserved keyword - we can't use overloading for static calls
 		if ($name == 'default') {
@@ -145,6 +148,6 @@ class Filterbank
 		}
 
 		// Call a class or an instance method
-		return call_user_func_array(array($class, $name), $args);
+		return call_user_func_array([$class, $name], $args);
 	}
 }

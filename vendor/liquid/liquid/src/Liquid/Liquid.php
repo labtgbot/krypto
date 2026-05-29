@@ -22,7 +22,7 @@ class Liquid
 	 *
 	 * @var array configuration array
 	 */
-	public static $config = array(
+	public static $config = [
 		// The method is called on objects when resolving variables to see
 		// if a given property exists.
 		'HAS_PROPERTY_METHOD' => 'field_exists',
@@ -52,6 +52,9 @@ class Liquid
 		// Prefix for include files.
 		'INCLUDE_PREFIX' => '_',
 
+		// Whitespace control.
+		'WHITESPACE_CONTROL' => '-',
+
 		// Tag start.
 		'TAG_START' => '{%',
 
@@ -67,7 +70,7 @@ class Liquid
 		// Variable name.
 		'VARIABLE_NAME' => '[a-zA-Z_][a-zA-Z_0-9.-]*',
 
-		'QUOTED_STRING' => '"[^"]*"|\'[^\']*\'',
+		'QUOTED_STRING' => '(?:"[^"]*"|\'[^\']*\')',
 		'QUOTED_STRING_FILTER_ARGUMENT' => '"[^"]*"|\'[^\']*\'',
 
 		// Automatically escape any variables unless told otherwise by a "raw" filter
@@ -77,8 +80,27 @@ class Liquid
 		'PAGINATION_REQUEST_KEY' => 'page',
 
 		// The name of the context key used to denote the current page number
-		'PAGINATION_CONTEXT_KEY' => 'page'
-	);
+		'PAGINATION_CONTEXT_KEY' => 'page',
+
+		// Whenever variables from $_SERVER should be directly available to templates
+		'EXPOSE_SERVER' => false,
+
+		// $_SERVER variables whitelist - exposed even when EXPOSE_SERVER is false
+		'SERVER_SUPERGLOBAL_WHITELIST' => [
+			'HTTP_ACCEPT',
+			'HTTP_ACCEPT_CHARSET',
+			'HTTP_ACCEPT_ENCODING',
+			'HTTP_ACCEPT_LANGUAGE',
+			'HTTP_CONNECTION',
+			'HTTP_HOST',
+			'HTTP_REFERER',
+			'HTTP_USER_AGENT',
+			'HTTPS',
+			'REQUEST_METHOD',
+			'REQUEST_URI',
+			'SERVER_NAME',
+		],
+	];
 
 	/**
 	 * Get a configuration setting.
@@ -98,15 +120,15 @@ class Liquid
 		}
 		// This case is needed for compound settings
 		switch ($key) {
-				case 'QUOTED_FRAGMENT':
-					return self::$config['QUOTED_STRING'] . '|(?:[^\s,\|\'"]|' . self::$config['QUOTED_STRING'] . ')+';
-				case 'TAG_ATTRIBUTES':
-					return '/(\w+)\s*\:\s*(' . self::get('QUOTED_FRAGMENT') . ')/';
-				case 'TOKENIZATION_REGEXP':
-					return '/(' . self::$config['TAG_START'] . '.*?' . self::$config['TAG_END'] . '|' . self::$config['VARIABLE_START'] . '.*?' . self::$config['VARIABLE_END'] . ')/';
-				default:
-					return null;
-			}
+			case 'QUOTED_FRAGMENT':
+				return '(?:' . self::get('QUOTED_STRING') . '|[^\s,\|\'"]+)';
+			case 'TAG_ATTRIBUTES':
+				return '/(\w+)\s*\:\s*(' . self::get('QUOTED_FRAGMENT') . ')/';
+			case 'TOKENIZATION_REGEXP':
+				return '/(' . self::$config['TAG_START'] . '.*?' . self::$config['TAG_END'] . '|' . self::$config['VARIABLE_START'] . '.*?' . self::$config['VARIABLE_END'] . ')/s';
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -134,7 +156,7 @@ class Liquid
 	 */
 	public static function arrayFlatten($array)
 	{
-		$return = array();
+		$return = [];
 
 		foreach ($array as $element) {
 			if (is_array($element)) {

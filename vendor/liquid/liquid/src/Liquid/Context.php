@@ -42,7 +42,14 @@ class Context
 	 *
 	 * @var array
 	 */
-	public $environments = array();
+	public $environments = [];
+
+	/**
+	 * Called "sometimes" while rendering. For example to abort the execution of a rendering.
+	 *
+	 * @var null|callable
+	 */
+	private $tickFunction = null;
 
 	/**
 	 * Constructor
@@ -50,13 +57,39 @@ class Context
 	 * @param array $assigns
 	 * @param array $registers
 	 */
-	public function __construct(array $assigns = array(), array $registers = array())
+	public function __construct(array $assigns = [], array $registers = [])
 	{
-		$this->assigns = array($assigns);
+		$this->assigns = [$assigns];
 		$this->registers = $registers;
 		$this->filterbank = new Filterbank($this);
+
 		// first empty array serves as source for overrides, e.g. as in TagDecrement
-		$this->environments = array(array(), $_SERVER);
+		$this->environments = [[], []];
+
+		if (Liquid::get('EXPOSE_SERVER')) {
+			$this->environments[1] = $_SERVER;
+		} else {
+			$this->environments[1] = array_filter(
+				$_SERVER,
+				function ($key) {
+					return in_array(
+						$key,
+						(array)Liquid::get('SERVER_SUPERGLOBAL_WHITELIST')
+					);
+				},
+				ARRAY_FILTER_USE_KEY
+			);
+		}
+	}
+
+	/**
+	 * Sets a tick function, this function is called sometimes while liquid is rendering a template.
+	 *
+	 * @param callable $tickFunction
+	 */
+	public function setTickFunction(callable $tickFunction)
+	{
+		$this->tickFunction = $tickFunction;
 	}
 
 	/**
@@ -64,7 +97,7 @@ class Context
 	 *
 	 * @param mixed $filter
 	 */
-	public function addFilters($filter, callable $callback = null)
+	public function addFilters($filter, ?callable $callback = null)
 	{
 		$this->filterbank->addFilter($filter, $callback);
 	}
@@ -78,9 +111,13 @@ class Context
 	 *
 	 * @return string
 	 */
-	public function invoke($name, $value, array $args = array())
+	public function invoke($name, $value, array $args = [])
 	{
-		return $this->filterbank->invoke($name, $value, $args);
+		try {
+			return $this->filterbank->invoke($name, $value, $args);
+		} catch (\TypeError $typeError) {
+			throw new LiquidException($typeError->getMessage(), 0, $typeError);
+		}
 	}
 
 	/**
@@ -100,7 +137,7 @@ class Context
 	 */
 	public function push()
 	{
-		array_unshift($this->assigns, array());
+		array_unshift($this->assigns, []);
 		return true;
 	}
 
@@ -258,7 +295,7 @@ class Context
 		if (preg_match("|\[[0-9]+\]|", $key)) {
 			$key = preg_replace("|\[([0-9]+)\]|", ".$1", $key);
 		} elseif (preg_match("|\[[0-9a-z._]+\]|", $key, $matches)) {
-			$index = $this->get(str_replace(array("[", "]"), "", $matches[0]));
+			$index = $this->get(str_replace(["[", "]"], "", $matches[0]));
 			if (strlen($index)) {
 				$key = preg_replace("|\[([0-9a-z._]+)\]|", ".$index", $key);
 			}
@@ -272,15 +309,17 @@ class Context
 			// since we still have a part to consider
 			// and since we can't dig deeper into plain values
 			// it can be thought as if it has a property with a null value
-			if (!is_object($object) && !is_array($object)) {
+			if (!is_object($object) && !is_array($object) && !is_string($object)) {
 				return null;
 			}
 
 			// first try to cast an object to an array or value
-			if (method_exists($object, 'toLiquid')) {
-				$object = $object->toLiquid();
-			} elseif (method_exists($object, 'toArray')) {
-				$object = $object->toArray();
+			if (is_object($object)) {
+				if (method_exists($object, 'toLiquid')) {
+					$object = $object->toLiquid();
+				} elseif (method_exists($object, 'toArray')) {
+					$object = $object->toArray();
+				}
 			}
 
 			if (is_null($object)) {
@@ -293,7 +332,27 @@ class Context
 
 			$nextPartName = array_shift($parts);
 
+			if (is_string($object)) {
+				if ($nextPartName == 'size') {
+					// if the last part of the context variable is .size we return the string length
+					return mb_strlen($object);
+				}
+
+				// no other special properties for strings, yet
+				return null;
+			}
+
 			if (is_array($object)) {
+				// if the last part of the context variable is .first we return the first array element
+				if ($nextPartName == 'first' && count($parts) == 0 && !array_key_exists('first', $object)) {
+					return StandardFilters::first($object);
+				}
+
+				// if the last part of the context variable is .last we return the last array element
+				if ($nextPartName == 'last' && count($parts) == 0 && !array_key_exists('last', $object)) {
+					return StandardFilters::last($object);
+				}
+
 				// if the last part of the context variable is .size we just return the count
 				if ($nextPartName == 'size' && count($parts) == 0 && !array_key_exists('size', $object)) {
 					return count($object);
@@ -314,6 +373,13 @@ class Context
 				return null;
 			}
 
+			if ($object instanceof \Countable) {
+				// if the last part of the context variable is .size we just return the count
+				if ($nextPartName == 'size' && count($parts) == 0) {
+					return count($object);
+				}
+			}
+
 			if ($object instanceof Drop) {
 				// if the object is a drop, make sure it supports the given method
 				if (!$object->hasKey($nextPartName)) {
@@ -326,17 +392,23 @@ class Context
 
 			// if it has `get` or `field_exists` methods
 			if (method_exists($object, Liquid::get('HAS_PROPERTY_METHOD'))) {
-				if (!call_user_func(array($object, Liquid::get('HAS_PROPERTY_METHOD')), $nextPartName)) {
+				if (!call_user_func([$object, Liquid::get('HAS_PROPERTY_METHOD')], $nextPartName)) {
 					return null;
 				}
 
-				$object = call_user_func(array($object, Liquid::get('GET_PROPERTY_METHOD')), $nextPartName);
+				$object = call_user_func([$object, Liquid::get('GET_PROPERTY_METHOD')], $nextPartName);
 				continue;
 			}
 
 			// if it's just a regular object, attempt to access a public method
-			if (is_callable(array($object, $nextPartName))) {
-				$object = call_user_func(array($object, $nextPartName));
+			if (is_callable([$object, $nextPartName])) {
+				$object = call_user_func([$object, $nextPartName]);
+				continue;
+			}
+
+			// if a magic accessor method present...
+			if (is_object($object) && method_exists($object, '__get')) {
+				$object = $object->$nextPartName;
 				continue;
 			}
 
@@ -357,7 +429,7 @@ class Context
 		// lastly, try to get an embedded value of an object
 		// value could be of any type, not just string, so we have to do this
 		// conversion here, not later in AbstractBlock::renderAll
-		if (method_exists($object, 'toLiquid')) {
+		if (is_object($object) && method_exists($object, 'toLiquid')) {
 			$object = $object->toLiquid();
 		}
 
@@ -372,5 +444,15 @@ class Context
 		 */
 
 		return $object;
+	}
+
+	public function tick()
+	{
+		if ($this->tickFunction === null) {
+			return;
+		}
+
+		$tickFunction = $this->tickFunction;
+		$tickFunction($this);
 	}
 }

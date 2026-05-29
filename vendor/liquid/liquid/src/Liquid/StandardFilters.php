@@ -18,7 +18,7 @@ use Liquid\Exception\RenderException;
  */
 class StandardFilters
 {
-	
+
 	/**
 	 * Add one string to another
 	 *
@@ -31,7 +31,7 @@ class StandardFilters
 	{
 		return $input . $string;
 	}
-	
+
 
 	/**
 	 * Capitalize words in the input sentence
@@ -43,10 +43,11 @@ class StandardFilters
 	public static function capitalize($input)
 	{
 		return preg_replace_callback("/(^|[^\p{L}'])([\p{Ll}])/u", function ($matches) {
-			return $matches[1] . ucfirst($matches[2]);
+			$first_char = mb_substr($matches[2], 0, 1);
+			return $matches[1] . mb_strtoupper($first_char) . mb_substr($matches[2], 1);
 		}, ucwords($input));
 	}
-	
+
 
 	/**
 	 * @param mixed $input number
@@ -57,30 +58,43 @@ class StandardFilters
 	{
 		return (int) ceil((float)$input);
 	}
-	
+
 
 	/**
-	 * Formats a date using strftime
+	 * Formats a date
 	 *
 	 * @param mixed $input
-	 * @param string $format
+	 * @param string $strftimeFormat (see http://strftime.net)
 	 *
 	 * @return string
 	 */
-	public static function date($input, $format)
+	public static function date($input, $strftimeFormat = '%A, %B %e, %Y at %l:%S %P %z')
 	{
-		if (!is_numeric($input)) {
-			$input = strtotime($input);
+		if (!$strftimeFormat) {
+			return $input;
 		}
 
-		if ($format == 'r') {
-			return date($format, $input);
+		if (is_numeric($input)) {
+			$input = date('Y-m-d H:i:s', $input);
 		}
 
-		return strftime($format, $input);
+		$dateTime = new \DateTime($input);
+		if (!$dateTime) {
+			return "";
+		}
+
+		$dateFormat = str_replace(
+			['at', '%a', '%A', '%d', '%e', '%u', '%w', '%W', '%b', '%h', '%B', '%m', '%y', '%Y', '%D', '%F', '%x', '%n', '%t', '%H', '%k', '%I', '%l', '%M', '%p', '%P', '%r', '%R', '%S', '%T', '%X', '%z', '%Z', '%c', '%s', '%%'],
+			['\a\t', 'D', 'l', 'd', 'j', 'N', 'w', 'W', 'M', 'M', 'F', 'm', 'y', 'Y', 'm/d/y', 'Y-m-d', 'm/d/y', "\n", "\t", 'H', 'G', 'h', 'g', 'i', 'A', 'a', 'h:i:s A', 'H:i', 's', 'H:i:s', 'H:i:s', 'O', 'T', 'D M j H:i:s Y', 'U', '%'],
+			$strftimeFormat
+		);
+
+		$formatted = $dateTime->format($dateFormat);
+
+		return $formatted;
 	}
-	
-	
+
+
 	/**
 	 * Default
 	 *
@@ -94,8 +108,8 @@ class StandardFilters
 		$isBlank = $input == '' || $input === false || $input === null;
 		return $isBlank ? $default_value : $input;
 	}
-	
-	
+
+
 	/**
 	 * division
 	 *
@@ -109,7 +123,7 @@ class StandardFilters
 		return (float)$input / (float)$operand;
 	}
 
-	
+
 	/**
 	 * Convert an input to lowercase
 	 *
@@ -119,10 +133,10 @@ class StandardFilters
 	 */
 	public static function downcase($input)
 	{
-		return is_string($input) ? strtolower($input) : $input;
+		return is_string($input) ? mb_strtolower($input) : $input;
 	}
-	
-	
+
+
 	/**
 	 * Pseudo-filter: negates auto-added escape filter
 	 *
@@ -137,6 +151,43 @@ class StandardFilters
 
 
 	/**
+	 * Converts into JSON string
+	 *
+	 * @param mixed $input
+	 *
+	 * @return string
+	 */
+	public static function json($input)
+	{
+		return json_encode($input);
+	}
+
+	/**
+	 * Creates an array including only the objects with a given property value
+	 * @link https://shopify.github.io/liquid/filters/where/
+	 *
+	 * @param mixed $input
+	 * @param string ...$args
+	 *
+	 * @throws LiquidException
+	 * @return mixed
+	 */
+	public static function where($input, string ...$args)
+	{
+		if (is_array($input)) {
+			switch (count($args)) {
+				case 1:
+					return array_values(array_filter($input, fn ($v) => !in_array($v[$args[0]] ?? null, [null, false], true)));
+				case 2:
+					return array_values(array_filter($input, fn ($v) => ($v[$args[0]] ?? '') == $args[1]));
+				default:
+					throw new LiquidException('Wrong number of arguments to function `where`, given ' . count($args) . ', expected 1 or 2');
+			}
+		}
+		return $input;
+	}
+
+	/**
 	 * Escape a string
 	 *
 	 * @param string $input
@@ -148,6 +199,10 @@ class StandardFilters
 		// Arrays are taken care down the stack with an error
 		if (is_array($input)) {
 			return $input;
+		}
+
+		if (is_null($input)) {
+			return '';
 		}
 
 		return htmlentities($input, ENT_QUOTES);
@@ -187,8 +242,8 @@ class StandardFilters
 		}
 		return is_array($input) ? reset($input) : $input;
 	}
-	
-	
+
+
 	/**
 	 * @param mixed $input number
 	 *
@@ -198,8 +253,8 @@ class StandardFilters
 	{
 		return (int) floor((float)$input);
 	}
-	
-	
+
+
 	/**
 	 * Joins elements of an array with a given character between them
 	 *
@@ -222,8 +277,8 @@ class StandardFilters
 		}
 		return is_array($input) ? implode($glue, $input) : $input;
 	}
-	
-	
+
+
 	/**
 	 * Returns the last element of an array
 	 *
@@ -242,7 +297,7 @@ class StandardFilters
 		}
 		return is_array($input) ? end($input) : $input;
 	}
-	
+
 
 	/**
 	 * @param string $input
@@ -253,8 +308,8 @@ class StandardFilters
 	{
 		return ltrim($input);
 	}
-	
-	
+
+
 	/**
 	 * Map/collect on a given property
 	 *
@@ -280,7 +335,7 @@ class StandardFilters
 			return null;
 		}, $input);
 	}
-	
+
 
 	/**
 	 * subtraction
@@ -294,8 +349,8 @@ class StandardFilters
 	{
 		return (float)$input - (float)$operand;
 	}
-	
-	
+
+
 	/**
 	 * modulo
 	 *
@@ -308,8 +363,8 @@ class StandardFilters
 	{
 		return fmod((float)$input, (float)$operand);
 	}
-	
-	
+
+
 	/**
 	 * Replace each newline (\n) with html break
 	 *
@@ -321,7 +376,7 @@ class StandardFilters
 	{
 		return is_string($input) ? str_replace("\n", "<br />\n", $input) : $input;
 	}
-		
+
 
 	/**
 	 * addition
@@ -335,7 +390,7 @@ class StandardFilters
 	{
 		return (float)$input + (float)$operand;
 	}
-	
+
 
 	/**
 	 * Prepend a string to another
@@ -349,7 +404,7 @@ class StandardFilters
 	{
 		return $string . $input;
 	}
-	
+
 
 	/**
 	 * Remove a substring
@@ -381,7 +436,7 @@ class StandardFilters
 
 		return $input;
 	}
-	
+
 
 	/**
 	 * Replace occurrences of a string with another
@@ -415,8 +470,8 @@ class StandardFilters
 
 		return $input;
 	}
-	
-	
+
+
 	/**
 	 * Reverse the elements of an array
 	 *
@@ -431,8 +486,8 @@ class StandardFilters
 		}
 		return array_reverse($input);
 	}
-	
-	
+
+
 	/**
 	 * Round a number
 	 *
@@ -445,8 +500,8 @@ class StandardFilters
 	{
 		return round((float)$input, (int)$n);
 	}
-	
-	
+
+
 	/**
 	 * @param string $input
 	 *
@@ -457,7 +512,7 @@ class StandardFilters
 		return rtrim($input);
 	}
 
-	
+
 	/**
 	 * Return the size of an array or of an string
 	 *
@@ -489,7 +544,7 @@ class StandardFilters
 		// only plain values and stringable objects left at this point
 		return strlen($input);
 	}
-	
+
 
 	/**
 	 * @param array|\Iterator|string $input
@@ -506,15 +561,13 @@ class StandardFilters
 		if (is_array($input)) {
 			$input = array_slice($input, $offset, $length);
 		} elseif (is_string($input)) {
-			$input = $length === null
-				? substr($input, $offset)
-				: substr($input, $offset, $length);
+			$input = mb_substr($input, $offset, $length);
 		}
 
 		return $input;
 	}
-	
-	
+
+
 	/**
 	 * Sort the elements of an array
 	 *
@@ -534,11 +587,11 @@ class StandardFilters
 			$first = reset($input);
 			if ($first !== false && is_array($first) && array_key_exists($property, $first)) {
 				uasort($input, function ($a, $b) use ($property) {
-					if ($a[$property] == $b[$property]) {
+					if (($a[$property] ?? 0) == ($b[$property] ?? 0)) {
 						return 0;
 					}
 
-					return $a[$property] < $b[$property] ? -1 : 1;
+					return ($a[$property] ?? 0) < ($b[$property] ?? 0) ? -1 : 1;
 				});
 			}
 		}
@@ -568,6 +621,14 @@ class StandardFilters
 	 */
 	public static function split($input, $pattern)
 	{
+		if ($input === '' || $input === null) {
+			return [];
+		}
+
+		if ($pattern === '') {
+			return mb_str_split($input);
+		}
+
 		return explode($pattern, $input);
 	}
 
@@ -581,8 +642,8 @@ class StandardFilters
 	{
 		return trim($input);
 	}
-	
-	
+
+
 	/**
 	 * Removes html tags from text
 	 *
@@ -594,7 +655,7 @@ class StandardFilters
 	{
 		return is_string($input) ? strip_tags($input) : $input;
 	}
-	
+
 
 	/**
 	 * Strip all newlines (\n, \r) from string
@@ -605,11 +666,11 @@ class StandardFilters
 	 */
 	public static function strip_newlines($input)
 	{
-		return is_string($input) ? str_replace(array(
-			"\n", "\r"
-		), '', $input) : $input;
+		return is_string($input) ? str_replace([
+			"\n", "\r",
+		], '', $input) : $input;
 	}
-	
+
 
 	/**
 	 * multiplication
@@ -623,7 +684,7 @@ class StandardFilters
 	{
 		return (float)$input * (float)$operand;
 	}
-	
+
 
 	/**
 	 * Truncate a string down to x characters
@@ -638,7 +699,7 @@ class StandardFilters
 	{
 		if (is_string($input) || is_numeric($input)) {
 			if (strlen($input) > $characters) {
-				return substr($input, 0, $characters) . $ending;
+				return mb_substr($input, 0, $characters) . $ending;
 			}
 		}
 
@@ -667,7 +728,7 @@ class StandardFilters
 
 		return $input;
 	}
-	
+
 
 	/**
 	 * Remove duplicate elements from an array
@@ -694,7 +755,7 @@ class StandardFilters
 	 */
 	public static function upcase($input)
 	{
-		return is_string($input) ? strtoupper($input) : $input;
+		return is_string($input) ? mb_strtoupper($input) : $input;
 	}
 
 

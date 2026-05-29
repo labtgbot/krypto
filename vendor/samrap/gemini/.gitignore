@@ -1,5 +1,0 @@
-report/
-vendor/
-composer.lock
-*.sublime-*
-integration.php

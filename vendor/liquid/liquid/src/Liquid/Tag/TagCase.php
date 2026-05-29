@@ -60,14 +60,14 @@ class TagCase extends Decision
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 *
 	 * @throws \Liquid\Exception\ParseException
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
-		$this->nodelists = array();
-		$this->elseNodelist = array();
+		$this->nodelists = [];
+		$this->elseNodelist = [];
 
 		parent::__construct($markup, $tokens, $fileSystem);
 
@@ -99,15 +99,14 @@ class TagCase extends Decision
 	 */
 	public function unknownTag($tag, $params, array $tokens)
 	{
-		$whenSyntaxRegexp = new Regexp('/' . Liquid::get('QUOTED_FRAGMENT') . '/');
-
 		switch ($tag) {
 			case 'when':
+				$whenSyntax = preg_match_all('/(?<=,|or|^)\s*(' . Liquid::get('QUOTED_FRAGMENT') . ')/', $params, $matches);
 				// push the current nodelist onto the stack and prepare for a new one
-				if ($whenSyntaxRegexp->match($params)) {
+				if ($whenSyntax) {
 					$this->pushNodelist();
-					$this->right = $whenSyntaxRegexp->matches[0];
-					$this->nodelist = array();
+					$this->right = $matches[1];
+					$this->nodelist = [];
 				} else {
 					throw new ParseException("Syntax Error in tag 'case' - Valid when condition: when [condition]"); // harry
 				}
@@ -118,7 +117,7 @@ class TagCase extends Decision
 				$this->pushNodelist();
 				$this->right = null;
 				$this->elseNodelist = &$this->nodelist;
-				$this->nodelist = array();
+				$this->nodelist = [];
 				break;
 
 			default:
@@ -132,7 +131,7 @@ class TagCase extends Decision
 	public function pushNodelist()
 	{
 		if (!is_null($this->right)) {
-			$this->nodelists[] = array($this->right, $this->nodelist);
+			$this->nodelists[] = [$this->right, $this->nodelist];
 		}
 	}
 
@@ -151,12 +150,16 @@ class TagCase extends Decision
 		foreach ($this->nodelists as $data) {
 			list($right, $nodelist) = $data;
 
-			if ($this->equalVariables($this->left, $right, $context)) {
-				$runElseBlock = false;
+			foreach ($right as $var) {
+				if ($this->equalVariables($this->left, $var, $context)) {
+					$runElseBlock = false;
 
-				$context->push();
-				$output .= $this->renderAll($nodelist, $context);
-				$context->pop();
+					$context->push();
+					$output .= $this->renderAll($nodelist, $context);
+					$context->pop();
+
+					break;
+				}
 			}
 		}
 
