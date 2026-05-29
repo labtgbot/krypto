@@ -2,15 +2,23 @@
 
 Analysis date: 2026-05-04
 
+Current product update (2026-05-29): Krypto is now presented as an open ChangeNOW-powered cross-currency swap application. The default public path supports quotes and swap creation without mandatory registration. Krypto is non-custodial: Krypto does not store customer funds, and ChangeNOW executes each exchange. The legacy trading-terminal capabilities below are retained as historical architecture context, migration context, or guarded rollback/admin functionality rather than the primary product positioning.
+
 ## Summary
 
-Krypto is a self-hosted cryptocurrency web platform. It is not a blockchain node, wallet daemon, or standalone exchange engine. It is a PHP web application that combines market data, dashboards, alerts, portfolios, trading integrations, payment gateways, subscriptions, identity verification, admin tools, and chat around external cryptocurrency services.
+Krypto is a self-hosted PHP cryptocurrency web platform whose current product surface is the public ChangeNOW swap flow. It is not a blockchain node, wallet daemon, custodial wallet, or standalone exchange engine. The legacy codebase still contains market data, dashboards, alerts, portfolios, payment gateways, identity verification, admin tools, chat, and migration/rollback pieces around external cryptocurrency services.
 
 The repository is a legacy full-stack PHP application with most runtime dependencies committed into the repository. The first-party PHP code is about 47,500 lines, with additional vendored Composer packages, Bower frontend packages, static assets, translations, and an installer.
 
 ## What The Platform Does
 
-Primary user-facing capabilities:
+Current default user-facing capabilities:
+
+- Public ChangeNOW quote, address validation, swap creation, status lookup, and deposit-instruction rendering.
+- Optional account access for saved settings, linked history, referrals, and account-specific workflows.
+- Admin configuration for ChangeNOW provider credentials, defaults, widget settings, guardrails, support actions, and operational checks.
+
+Legacy or secondary capabilities retained in the PHP codebase:
 
 - Public login, signup, password reset, Google OAuth, Facebook OAuth, and optional Google Authenticator two-factor flow.
 - Authenticated dashboard with configurable market panels, charts, order book views, watchlist, notifications, calculator, portfolio, news, social feeds, and chat.
