@@ -1,6 +1,6 @@
 {
     "name": "labtgbot/krypto",
-    "description": "Legacy PHP cryptocurrency service with trading, market data, payment, subscription, news, and ChangeNOW swap modules.",
+    "description": "Open ChangeNOW-powered non-custodial cross-currency swap application without mandatory registration.",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "dev",

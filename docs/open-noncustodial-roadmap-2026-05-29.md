@@ -48,7 +48,7 @@ and the gaps that justify the new task issues.
   `expires_at` (`ChangeNowMarketRepository.php`). Expiry data exists — only the
   pruning job is missing (see gap 3).
 
-## Verified remaining gaps
+## Verified remaining gaps at analysis time
 
 Each gap below was confirmed in source and maps to one new task issue.
 
@@ -81,11 +81,7 @@ Each gap below was confirmed in source and maps to one new task issue.
    old table contents before running
    `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`.
 
-6. **Product documentation and packaging are stale.** `README.md` still
-   describes Krypto as "online trading, advanced data, market analysis,
-   watchlist, portfolio, subscriptions" and `composer.json` still says
-   "Legacy PHP cryptocurrency service" with `"license": "proprietary"`. Nothing
-   user-facing presents the open, non-custodial, registration-free swap product.
+6. **Product documentation and packaging needed a refresh.** Gap 6 was addressed by issue #74. README and Composer metadata now present Krypto as an open, non-custodial ChangeNOW swap product. The README also explains that the Composer package remains marked `proprietary` until maintainers publish an explicit source license.
 
 7. **Unused legacy dependencies inflate the attack surface.** `composer.json`
    still requires dozens of exchange/payment SDKs (CCXT, Binance, Kraken, GDAX,
@@ -102,5 +98,5 @@ parent tracker is #76.
 - #71 — OPEN-03: Add retention and cleanup job for ChangeNOW data (gap 3).
 - #72 — OPEN-04: Add end-to-end browser tests for the public swap (gap 4).
 - #73 — OPEN-05: Decommission legacy custodial exchange/wallet code and tables (gap 5).
-- #74 — OPEN-06: Refresh README, docs, and Composer metadata for the open product (gap 6).
+- #74 — OPEN-06: Refresh README, docs, and Composer metadata for the open product (gap 6, addressed).
 - #75 — OPEN-07: Prune unused legacy Composer dependencies (gap 7).
