@@ -55,6 +55,10 @@ class ChangeNowGuardrails {
     return ChangeNowEligibility::defaultCopy();
   }
 
+  public static function messages(){
+    return self::defaultComplianceCopy();
+  }
+
   public static function mergeComplianceCopy($copy){
     if(is_string($copy)){
       $decoded = json_decode($copy, true);
