@@ -389,6 +389,16 @@ class App extends MySQL {
     return ($ttl > 0 ? $ttl : 30);
   }
 
+  public function _getChangeNowRetentionAnonymousDays(){
+    $days = intval($this->_getChangeNowSetting('changenow_retention_anonymous_days'));
+    return ($days > 0 ? $days : 30);
+  }
+
+  public function _getChangeNowRetentionCompletedDays(){
+    $days = intval($this->_getChangeNowSetting('changenow_retention_completed_days'));
+    return ($days > 0 ? $days : 365);
+  }
+
   public function _getChangeNowMissingRequiredSettings(){
     if(!$this->_changeNowProviderEnabled()) return [];
 

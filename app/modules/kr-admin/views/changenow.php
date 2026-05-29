@@ -391,6 +391,22 @@ try {
       </div>
       <div class="kr-admin-field">
         <div>
+          <label><?php echo $Lang->tr('Anonymous retention days'); ?></label>
+        </div>
+        <div>
+          <input type="text" name="kr-adm-changenowretentionanonymousdays" value="<?php echo changenow_admin_escape($changeNowSettings['changenow_retention_anonymous_days']); ?>">
+        </div>
+      </div>
+      <div class="kr-admin-field">
+        <div>
+          <label><?php echo $Lang->tr('Completed retention days'); ?></label>
+        </div>
+        <div>
+          <input type="text" name="kr-adm-changenowretentioncompleteddays" value="<?php echo changenow_admin_escape($changeNowSettings['changenow_retention_completed_days']); ?>">
+        </div>
+      </div>
+      <div class="kr-admin-field">
+        <div>
           <label><?php echo $Lang->tr('Debug logging'); ?></label>
         </div>
         <div>

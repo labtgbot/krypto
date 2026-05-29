@@ -4476,7 +4476,9 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (252, 'changenow_debug_logging', '0', 0),
 (253, 'changenow_unsupported_countries', '[]', 0),
 (254, 'changenow_rate_limits', '{"quote":{"limit":30,"window_seconds":60},"transaction":{"limit":6,"window_seconds":60}}', 0),
-(255, 'changenow_compliance_copy', '{"non_custodial_warning":"Krypto does not custody funds. ChangeNOW processes the exchange and controls provider-side timing, limits, and status updates.","unsupported_region":"ChangeNOW swaps are not available in your region under current provider or local policy.","unsupported_pair":"This pair is not available for ChangeNOW exchange right now.","provider_down":"ChangeNOW exchange is temporarily unavailable. Please try again later.","expired_quote":"The quote expired. Request a new quote before creating a transaction.","address_validation_failed":"The destination or refund address could not be validated for the selected asset and network.","rate_limited":"Too many swap requests. Please wait before trying again."}', 0);
+(255, 'changenow_compliance_copy', '{"non_custodial_warning":"Krypto does not custody funds. ChangeNOW processes the exchange and controls provider-side timing, limits, and status updates.","unsupported_region":"ChangeNOW swaps are not available in your region under current provider or local policy.","unsupported_pair":"This pair is not available for ChangeNOW exchange right now.","provider_down":"ChangeNOW exchange is temporarily unavailable. Please try again later.","expired_quote":"The quote expired. Request a new quote before creating a transaction.","address_validation_failed":"The destination or refund address could not be validated for the selected asset and network.","rate_limited":"Too many swap requests. Please wait before trying again."}', 0),
+(256, 'changenow_retention_anonymous_days', '30', 0),
+(257, 'changenow_retention_completed_days', '365', 0);
 
 CREATE TABLE `social_krypto` (
   `id_social` int(11) NOT NULL,
@@ -5146,7 +5148,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
