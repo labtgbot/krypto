@@ -152,9 +152,7 @@ try {
   <script src="https://cdn.linearicons.com/free/1.0.0/svgembedder.min.js"></script>
   <script src="<?php echo APP_URL; ?>/assets/bower/clipboard/dist/clipboard.min.js" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/js/notifications.js" charset="utf-8"></script>
-  <script src="<?php echo APP_URL; ?>/app/modules/kr-trade/statics/js/blockonomics.js" charset="utf-8"></script>
   <script type="text/javascript">
-    blockonomicsCloseOM = true;
     $(document).ready(function(){
       ClipBoard = new ClipboardJS('[data-clipboard-target]');
       ClipBoard.on('success', function(e) {

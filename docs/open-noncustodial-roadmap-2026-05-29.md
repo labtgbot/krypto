@@ -75,11 +75,11 @@ Each gap below was confirmed in source and maps to one new task issue.
    Playwright/browser tests even though CN-05 and CN-13 acceptance criteria
    explicitly call for desktop and mobile browser tests of the swap flow.
 
-5. **Legacy custodial code is isolated but not decommissioned.** 31 connector
-   classes remain under `app/modules/kr-trade/src/` (Binance, Kraken, Gdax, …)
-   plus custodial balance/order/withdraw tables in
-   `install/assets/sql/krypto.sql`. The migration "Definition of Done" defers
-   removal until migration data is handled; that final cleanup is still open.
+5. **Legacy custodial code has an OPEN-05 cleanup path.** The connector classes
+   under `app/modules/kr-trade/src/` and the custodial balance/order/withdraw
+   tables were removed from the fresh installer. Existing installs must archive
+   old table contents before running
+   `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`.
 
 6. **Product documentation and packaging are stale.** `README.md` still
    describes Krypto as "online trading, advanced data, market analysis,

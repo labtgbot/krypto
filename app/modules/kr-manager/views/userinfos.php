@@ -35,9 +35,6 @@ if(!$User->_isAdmin() && !$User->_isManager()) throw new Exception("Permission d
 
 if(empty($_POST) || !isset($_POST['idu']) || empty($_POST['idu'])) throw new Exception("Permission denied", 1);
 
-if($App->_hiddenThirdpartyActive()){
-$Balance = new Balance($User, $App, "real");
-}
 // Init language object
 $Lang = new Lang($User->_getLang(), $App);
 
@@ -46,11 +43,7 @@ $Manager = new Manager($App);
 
 $UserFetched = $Manager->_getUserByManager($_POST['idu']);
 $PageViewed = 'card';
-if(isset($_POST['np']) && !empty($_POST['np']) && in_array($_POST['np'], ['card', 'balances', 'payments', 'withdraw', 'security', 'orders'])) $PageViewed = $_POST['np'];
-
-if($App->_hiddenThirdpartyActive()){
-$BalanceObject = new Balance($UserFetched, $App, 'real');
-}
+if(isset($_POST['np']) && !empty($_POST['np']) && in_array($_POST['np'], ['card', 'payments', 'security'])) $PageViewed = $_POST['np'];
 
 $Charge = $UserFetched->_getCharge($App);
 ?>
@@ -67,13 +60,7 @@ $Charge = $UserFetched->_getCharge($App);
     <nav>
       <ul class="kr-manager-user-profile-tab">
         <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>');" class="<?php if($PageViewed == 'card') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Card'); ?></li>
-        <?php if($App->_hiddenThirdpartyActive()): ?>
-          <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>', 'balances');" class="<?php if($PageViewed == 'balances') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Balances'); ?></li>
-
         <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>', 'payments');" class="<?php if($PageViewed == 'payments') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Payments'); ?></li>
-        <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>', 'withdraw');" class="<?php if($PageViewed == 'withdraw') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Withdraw'); ?></li>
-        <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>', 'orders');" class="<?php if($PageViewed == 'orders') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Orders'); ?></li>
-        <?php endif; ?>
         <li onclick="showManagerUserInfos('<?php echo $_POST['idu']; ?>', 'security');" class="<?php if($PageViewed == 'security') echo 'kr-manager-user-profile-tabs'; ?>"><?php echo $Lang->tr('Security'); ?></li>
       </ul>
     </nav>
@@ -91,24 +78,6 @@ $Charge = $UserFetched->_getCharge($App);
         </div>
 
         <div class="kr-manager-user-profile-mi-btn">
-          <?php if($App->_hiddenThirdpartyActive()){ ?>
-            <?php
-            $EstimatedValueBalance = $BalanceObject->_getEstimationBalance();
-            $EstimatedValueSymbol = $BalanceObject->_getEstimationSymbol();
-            $ConvertedEstimateBalanceBTC = $BalanceObject->_convertCurrency($EstimatedValueBalance, 'USD', 'BTC');
-            ?>
-            <ul class="kr-manager-user-profile-estimatebalance">
-              <li>
-                <span><?php echo $Lang->tr('Estimate balance in'); ?> <i>BTC</i></span>
-                <label><?php echo $App->_formatNumber($ConvertedEstimateBalanceBTC, 2).' BTC'; ?></label>
-              </li>
-              <li>
-                <span><?php echo $Lang->tr('Estimate balance in'); ?> <i>USD</i></span>
-                <label><?php echo $App->_formatNumber($EstimatedValueBalance, 2).' '.$EstimatedValueSymbol; ?></label>
-              </li>
-            </ul>
-
-          <?php } ?>
           <?php if($User->_getUserID() != $UserFetched->_getUserID()): ?>
             <?php if(!($UserFetched->_isAdmin() || $UserFetched->_isManager()) && !$User->_isAdmin()): ?>
               <ul class="kr-manager-user-profile-actionlist">
@@ -237,7 +206,6 @@ $Charge = $UserFetched->_getCharge($App);
             <?php } ?>
           </table>
         </section>
-        <?php if($App->_hiddenThirdpartyActive()){ ?>
         <section>
           <header>
             <h4><?php echo $Lang->tr('Deposit history'); ?></h4>
@@ -245,7 +213,7 @@ $Charge = $UserFetched->_getCharge($App);
           </header>
           <table class="kr-manager-user-profile-table">
             <?php
-              foreach (array_slice($BalanceObject->_getDepositHistory(true), 0, 8) as $key => $infosDeposit) {
+              foreach (array_slice($Manager->_fetchPayments($UserFetched), 0, 8) as $key => $infosDeposit) {
                 ?>
                 <tr>
                   <td>
@@ -279,171 +247,8 @@ $Charge = $UserFetched->_getCharge($App);
             ?>
           </table>
         </section>
-      <?php } ?>
       </section>
-    <?php elseif($PageViewed == "balances" && $App->_hiddenThirdpartyActive()):
-      $BalanceListResum = $BalanceObject->_getBalanceListResum();
-      ?>
-      <form class="kr-manager-form-lst" kr-form-callback-user="<?php echo $_POST['idu']; ?>" action="<?php echo APP_URL; ?>/app/modules/kr-manager/src/actions/modifyBalance.php" method="post">
-        <div class="kr-admin-line kr-admin-line-cls" style="padding:0px;padding-top:15px;">
-          <div class="kr-admin-field">
-            <div>
-              <label><?php echo $Lang->tr('Select balance'); ?></label>
-            </div>
-            <div>
-              <select class="" name="kr-manager-modif-balance-symbol">
-                <?php
-                foreach ($BalanceListResum as $coinSymbol => $coinValue) {
-                  ?>
-                  <option value="<?php echo $coinSymbol; ?>"><?php echo $coinSymbol; ?></option>
-                  <?php
-                }
-                ?>
-              </select>
-            </div>
-          </div>
-          <div class="kr-admin-field">
-            <div>
-              <label><?php echo $Lang->tr('Modification type'); ?></label>
-            </div>
-            <div>
-              <select class="" name="kr-manager-modif-balance-t">
-                <option value="add"><?php echo $Lang->tr('Add'); ?></option>
-                <option value="remove"><?php echo $Lang->tr('Remove'); ?></option>
-              </select>
-            </div>
-          </div>
-          <div class="kr-admin-field">
-            <div>
-              <label><?php echo $Lang->tr('Modification value'); ?></label>
-            </div>
-            <div>
-              <input type="text" name="kr-manager-modif-balance-value" value="0.001">
-            </div>
-          </div>
-        </div>
-        <div class="kr-admin-action" style="padding-right:0px;">
-          <input type="hidden" name="kr-manager-modif-balance-idu" value="<?php echo App::encrypt_decrypt('encrypt', time().'-'.$UserFetched->_getUserID()); ?>">
-          <input type="submit" class="btn btn-orange btn-autowidth" name="" value="<?php echo $Lang->tr('Add modification'); ?>">
-        </div>
-      </form>
-      <section class="kr-manager-user-profile-nlc">
-        <?php
-
-        $CryptoApi = new CryptoApi($User, null, $App);
-        for ($i=0; $i < 2; $i++) {
-        ?>
-        <section>
-          <table class="kr-manager-user-profile-table">
-            <?php
-              foreach (array_slice($BalanceListResum, (count($BalanceListResum) / 2) * $i, count($BalanceListResum) / 2) as $coinSymbol => $coinValue) {
-                $title = $coinSymbol;
-                if($BalanceObject->_symbolIsMoney($coinSymbol)){
-
-                } else {
-                  try {
-                    $Coin = $CryptoApi->_getCoin($coinSymbol);
-                    $title = $Coin->_getCoinName().' ('.$coinSymbol.')';
-                  } catch (\Exception $e) {
-
-                  }
-
-                }
-
-                $convertedBTCValue = 0;
-                if($coinValue > 0) $convertedBTCValue = $BalanceObject->_convertCurrency($coinValue, $coinSymbol, 'BTC');
-
-                ?>
-                <tr>
-                  <td>
-                    <div>
-                      <b><?php echo $title; ?></b>
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-                      <span><?php echo $App->_formatNumber($coinValue, 8).' '.$coinSymbol; ?></span>
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-                      <span><?php echo $App->_formatNumber($convertedBTCValue, 8).' BTC'; ?></span>
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-
-                    </div>
-                  </td>
-                </tr>
-                <?php
-              }
-            ?>
-          </table>
-        </section>
-      <?php } ?>
-      </section>
-    <?php elseif($PageViewed == "orders"):
-      ?>
-
-      <table class="kr-admin-table-view">
-        <thead>
-          <tr>
-            <td><?php echo $Lang->tr('Ref.'); ?></td>
-            <td><?php echo $Lang->tr('Order date'); ?></td>
-            <td><?php echo $Lang->tr('Exchange'); ?></td>
-            <td><?php echo $Lang->tr('Pair'); ?></td>
-            <td><?php echo $Lang->tr('Type'); ?></td>
-            <td><?php echo $Lang->tr('Amount'); ?></td>
-            <td><?php echo $Lang->tr('Received'); ?></td>
-            <td><?php echo $Lang->tr('Fees'); ?></td>
-            <td><?php echo $Lang->tr('Total deducted'); ?></td>
-            <td><?php echo $Lang->tr('Total received'); ?></td>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          foreach ($Manager->_getInternalOrderList($UserFetched) as $key => $orderInfos):
-            ?>
-            <tr>
-              <td>
-                <b><?php echo (strlen($orderInfos['ref_internal_order']) > 0 ? $orderInfos['ref_internal_order'] : $orderInfos['id_user'].'-'.$orderInfos['id_internal_order'] ); ?></b>
-              </td>
-               <td>
-                 <?php echo date('d/m/Y H:i:s', $orderInfos['date_internal_order']); ?>
-               </td>
-               <td>
-                 <?php echo ucfirst($orderInfos['thirdparty_internal_order']); ?>
-               </td>
-               <td>
-                 <?php echo $orderInfos['symbol_internal_order'].'/'.$orderInfos['to_internal_order']; ?>
-               </td>
-               <td>
-                 <?php
-                 if($orderInfos['side_internal_order'] == "SELL") echo '<span class="kr-admin-lst-c-status kr-admin-lst-tag kr-admin-lst-tag-red">'.$Lang->tr('Sell').'</span>';
-                 if($orderInfos['side_internal_order'] == "BUY") echo '<span class="kr-admin-lst-c-status kr-admin-lst-tag kr-admin-lst-tag-green">'.$Lang->tr('Buy').'</span>';
-                 ?>
-               </td>
-               <td>
-                 <?php echo rtrim($App->_formatNumber(($orderInfos['side_internal_order'] == "BUY" ? $orderInfos['usd_amount_internal_order'] : $orderInfos['amount_internal_order']), 8), "0").' '.$orderInfos['symbol_internal_order']; ?>
-               </td>
-               <td>
-                 <?php echo $App->_formatNumber($orderInfos['usd_amount_internal_order'], 8).' '.($orderInfos['side_internal_order'] == "BUY" ? $orderInfos['symbol_internal_order'] : $orderInfos['to_internal_order']); ?>
-               </td>
-               <td>
-                 <span title="<?php echo $App->_formatNumber($orderInfos['fees_internal_order'], 15); ?>"><?php echo $App->_formatNumber($orderInfos['fees_internal_order'], 8).' '.($orderInfos['side_internal_order'] == "BUY" ? $orderInfos['symbol_internal_order'] : $orderInfos['to_internal_order']); ?></span>
-               </td>
-               <td>
-                 <span class="kr-admin-lst-c-status kr-admin-lst-tag kr-admin-lst-tag-red" title="- <?php echo $App->_formatNumber($orderInfos['amount_internal_order'], 15); ?>">- <?php echo $App->_formatNumber($orderInfos['amount_internal_order'], 8).' '.($orderInfos['side_internal_order'] == "BUY" ? $orderInfos['to_internal_order'] : $orderInfos['symbol_internal_order']); ?></span>
-               </td>
-               <td>
-                 <span class="kr-admin-lst-c-status kr-admin-lst-tag kr-admin-lst-tag-green" title="+ <?php echo $App->_formatNumber($orderInfos['usd_amount_internal_order'] - $orderInfos['fees_internal_order'], 15); ?>">+ <?php echo $App->_formatNumber($orderInfos['usd_amount_internal_order'] - $orderInfos['fees_internal_order'], 8).' '.($orderInfos['side_internal_order'] == "BUY" ? $orderInfos['symbol_internal_order'] : $orderInfos['to_internal_order']); ?></span>
-               </td>
-             </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    <?php elseif($PageViewed == "payments" && $App->_hiddenThirdpartyActive()):
+    <?php elseif($PageViewed == "payments"):
 
       ?>
       <table class="kr-admin-table-view">
@@ -463,12 +268,9 @@ $Charge = $UserFetched->_getCharge($App);
         </thead>
         <tbody>
           <?php
-          $WalletListAvailable = $Balance->_getBalanceListResum();
           foreach ($Manager->_fetchPayments($UserFetched) as $key => $infosPayment):
             if($infosPayment['payment_type_deposit_history'] == "Initial") continue;
 
-            $BalanceReceivedSymbol = $App->_getDepositSymbolNotExistConvert();
-            if(array_key_exists($infosPayment['currency_deposit_history'], $WalletListAvailable)) $BalanceReceivedSymbol = $infosPayment['currency_deposit_history'];
             ?>
             <tr>
                <td>

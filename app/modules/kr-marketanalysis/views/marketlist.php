@@ -37,8 +37,6 @@ $Lang = new Lang($User->_getLang(), $App);
 // Init CryptoApi object
 $CryptoApi = new CryptoApi($User, null, $App);
 
-$Trade = new Trade($User, $App);
-
 ?>
 <div class="kr-marketcoinlist">
 
@@ -67,28 +65,22 @@ $Trade = new Trade($User, $App);
       <div class="kr-marketlist-cellnumber kr-mono kr-marketlist-cellnumber-f1"><span><?php echo $Lang->tr('24h High/Low'); ?></span></div>
     </div>
     <?php
-    foreach ($Trade->_getMarketTradeAvailable($CryptoApi, 60, (!isset($_POST['search']) || empty($_POST['search']) ? null : $_POST['search'])) as $Market) {
-      $Coin = $Market['coin'];
-      $CryptoApi = $Market['cryptoapi'];
-      if(is_null($Coin)) continue;
-
-      $Exchange = $Trade->_getExchange($Market['market']['name_thirdparty_crypto']);
-      if(is_null($Exchange)) continue;
+    foreach ($CryptoApi->_getCoinsList(60, true, false, (!isset($_POST['search']) || empty($_POST['search']) ? null : $_POST['search'])) as $Coin) {
 
       $icon = $Coin->_getIcon();
 
       ?>
-      <div class="kr-marketlist-item" kr-symbol-mm="<?php echo $Coin->_getSymbol(); ?>" kr-symbol-tt="<?php echo $CryptoApi->_getCurrencySymbol(); ?>" kr-symbol-market="<?php echo $Market['market']['name_thirdparty_crypto']; ?>">
+      <div class="kr-marketlist-item" kr-symbol-mm="<?php echo $Coin->_getSymbol(); ?>" kr-symbol-tt="<?php echo $CryptoApi->_getCurrencySymbol(); ?>" kr-symbol-market="CCCAGG">
         <?php if(!$App->_getHideMarket()): ?>
           <div class="kr-marketlist-n">
             <div class="kr-marketlist-n-nn">
-              <label class="kr-mono"><?php echo $Exchange->_getName(); ?></label>
+              <label class="kr-mono">CCCAGG</label>
             </div>
           </div>
         <?php endif; ?>
         <div class="kr-marketlist-n">
           <div class="kr-marketlist-n-nn">
-            <label class="kr-mono"><?php echo $Coin->_getSymbol(); ?>/<?php echo $Market['market']['to_thirdparty_crypto']; ?></label>
+            <label class="kr-mono"><?php echo $Coin->_getSymbol(); ?>/<?php echo $CryptoApi->_getCurrency(); ?></label>
           </div>
         </div>
         <div class="kr-marketlist-cellnumber kr-mono">

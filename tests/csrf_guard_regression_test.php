@@ -172,10 +172,12 @@ assert_csrf_contains(
     "\$_POST['id_deposit_history']",
     'askProof.php must read proof-request ids from POST.'
 );
-assert_csrf_guard(
-    array_key_exists('app/modules/kr-trade/src/actions/askWidthdrawApprove.php', $policy['allowlist']),
-    'Tokenized withdrawal approval GET mutation must be documented in the CSRF allowlist.'
-);
+foreach (array_keys($policy['allowlist']) as $allowlistPath) {
+    assert_csrf_guard(
+        strpos($allowlistPath, 'app/modules/kr-trade/') !== 0,
+        'Retired kr-trade endpoints must not remain in the CSRF allowlist: '.$allowlistPath
+    );
+}
 
 echo "CSRF guard regression checks passed.\n";
 

@@ -1463,7 +1463,6 @@ class User extends MySQL {
 
   public function _delete(){
     $tableList = [
-      'balance_krypto' => 'id_user',
       'banktransfert_krypto' => 'id_user',
       'banktransfert_proof_krypto' => 'id_user',
       'blocked_user_chat_krypto' => 'id_user',
@@ -1480,12 +1479,9 @@ class User extends MySQL {
       'holding_krypto' => 'id_user',
       'identity_asset_krypto' => 'id_user',
       'identity_krypto' => 'id_user',
-      'internal_order_krypto' => 'id_user',
-      'leader_board_krypto' => 'id_user',
       'msg_room_chat_krypto' => 'id_user',
       'notification_center_krypto' => 'id_user',
       'notification_krypto' => 'id_user',
-      'order_krypto' => 'id_user',
       'referal_histo_krypto' => 'id_user',
       'referal_krypto' => 'id_user',
       'top_list_krypto' => 'id_user',
@@ -1495,11 +1491,8 @@ class User extends MySQL {
       'user_room_chat_krypto' => 'id_user',
       'user_settings_krypto' => 'id_user',
       'user_status_krypto' => 'id_user',
-      'user_thirdparty_selected_krypto' => 'id_user',
-      'user_widthdraw_krypto' => 'id_user',
       'visits_krypto' => 'id_user',
       'watching_krypto' => 'id_user',
-      'widthdraw_history_krypto' => 'id_user',
       'user_krypto' => 'id_user'
     ];
 

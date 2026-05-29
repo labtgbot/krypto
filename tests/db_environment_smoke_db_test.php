@@ -15,7 +15,7 @@ function assertDbSmokeTrue($condition, $message) {
 
 $pdo = krypto_db_pdo();
 
-assertDbSmokeTrue(krypto_db_table_count($pdo) >= 80, 'Fresh Krypto schema should contain the legacy application tables.');
+assertDbSmokeTrue(krypto_db_table_count($pdo) >= 58, 'Fresh Krypto schema should contain the active non-custodial application tables.');
 
 foreach ([
     'settings_krypto',
@@ -25,6 +25,14 @@ foreach ([
     'changenow_transaction_events_krypto',
 ] as $table) {
     assertDbSmokeTrue(krypto_db_table_exists($pdo, $table), 'Bootstrapped schema missing table: '.$table);
+}
+
+foreach ([
+    'balance_krypto',
+    'thirdparty_crypto_krypto',
+    'widthdraw_history_krypto',
+] as $legacyTable) {
+    assertDbSmokeTrue(!krypto_db_table_exists($pdo, $legacyTable), 'Fresh schema should not create retired legacy custody table: '.$legacyTable);
 }
 
 $settings = $pdo->query('SELECT key_settings, value_settings, encrypted_settings FROM settings_krypto')->fetchAll(PDO::FETCH_ASSOC);

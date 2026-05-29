@@ -172,16 +172,7 @@ function initAdmin(){
 
   $('.kr-admin-boxthird').sortable({
     update: function(event, ui){
-      let exchangeOrder = [];
-      $('.kr-admin-boxthird > div').each(function(){
-        exchangeOrder.push($(this).attr('kr-exchangename'));
-      });
-
-      $.post($('body').attr('hrefapp') + '/app/modules/kr-admin/src/actions/updateTradingExchangeOrder.php', {exchange:JSON.stringify(exchangeOrder)}).done(function(data){
-      
-      }).fail(function(){
-        showAlert('Oops', 'Fail to update exchange order', 'error');
-      });
+      return false;
     }
   });
 

@@ -76,6 +76,8 @@ Recommended order:
 5. Decommission legacy exchange and wallet connection UX after feature parity is confirmed.
 6. Complete data migration, installer defaults, observability, compliance guardrails, and release validation.
 
+OPEN-05 decommissioned the legacy custodial exchange runtime after the ChangeNOW flow was introduced. The connector classes under `app/modules/kr-trade/src`, legacy wallet/exchange route files, and connector logo assets were removed. Fresh installer SQL no longer creates the retired custodial tables, and existing installs should archive legacy table contents before running `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`.
+
 ## Created Implementation Issues
 
 The detailed implementation issues were created on 2026-05-04 from this task plan. Each issue includes objective, current code to review, scope, acceptance criteria, verification, dependency links, and relevant ChangeNOW documentation links.

@@ -106,19 +106,7 @@ class Statistics extends MySQL {
 
     if(!is_null($this->ListWithdrawCache)) return $this->ListWithdrawCache;
 
-    $r = parent::querySqlRequest("SELECT id_widthdraw_history, date_widthdraw_history FROM widthdraw_history_krypto WHERE date_widthdraw_history > :date_deposit_history_start AND date_widthdraw_history < :date_deposit_history_end",
-                                [
-                                  'date_deposit_history_start' => $this->_getStartingDate()->getTimestamp(),
-                                  'date_deposit_history_end' => $this->_getEndingDate()->getTimestamp()
-                                ]);
-
     $res = [];
-    foreach ($r as $key => $value) {
-      $DateTime = new DateTime();
-      $DateTime->setTimestamp($value['date_widthdraw_history']);
-      if(array_key_exists($DateTime->format('d/m/Y'), $res)) $res[$DateTime->format('d/m/Y')] = $res[$DateTime->format('d/m/Y')] + 1;
-      else  $res[$DateTime->format('d/m/Y')] = 1;
-    }
 
     $this->ListWithdrawCache = $res;
 
@@ -158,19 +146,7 @@ class Statistics extends MySQL {
 
     if(!is_null($this->ListOrderCache)) return $this->ListOrderCache;
 
-    $r = parent::querySqlRequest("SELECT id_internal_order, date_internal_order FROM internal_order_krypto WHERE date_internal_order > :date_deposit_history_start AND date_internal_order < :date_deposit_history_end",
-                                [
-                                  'date_deposit_history_start' => $this->_getStartingDate()->getTimestamp(),
-                                  'date_deposit_history_end' => $this->_getEndingDate()->getTimestamp()
-                                ]);
-
     $res = [];
-    foreach ($r as $key => $value) {
-      $DateTime = new DateTime();
-      $DateTime->setTimestamp($value['date_internal_order']);
-      if(array_key_exists($DateTime->format('d/m/Y'), $res)) $res[$DateTime->format('d/m/Y')] = $res[$DateTime->format('d/m/Y')] + 1;
-      else  $res[$DateTime->format('d/m/Y')] = 1;
-    }
 
     $this->ListOrderCache = $res;
 
@@ -225,8 +201,6 @@ class Statistics extends MySQL {
   public function _getFeesList($App){
 
     $currency = [];
-    $balanceUser = [];
-
     $r = parent::querySqlRequest("SELECT * FROM deposit_history_krypto WHERE date_deposit_history > :date_deposit_history_start AND date_deposit_history < :date_deposit_history_end",
                                 [
                                   'date_deposit_history_start' => $this->_getStartingDate()->getTimestamp(),
@@ -235,49 +209,10 @@ class Statistics extends MySQL {
 
     foreach ($r as $key => $value) {
       try {
-        if(!array_key_exists($value['id_user'], $balanceUser)) $balanceUser[$value['id_user']] = new Balance(new User($value['id_user']), $App, 'real');
-        $BalanceUser = $balanceUser[$value['id_user']];
-        if($BalanceUser->_getBalanceID() != $value['balance_deposit_history']) continue;
         $currency = $this->_addFeesList($currency, $value['currency_deposit_history'], $value['amount_deposit_history'], 0, 0, $value['fees_deposit_history']);
       } catch (\Exception $e) {
 
       }
-    }
-
-    $r = parent::querySqlRequest("SELECT * FROM internal_order_krypto WHERE date_internal_order > :date_deposit_history_start AND date_internal_order < :date_deposit_history_end",
-                                [
-                                  'date_deposit_history_start' => $this->_getStartingDate()->getTimestamp(),
-                                  'date_deposit_history_end' => $this->_getEndingDate()->getTimestamp()
-                                ]);
-
-    foreach ($r as $key => $value) {
-      try {
-        if(!array_key_exists($value['id_user'], $balanceUser)) $balanceUser[$value['id_user']] = new Balance(new User($value['id_user']), $App, 'real');
-        $BalanceUser = $balanceUser[$value['id_user']];
-        if($BalanceUser->_getBalanceID() != $value['id_balance']) continue;
-        $currency = $this->_addFeesList($currency, $value['to_internal_order'], 0, $value['amount_internal_order'], 0, $value['fees_internal_order']);
-      } catch (\Exception $e) {
-
-      }
-
-    }
-
-    $r = parent::querySqlRequest("SELECT * FROM widthdraw_history_krypto WHERE date_widthdraw_history > :date_deposit_history_start AND date_widthdraw_history < :date_deposit_history_end",
-                                [
-                                  'date_deposit_history_start' => $this->_getStartingDate()->getTimestamp(),
-                                  'date_deposit_history_end' => $this->_getEndingDate()->getTimestamp()
-                                ]);
-
-    foreach ($r as $key => $value) {
-      try {
-        if(!array_key_exists($value['id_user'], $balanceUser)) $balanceUser[$value['id_user']] = new Balance(new User($value['id_user']), $App, 'real');
-        $BalanceUser = $balanceUser[$value['id_user']];
-        if($BalanceUser->_getBalanceID() != $value['id_balance']) continue;
-        $currency = $this->_addFeesList($currency, $value['symbol_widthdraw_history'], 0, 0, $value['amount_widthdraw_history'], $value['fees_widthdraw_history']);
-      } catch (\Exception $e) {
-
-      }
-
     }
 
     return $currency;

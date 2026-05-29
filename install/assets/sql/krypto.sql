@@ -8,21 +8,12 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
-
 CREATE TABLE `additional_pages_krypto` (
   `id_additional_pages` int(11) NOT NULL,
   `name_additional_pages` varchar(50) NOT NULL,
   `url_additional_pages` text NOT NULL,
   `icon_additional_pages` varchar(255) NOT NULL,
   `svg_additional_pages` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `balance_krypto` (
-  `id_balance` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `type_balance` varchar(20) NOT NULL,
-  `created_balance` varchar(12) NOT NULL,
-  `active_balance` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `banktransfert_accountavailable_krypto` (
@@ -58,34 +49,6 @@ CREATE TABLE `banktransfert_proof_krypto` (
   `id_user` int(11) NOT NULL,
   `url_banktransfert_proof` text NOT NULL,
   `date_banktransfert_proof` varchar(15) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `binance_krypto` (
-  `id_binance` int(11) NOT NULL,
-  `key_binance` longtext NOT NULL,
-  `secret_binance` longtext NOT NULL,
-  `id_user` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `bitbank_krypto` (
-  `id_bitbank` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_bitbank` text NOT NULL,
-  `secret_bitbank` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `bitmex_krypto` (
-  `id_bitmex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_bitmex` text NOT NULL,
-  `secret_bitmex` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `bittrex_krypto` (
-  `id_bittrex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `api_key_bittrex` longtext NOT NULL,
-  `api_secret_bittrex` longtext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `blocked_user_chat_krypto` (
@@ -137,26 +100,11 @@ CREATE TABLE `block_exp_tx_krypto` (
   `date_block_exp_tx` varchar(12) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `btcmarket_krypto` (
-  `id_btcmarket` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_btcmarket` text NOT NULL,
-  `secret_btcmarket` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `cache_krypto` (
   `id_cache` int(11) NOT NULL,
   `service_cache` longtext NOT NULL,
   `value_cache` longtext NOT NULL,
   `last_update_cache` varchar(12) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `cex_krypto` (
-  `id_cex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_cex` longtext NOT NULL,
-  `secret_cex` longtext NOT NULL,
-  `uid_cex` longtext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `charges_krypto` (
@@ -299,13 +247,6 @@ CREATE TABLE `changenow_sync_status_krypto` (
   `pairs_count_changenow_sync` int(11) NOT NULL DEFAULT '0',
   `started_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0',
   `finished_at_changenow_sync` varchar(15) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `coinex_krypto` (
-  `id_coinex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_coinex` text NOT NULL,
-  `secret_coinex` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `coinlist_krypto` (
@@ -3509,13 +3450,6 @@ INSERT INTO `coinlist_krypto` (`id_coinlist`, `currencyid_coinlist`, `symbol_coi
 (3177, 811717, 'XTROPTIO', 'TROPTIONS (XTROPTIONS)', 'TROPTIONS', 2460, 'N/A', 'PoW', '/coins/xtroptions/overview', 1, 'cryptocompare'),
 (3178, 892415, 'BITSILVE', 'bitSilver (BITSILVER)', 'bitSilver', 2758, 'N/A', 'N/A', '/coins/bitsilver/overview', 1, 'cryptocompare');
 
-CREATE TABLE `coinspot_krypto` (
-  `id_coinspot` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_coinspot` text NOT NULL,
-  `secret_coinspot` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `converter_krypto` (
   `id_converter` int(11) NOT NULL,
   `id_user` int(11) NOT NULL,
@@ -3910,54 +3844,11 @@ CREATE TABLE `deposit_history_proof_krypto` (
   `reason__deposit_history_proof` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `ethfinex_krypto` (
-  `id_ethfinex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_ethfinex` longtext NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `exchanges_krypto` (
   `id_exchanges` int(11) NOT NULL,
   `market_exchanges` varchar(50) NOT NULL,
   `symbol_exchanges` varchar(50) NOT NULL,
   `currency_exchanges` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `exchanges_withdraw_krypto` (
-  `id_exchanges_withdraw` int(11) NOT NULL,
-  `symbol_exchanges_withdraw` varchar(50) NOT NULL,
-  `exchange_exchanges_withdraw` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `exmo_krypto` (
-  `id_exmo` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_exmo` text NOT NULL,
-  `secret_exmo` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gateio_krypto` (
-  `id_gateio` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_gateio` text NOT NULL,
-  `secret_gateio` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gdax_krypto` (
-  `id_gdax` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_gdax` text NOT NULL,
-  `pass_gdax` text NOT NULL,
-  `secret_gdax` text NOT NULL,
-  `live_gdax` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gemini_krypto` (
-  `id_gemini` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_gemini` longtext NOT NULL,
-  `secret_gemini` longtext NOT NULL,
-  `live_gemini` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `googletfs_krypto` (
@@ -3982,13 +3873,6 @@ CREATE TABLE `histo_krypto` (
   `type_histo` varchar(75) NOT NULL,
   `last_update_histo` varchar(20) NOT NULL,
   `data_histo` longtext NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `hitbtc2_krypto` (
-  `id_hitbtc2` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_hitbtc2` text NOT NULL,
-  `secret_hitbtc2` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `holding_krypto` (
@@ -4052,59 +3936,6 @@ CREATE TABLE `indicators_krypto` (
   `title_indicators` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `internal_order_krypto` (
-  `id_internal_order` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `date_internal_order` varchar(12) NOT NULL,
-  `id_balance` int(11) NOT NULL,
-  `thirdparty_internal_order` varchar(50) NOT NULL,
-  `amount_internal_order` float NOT NULL DEFAULT '0',
-  `usd_amount_internal_order` float NOT NULL DEFAULT '0',
-  `symbol_internal_order` varchar(50) NOT NULL,
-  `fees_internal_order` varchar(50) NOT NULL,
-  `order_key_internal_order` text NOT NULL,
-  `side_internal_order` varchar(20) NOT NULL DEFAULT 'BUY',
-  `to_internal_order` varchar(50) NOT NULL DEFAULT 'USD',
-  `ref_internal_order` varchar(255) NOT NULL,
-  `type_internal_order` varchar(50) DEFAULT 'market',
-  `status_internal_order` int(11) NOT NULL DEFAULT '1',
-  `ordered_price_internal_order` varchar(50) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `kraken_krypto` (
-  `id_kraken` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_kraken` longtext NOT NULL,
-  `private_kraken` longtext NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `kucoin_krypto` (
-  `id_kucoin` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_kucoin` longtext NOT NULL,
-  `secret_kucoin` longtext NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `leader_board_krypto` (
-  `id_leader_board` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `benef_leader_board` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `livecoin_krypto` (
-  `id_livecoin` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_livecoin` text NOT NULL,
-  `secret_livecoin` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `luno_krypto` (
-  `id_luno` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_luno` text NOT NULL,
-  `secret_luno` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `msg_room_chat_krypto` (
   `id_msg_room_chat` int(11) NOT NULL,
   `id_room_chat` int(11) NOT NULL,
@@ -4138,31 +3969,6 @@ CREATE TABLE `notification_krypto` (
   `currency_notification` varchar(50) NOT NULL DEFAULT 'USD'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `okcoinusd_krypto` (
-  `id_okcoinusd` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_okcoinusd` text NOT NULL,
-  `secret_okcoinusd` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `okex_krypto` (
-  `id_okex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_okex` text NOT NULL,
-  `secret_okex` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `order_krypto` (
-  `id_order` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `time_order` varchar(50) NOT NULL,
-  `type_order` varchar(5) NOT NULL DEFAULT 'BUY',
-  `amount_order` varchar(50) NOT NULL,
-  `symbol_order` varchar(20) NOT NULL,
-  `currency_order` varchar(15) NOT NULL,
-  `thirdparty_order` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `paygateway_krypto` (
   `id_paygateway` int(11) NOT NULL,
   `name_paygateway` varchar(255) NOT NULL,
@@ -4180,20 +3986,6 @@ CREATE TABLE `plan_krypto` (
 INSERT INTO `plan_krypto` (`id_plan`, `name_plan`, `price_plan`, `ndays_plan`) VALUES
 (4, '1 Month', 990, 31),
 (5, '1 Year', 9504, 365);
-
-CREATE TABLE `poloniex_krypto` (
-  `id_poloniex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_poloniex` text NOT NULL,
-  `secret_poloniex` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `quoinex_krypto` (
-  `id_quoinex` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_quoinex` text NOT NULL,
-  `secret_quoinex` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `referal_histo_krypto` (
   `referal_histo_id` int(11) NOT NULL,
@@ -4492,17 +4284,6 @@ INSERT INTO `social_krypto` (`id_social`, `type_social`, `user_social`) VALUES
 (11, 'twitter', 'Bitcoin'),
 (13, 'twitter', 'litecoinqueen');
 
-CREATE TABLE `thirdparty_crypto_krypto` (
-  `id_thirdparty_crypto` int(11) NOT NULL,
-  `symbol_thirdparty_crypto` varchar(12) NOT NULL,
-  `to_thirdparty_crypto` varchar(20) NOT NULL,
-  `name_thirdparty_crypto` varchar(50) NOT NULL,
-  `min_thirdparty_crypto` varchar(15) NOT NULL,
-  `max_thirdparty_crypto` varchar(15) NOT NULL,
-  `active_thirdparty_crypto` tinyint(1) NOT NULL DEFAULT '1',
-  `precision_amount_thirdparty_crypto` varchar(11) NOT NULL DEFAULT '3'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `top_list_krypto` (
   `id_top_list` int(11) NOT NULL,
   `symbol_top_list` varchar(20) NOT NULL,
@@ -4574,20 +4355,6 @@ CREATE TABLE `user_status_krypto` (
   `type_user_status` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `user_thirdparty_selected_krypto` (
-  `id_user_thirdparty_selected` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `name_user_thirdparty_selected` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `user_widthdraw_krypto` (
-  `id_user_widthdraw` int(11) NOT NULL,
-  `type_user_widthdraw` varchar(50) NOT NULL,
-  `value_user_widthdraw` text NOT NULL,
-  `date_user_widthdraw` varchar(15) NOT NULL,
-  `id_user` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `visits_krypto` (
   `id_visits` int(11) NOT NULL,
   `id_user` int(11) NOT NULL,
@@ -4603,35 +4370,8 @@ CREATE TABLE `watching_krypto` (
   `market` varchar(50) NOT NULL DEFAULT 'CCCAGG'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `widthdraw_history_krypto` (
-  `id_widthdraw_history` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `id_balance` int(11) NOT NULL,
-  `amount_widthdraw_history` varchar(50) NOT NULL,
-  `date_widthdraw_history` varchar(12) NOT NULL,
-  `status_widthdraw_history` int(11) NOT NULL DEFAULT '0',
-  `paypal_widthdraw_history` varchar(150) NOT NULL,
-  `token_widthdraw_history` text NOT NULL,
-  `description_widthdraw_history` varchar(150) NOT NULL,
-  `symbol_widthdraw_history` varchar(50) NOT NULL DEFAULT 'USD',
-  `method_widthdraw_history` int(11) NOT NULL DEFAULT '0',
-  `fees_widthdraw_history` varchar(50) NOT NULL DEFAULT '0',
-  `ref_widthdraw_history` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `yobit_krypto` (
-  `id_yobit` int(11) NOT NULL,
-  `id_user` int(11) NOT NULL,
-  `key_yobit` text NOT NULL,
-  `secret_yobit` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
 ALTER TABLE `additional_pages_krypto`
   ADD PRIMARY KEY (`id_additional_pages`);
-
-ALTER TABLE `balance_krypto`
-  ADD PRIMARY KEY (`id_balance`);
 
 ALTER TABLE `banktransfert_accountavailable_krypto`
   ADD PRIMARY KEY (`id_banktransfert_accountavailable`);
@@ -4641,18 +4381,6 @@ ALTER TABLE `banktransfert_krypto`
 
 ALTER TABLE `banktransfert_proof_krypto`
   ADD PRIMARY KEY (`id_banktransfert_proof`);
-
-ALTER TABLE `binance_krypto`
-  ADD PRIMARY KEY (`id_binance`);
-
-ALTER TABLE `bitbank_krypto`
-  ADD PRIMARY KEY (`id_bitbank`);
-
-ALTER TABLE `bitmex_krypto`
-  ADD PRIMARY KEY (`id_bitmex`);
-
-ALTER TABLE `bittrex_krypto`
-  ADD PRIMARY KEY (`id_bittrex`);
 
 ALTER TABLE `blocked_user_chat_krypto`
   ADD PRIMARY KEY (`id_blocked_user_chat`);
@@ -4672,14 +4400,8 @@ ALTER TABLE `block_exp_address_list_krypto`
 ALTER TABLE `block_exp_tx_krypto`
   ADD PRIMARY KEY (`id_block_exp_tx`);
 
-ALTER TABLE `btcmarket_krypto`
-  ADD PRIMARY KEY (`id_btcmarket`);
-
 ALTER TABLE `cache_krypto`
   ADD PRIMARY KEY (`id_cache`);
-
-ALTER TABLE `cex_krypto`
-  ADD PRIMARY KEY (`id_cex`);
 
 ALTER TABLE `charges_krypto`
   ADD PRIMARY KEY (`id_charges`);
@@ -4736,14 +4458,8 @@ ALTER TABLE `changenow_sync_status_krypto`
   ADD UNIQUE KEY `sync_key_changenow_sync` (`sync_key_changenow_sync`),
   ADD KEY `status_changenow_sync` (`status_changenow_sync`);
 
-ALTER TABLE `coinex_krypto`
-  ADD PRIMARY KEY (`id_coinex`);
-
 ALTER TABLE `coinlist_krypto`
   ADD PRIMARY KEY (`id_coinlist`);
-
-ALTER TABLE `coinspot_krypto`
-  ADD PRIMARY KEY (`id_coinspot`);
 
 ALTER TABLE `converter_krypto`
   ADD PRIMARY KEY (`id_converter`);
@@ -4766,24 +4482,6 @@ ALTER TABLE `deposit_history_krypto`
 ALTER TABLE `deposit_history_proof_krypto`
   ADD PRIMARY KEY (`id_deposit_history_proof`);
 
-ALTER TABLE `ethfinex_krypto`
-  ADD PRIMARY KEY (`id_ethfinex`);
-
-ALTER TABLE `exchanges_withdraw_krypto`
-  ADD PRIMARY KEY (`id_exchanges_withdraw`);
-
-ALTER TABLE `exmo_krypto`
-  ADD PRIMARY KEY (`id_exmo`);
-
-ALTER TABLE `gateio_krypto`
-  ADD PRIMARY KEY (`id_gateio`);
-
-ALTER TABLE `gdax_krypto`
-  ADD PRIMARY KEY (`id_gdax`);
-
-ALTER TABLE `gemini_krypto`
-  ADD PRIMARY KEY (`id_gemini`);
-
 ALTER TABLE `googletfs_krypto`
   ADD PRIMARY KEY (`id_googletfs`);
 
@@ -4793,9 +4491,6 @@ ALTER TABLE `graph_krypto`
 
 ALTER TABLE `histo_krypto`
   ADD PRIMARY KEY (`id_histo`);
-
-ALTER TABLE `hitbtc2_krypto`
-  ADD PRIMARY KEY (`id_hitbtc2`);
 
 ALTER TABLE `holding_krypto`
   ADD PRIMARY KEY (`id_holding`);
@@ -4817,24 +4512,6 @@ ALTER TABLE `identity_step_krypto`
 ALTER TABLE `indicators_krypto`
   ADD PRIMARY KEY (`id_indicators`);
 
-ALTER TABLE `internal_order_krypto`
-  ADD PRIMARY KEY (`id_internal_order`);
-
-ALTER TABLE `kraken_krypto`
-  ADD PRIMARY KEY (`id_kraken`);
-
-ALTER TABLE `kucoin_krypto`
-  ADD PRIMARY KEY (`id_kucoin`);
-
-ALTER TABLE `leader_board_krypto`
-  ADD PRIMARY KEY (`id_leader_board`);
-
-ALTER TABLE `livecoin_krypto`
-  ADD PRIMARY KEY (`id_livecoin`);
-
-ALTER TABLE `luno_krypto`
-  ADD PRIMARY KEY (`id_luno`);
-
 ALTER TABLE `msg_room_chat_krypto`
   ADD PRIMARY KEY (`id_msg_room_chat`);
 
@@ -4844,26 +4521,11 @@ ALTER TABLE `notification_center_krypto`
 ALTER TABLE `notification_krypto`
   ADD PRIMARY KEY (`id_notification`);
 
-ALTER TABLE `okcoinusd_krypto`
-  ADD PRIMARY KEY (`id_okcoinusd`);
-
-ALTER TABLE `okex_krypto`
-  ADD PRIMARY KEY (`id_okex`);
-
-ALTER TABLE `order_krypto`
-  ADD PRIMARY KEY (`id_order`);
-
 ALTER TABLE `paygateway_krypto`
   ADD PRIMARY KEY (`id_paygateway`);
 
 ALTER TABLE `plan_krypto`
   ADD PRIMARY KEY (`id_plan`);
-
-ALTER TABLE `poloniex_krypto`
-  ADD PRIMARY KEY (`id_poloniex`);
-
-ALTER TABLE `quoinex_krypto`
-  ADD PRIMARY KEY (`id_quoinex`);
 
 ALTER TABLE `referal_histo_krypto`
   ADD PRIMARY KEY (`referal_histo_id`);
@@ -4882,11 +4544,6 @@ ALTER TABLE `settings_krypto`
 
 ALTER TABLE `social_krypto`
   ADD PRIMARY KEY (`id_social`);
-
-ALTER TABLE `thirdparty_crypto_krypto`
-  ADD PRIMARY KEY (`id_thirdparty_crypto`),
-  ADD UNIQUE KEY `name_thirdparty_crypto` (`name_thirdparty_crypto`,`to_thirdparty_crypto`,`symbol_thirdparty_crypto`),
-  ADD UNIQUE KEY `symbol_thirdparty_crypto` (`symbol_thirdparty_crypto`,`to_thirdparty_crypto`,`name_thirdparty_crypto`);
 
 ALTER TABLE `top_list_krypto`
   ADD PRIMARY KEY (`id_top_list`);
@@ -4912,30 +4569,14 @@ ALTER TABLE `user_settings_krypto`
 ALTER TABLE `user_status_krypto`
   ADD PRIMARY KEY (`id_user_status`);
 
-ALTER TABLE `user_thirdparty_selected_krypto`
-  ADD PRIMARY KEY (`id_user_thirdparty_selected`);
-
-ALTER TABLE `user_widthdraw_krypto`
-  ADD PRIMARY KEY (`id_user_widthdraw`);
-
 ALTER TABLE `visits_krypto`
   ADD PRIMARY KEY (`id_visits`);
 
 ALTER TABLE `watching_krypto`
   ADD PRIMARY KEY (`id_watching`);
 
-ALTER TABLE `widthdraw_history_krypto`
-  ADD PRIMARY KEY (`id_widthdraw_history`);
-
-ALTER TABLE `yobit_krypto`
-  ADD PRIMARY KEY (`id_yobit`);
-
-
 ALTER TABLE `additional_pages_krypto`
   MODIFY `id_additional_pages` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `balance_krypto`
-  MODIFY `id_balance` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=245;
 
 ALTER TABLE `banktransfert_accountavailable_krypto`
   MODIFY `id_banktransfert_accountavailable` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
@@ -4945,18 +4586,6 @@ ALTER TABLE `banktransfert_krypto`
 
 ALTER TABLE `banktransfert_proof_krypto`
   MODIFY `id_banktransfert_proof` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
-ALTER TABLE `binance_krypto`
-  MODIFY `id_binance` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
-ALTER TABLE `bitbank_krypto`
-  MODIFY `id_bitbank` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `bitmex_krypto`
-  MODIFY `id_bitmex` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `bittrex_krypto`
-  MODIFY `id_bittrex` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `blocked_user_chat_krypto`
   MODIFY `id_blocked_user_chat` int(11) NOT NULL AUTO_INCREMENT;
@@ -4976,14 +4605,8 @@ ALTER TABLE `block_exp_address_list_krypto`
 ALTER TABLE `block_exp_tx_krypto`
   MODIFY `id_block_exp_tx` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
-ALTER TABLE `btcmarket_krypto`
-  MODIFY `id_btcmarket` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `cache_krypto`
   MODIFY `id_cache` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12644;
-
-ALTER TABLE `cex_krypto`
-  MODIFY `id_cex` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `charges_krypto`
   MODIFY `id_charges` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
@@ -5009,14 +4632,8 @@ ALTER TABLE `changenow_referral_attribution_krypto`
 ALTER TABLE `changenow_sync_status_krypto`
   MODIFY `id_changenow_sync` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `coinex_krypto`
-  MODIFY `id_coinex` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `coinlist_krypto`
   MODIFY `id_coinlist` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3179;
-
-ALTER TABLE `coinspot_krypto`
-  MODIFY `id_coinspot` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 ALTER TABLE `converter_krypto`
   MODIFY `id_converter` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
@@ -5039,24 +4656,6 @@ ALTER TABLE `deposit_history_krypto`
 ALTER TABLE `deposit_history_proof_krypto`
   MODIFY `id_deposit_history_proof` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
-ALTER TABLE `ethfinex_krypto`
-  MODIFY `id_ethfinex` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `exchanges_withdraw_krypto`
-  MODIFY `id_exchanges_withdraw` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=153;
-
-ALTER TABLE `exmo_krypto`
-  MODIFY `id_exmo` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `gateio_krypto`
-  MODIFY `id_gateio` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `gdax_krypto`
-  MODIFY `id_gdax` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `gemini_krypto`
-  MODIFY `id_gemini` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `googletfs_krypto`
   MODIFY `id_googletfs` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=737;
 
@@ -5065,9 +4664,6 @@ ALTER TABLE `graph_krypto`
 
 ALTER TABLE `histo_krypto`
   MODIFY `id_histo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9895;
-
-ALTER TABLE `hitbtc2_krypto`
-  MODIFY `id_hitbtc2` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `holding_krypto`
   MODIFY `id_holding` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
@@ -5087,24 +4683,6 @@ ALTER TABLE `identity_step_krypto`
 ALTER TABLE `indicators_krypto`
   MODIFY `id_indicators` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
-ALTER TABLE `internal_order_krypto`
-  MODIFY `id_internal_order` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=257;
-
-ALTER TABLE `kraken_krypto`
-  MODIFY `id_kraken` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
-ALTER TABLE `kucoin_krypto`
-  MODIFY `id_kucoin` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `leader_board_krypto`
-  MODIFY `id_leader_board` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
-
-ALTER TABLE `livecoin_krypto`
-  MODIFY `id_livecoin` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `luno_krypto`
-  MODIFY `id_luno` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `msg_room_chat_krypto`
   MODIFY `id_msg_room_chat` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
@@ -5114,26 +4692,11 @@ ALTER TABLE `notification_center_krypto`
 ALTER TABLE `notification_krypto`
   MODIFY `id_notification` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
-ALTER TABLE `okcoinusd_krypto`
-  MODIFY `id_okcoinusd` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `okex_krypto`
-  MODIFY `id_okex` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
-ALTER TABLE `order_krypto`
-  MODIFY `id_order` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
 ALTER TABLE `paygateway_krypto`
   MODIFY `id_paygateway` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 ALTER TABLE `plan_krypto`
   MODIFY `id_plan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
-ALTER TABLE `poloniex_krypto`
-  MODIFY `id_poloniex` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `quoinex_krypto`
-  MODIFY `id_quoinex` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `referal_histo_krypto`
   MODIFY `referal_histo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
@@ -5152,9 +4715,6 @@ ALTER TABLE `settings_krypto`
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
-
-ALTER TABLE `thirdparty_crypto_krypto`
-  MODIFY `id_thirdparty_crypto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38296;
 
 ALTER TABLE `top_list_krypto`
   MODIFY `id_top_list` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12595;
@@ -5180,23 +4740,12 @@ ALTER TABLE `user_settings_krypto`
 ALTER TABLE `user_status_krypto`
   MODIFY `id_user_status` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
-ALTER TABLE `user_thirdparty_selected_krypto`
-  MODIFY `id_user_thirdparty_selected` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
-ALTER TABLE `user_widthdraw_krypto`
-  MODIFY `id_user_widthdraw` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
-
 ALTER TABLE `visits_krypto`
   MODIFY `id_visits` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4439;
 
 ALTER TABLE `watching_krypto`
   MODIFY `id_watching` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=427;
 
-ALTER TABLE `widthdraw_history_krypto`
-  MODIFY `id_widthdraw_history` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
-
-ALTER TABLE `yobit_krypto`
-  MODIFY `id_yobit` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -91,7 +91,7 @@ function initManager(){
       if(resp.error == 1) showAlert('Oops', resp.msg, 'error');
       else showAlert(resp.title, resp.msg);
 
-      showManagerUserInfos(idUseredChanged, 'orders');
+      showManagerUserInfos(idUseredChanged, 'payments');
 
     }).fail(function(){ // If fail to post (505, 404), show error message
       showAlert('Oops', 'Error : Fail to change balance (check php error log)', 'error');
@@ -361,22 +361,8 @@ function _initStatsChartMain(){
 }
 
 function _showWithdrawMethod(id){
-
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-manager/src/actions/viewWitdhrawMethod.php', {id:id}).done(function(data){
-    try {
-      let infosJson = jQuery.parseJSON(data);
-      if(infosJson.error == 1){
-        showAlert('Oops', infosJson.msg, 'error');
-      }
-    } catch (e) {
-      $.when($('body').prepend(data)).then(function(){
-        _initWithdrawMethodViewController();
-      });
-    }
-  }).fail(function(){
-    showAlert('Oops', 'Fail to load view method withdraw popup')
-  });
-
+  showAlert('Oops', 'Legacy withdraw methods are retired', 'error');
+  return false;
 }
 
 function _initWithdrawMethodViewController(){

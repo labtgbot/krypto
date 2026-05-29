@@ -13,7 +13,7 @@ class Manager extends MySQL {
   }
 
   public function _getListSection(){
-    $s = ['Statistics', 'Bank transferts', 'Payments', 'Subscriptions', 'Identity', 'Users', 'Orders', 'Withdraw', 'ChangeNOW swaps'];
+    $s = ['Statistics', 'Bank transferts', 'Payments', 'Subscriptions', 'Identity', 'Users', 'ChangeNOW swaps'];
     if(!$this->_getApp()->_getIdentityEnabled()){
       unset($s[4]);
     }
@@ -244,65 +244,11 @@ class Manager extends MySQL {
   }
 
   public function _getInternalOrderList($user = null, $Query = null, $StartDate = null, $EndDate = null){
-    if(!is_null($user)){
-      return parent::querySqlRequest("SELECT * FROM internal_order_krypto WHERE id_user=:id_user ORDER BY date_internal_order DESC",
-                                    [
-                                      'id_user' => $user->_getUserID()
-                                    ]);
-
-    }
-
-    if(!is_null($Query)){
-      return parent::querySqlRequest("SELECT * FROM internal_order_krypto WHERE
-                                      id_user LIKE :query_search OR
-                                      ref_internal_order LIKE :query_search OR
-                                      CONCAT(id_user, '-', id_internal_order) LIKE :query_search OR
-                                      symbol_internal_order LIKE :query_search OR
-                                      to_internal_order LIKE :query_search OR
-                                      CONCAT(symbol_internal_order, '/', to_internal_order) LIKE :query_search OR
-                                      CONCAT(symbol_internal_order, '', to_internal_order) LIKE :query_search OR
-                                      thirdparty_internal_order LIKE :query_search
-                                      ORDER BY date_internal_order DESC",
-                                    ['query_search' => '%'.$Query.'%']);
-    }
-
-    if(!is_null($StartDate) && !is_null($EndDate)){
-      $StartDate->setTime(0,0,0);
-      $EndDate->setTime(23,59,59);
-      return parent::querySqlRequest("SELECT * FROM internal_order_krypto WHERE
-                                      date_internal_order > :date_internal_order_start AND
-                                      date_internal_order < :date_internal_order_end
-                                      ORDER BY date_internal_order DESC",
-                                    [
-                                      'date_internal_order_start' => $StartDate->getTimestamp(),
-                                      'date_internal_order_end' => $EndDate->getTimestamp()
-                                    ]);
-
-    }
-
-    return parent::querySqlRequest("SELECT * FROM internal_order_krypto ORDER BY date_internal_order DESC");
+    return [];
   }
 
   public function _modifiyUserBalance($userid, $value, $type, $symbol){
-
-    $infosUser = explode('-', App::encrypt_decrypt('decrypt', $userid));
-    if(count($infosUser) != 2) throw new Exception("Permission denied", 1);
-    $UserFetched = new User($infosUser[1]);
-
-    $BalanceFetched = new Balance($UserFetched, $this->_getApp(), 'real');
-
-    if(!array_key_exists($symbol, $BalanceFetched->_getBalanceListResum())) throw new Exception("Error : Symbol (".$symbol.") is not available in balance list", 1);
-
-    if($type == "remove" && $BalanceFetched->_getBalanceListResum()[$symbol] < $value) throw new Exception("Error : You can't remove ".$value." ".$symbol.", current value : ".$BalanceFetched->_getBalanceListResum()[$symbol]." ".$symbol, 1);
-
-
-    $BalanceFetched->_addDeposit(($type == "add" ? $value : ($value * -1)), 'Manager_update',
-                                'Manager update '.($type == "add" ? '+' : '-').$value.' '.$symbol, $symbol,
-                                "",
-                                ($this->_getApp()->_getPaymentApproveNeeded() ? 2 : 1), $symbol);
-
-    return ($type == "add" ? $BalanceFetched->_getBalanceListResum()[$symbol] + $value : $BalanceFetched->_getBalanceListResum()[$symbol] - $value);
-
+    throw new Exception("Legacy custody balances are retired", 1);
   }
 
   public function _getNumberManagerNotification($type = 'all'){
@@ -316,11 +262,6 @@ class Manager extends MySQL {
 
     if($type == "all" || $type == "identity"){
       $r = parent::querySqlRequest("SELECT * FROM identity_krypto WHERE status_identity=:status_identity", ['status_identity' => 0]);
-      $nNotification += count($r);
-    }
-
-    if($type == "all" || $type == "withdraw"){
-      $r = parent::querySqlRequest("SELECT * FROM widthdraw_history_krypto WHERE status_widthdraw_history=:status_widthdraw_history", ['status_widthdraw_history' => 0]);
       $nNotification += count($r);
     }
 

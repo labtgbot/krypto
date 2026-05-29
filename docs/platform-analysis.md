@@ -189,11 +189,12 @@ Installation flow:
 Recurring jobs tracked by the admin cron page:
 
 - `app/src/CryptoApi/actions/CheckNotification.php` every 60 seconds.
-- `app/modules/kr-trade/src/actions/generateLeaderBoard.php` every 18,000 seconds.
 - `app/src/App/actions/cronCleanCache.php` every 3,600 seconds.
 - `app/src/CryptoApi/actions/SyncExchanges.php` every 43,200 seconds.
 - `app/src/CryptoApi/actions/SyncCoin.php` every 43,200 seconds.
-- `app/modules/kr-trade/src/actions/CronLimitOrder.php` every 60 seconds.
+
+OPEN-05 removed the legacy leaderboard and limit-order cron endpoints from
+`app/modules/kr-trade/src/actions/`.
 
 ## Current Repository Health
 
@@ -207,7 +208,6 @@ Observed during this analysis:
 - Composer CLI was not available in the local execution environment, so Composer validation and platform requirement checks could not be run locally.
 - PHP CLI 8.3.30 syntax validation completed for 370 first-party PHP files with no parse errors.
 - PHP 8.3 emitted deprecation notices for optional parameters declared before required parameters in:
-  - `app/modules/kr-trade/src/0Exchange.php`
   - `app/modules/kr-payment/src/Banktransfert.php`
   - `app/src/Lang/Lang.php`
   - `app/src/CryptoApi/CryptoOrder.php`

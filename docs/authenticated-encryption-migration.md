@@ -14,8 +14,10 @@ These values must use `App::_encryptSecret()` for new writes and
   OAuth, reCAPTCHA, calendar, POEditor, payment gateway credentials, and
   ChangeNOW credentials.
 - Payment gateway credentials submitted by `app/modules/kr-admin/src/actions/savePayment.php`.
-- User and global exchange API credentials submitted by
-  `app/modules/kr-trade/src/actions/saveThirdpartySettings.php`.
+- ChangeNOW credentials submitted through the admin provider settings.
+- Legacy exchange credential writes previously submitted by
+  `app/modules/kr-trade/src/actions/saveThirdpartySettings.php` were removed in
+  OPEN-05 with the legacy custodial exchange runtime.
 - Google 2FA secrets in `googletfs_krypto.secret_googletfs`.
 - Password reset links, account activation links, and withdraw confirmation
   links that currently need to recover plaintext routing data.
@@ -69,7 +71,7 @@ cannot be silently moved between supported algorithms.
 2. All new settings writes with `$encrypt = true` now use
    `App::_encryptSecret()` and update `encrypted_settings` on both INSERT and
    UPDATE.
-3. Admin payment and exchange credential saves now write AEAD ciphertext. Rows
+3. Admin payment and ChangeNOW credential saves now write AEAD ciphertext. Rows
    that are edited through those forms migrate naturally on save.
 4. Google 2FA, password reset, activation, and withdraw confirmation flows write
    AEAD tokens/secrets immediately. Existing links and rows continue to decrypt

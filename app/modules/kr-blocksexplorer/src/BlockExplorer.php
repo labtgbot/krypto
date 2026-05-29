@@ -49,9 +49,6 @@ class BlockExplorer extends MySQL {
       return true;
     }
 
-    $Addresslist = $this->_getDepositAddress();
-    $BalanceUserReal = [];
-
     foreach ($transaction_list as $key => $transaction) {
       $infosTransaction = parent::querySqlRequest("SELECT * FROM block_exp_tx_krypto WHERE tx_block_exp_tx=:tx_block_exp_tx",
                                   [
@@ -86,42 +83,12 @@ class BlockExplorer extends MySQL {
         if($infosTransaction['status_block_exp_tx'] == '1') continue;
       }
 
-      if(!array_key_exists($infosTransaction['symbol_block_exp_tx'], $Addresslist)){
-        error_log('Fail to fetch deposit address (Wallet not found)');
-        continue;
-      }
-
-      $DataTransfert = json_decode($infosTransaction['data_block_exp_tx'], true);
-
-      $AddressInfos = $Addresslist[$infosTransaction['symbol_block_exp_tx']];
-
-      if($AddressInfos->_getNbVerification() > $infosTransaction['confirmations_block_exp_tx']) continue;
-
-      $assignedWallet = parent::querySqlRequest("SELECT * FROM user_widthdraw_krypto WHERE value_user_widthdraw LIKE :value_user_widthdraw AND value_user_widthdraw LIKE :value_user_widthdraw_symbol AND type_user_widthdraw=:type_user_widthdraw",
-                                               [
-                                                 'value_user_widthdraw' => '%"address":"'.$DataTransfert['from'].'"%',
-                                                 'value_user_widthdraw_symbol' => '%"cryptocurrency_name":"'.$infosTransaction['symbol_block_exp_tx'].'",%',
-                                                 'type_user_widthdraw' => 'cryptocurrencies'
-                                               ]);
-
-      if(count($assignedWallet) == 0){
-        error_log('Fail to fetch assigned transaction');
-        continue;
-      }
-
-      $assignedWallet = $assignedWallet[0];
-
-      $UserAssigned = new User($assignedWallet['id_user']);
-      $BalanceAssigned = new Balance($UserAssigned, $this->_getApp(), 'real');
-
-      $BalanceAssigned->_addDeposit($DataTransfert['value'], 'direct_deposit', 'Direct deposit ('.$DataTransfert['value'].' '.$DataTransfert['symbol'].')',
-                                    $DataTransfert['symbol'], $DataTransfert['hash'], 1);
-
-      $updateTransaction = parent::execSqlRequest("UPDATE block_exp_tx_krypto SET status_block_exp_tx=:status_block_exp_tx WHERE id_block_exp_tx=:id_block_exp_tx",
-                                                  [
-                                                    'id_block_exp_tx' => $infosTransaction['id_block_exp_tx'],
-                                                    'status_block_exp_tx' => '1'
-                                                  ]);
+      error_log('Direct deposit assignment is disabled because legacy custody wallets are retired');
+      parent::execSqlRequest("UPDATE block_exp_tx_krypto SET status_block_exp_tx=:status_block_exp_tx WHERE id_block_exp_tx=:id_block_exp_tx",
+                            [
+                              'id_block_exp_tx' => $infosTransaction['id_block_exp_tx'],
+                              'status_block_exp_tx' => '1'
+                            ]);
 
 
     }

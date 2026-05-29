@@ -99,9 +99,8 @@ $savePaymentSource = file_get_contents($root.'/app/modules/kr-admin/src/actions/
 assertTrueAuthenticatedEncryption(strpos($savePaymentSource, "App::encrypt_decrypt('encrypt', \$_POST['kr-adm-") === false, 'Payment credentials must not be newly written with legacy CBC.');
 assertTrueAuthenticatedEncryption(strpos($savePaymentSource, 'App::_encryptSecret') !== false, 'Payment credentials must use authenticated encryption.');
 
-$thirdpartySource = file_get_contents($root.'/app/modules/kr-trade/src/actions/saveThirdpartySettings.php');
-assertTrueAuthenticatedEncryption(strpos($thirdpartySource, "App::encrypt_decrypt('encrypt', \$_POST[") === false, 'Exchange credentials must not be newly written with legacy CBC.');
-assertTrueAuthenticatedEncryption(strpos($thirdpartySource, 'App::_encryptSecret') !== false, 'Exchange credentials must use authenticated encryption.');
+$legacyThirdpartyAction = $root.'/app/modules/kr-trade/src/actions/saveThirdpartySettings.php';
+assertTrueAuthenticatedEncryption(!file_exists($legacyThirdpartyAction), 'Legacy exchange credential action must be removed after OPEN-05.');
 
 $userSource = file_get_contents($root.'/app/src/User/User.php');
 assertTrueAuthenticatedEncryption(strpos($userSource, "secret_googletfs' => App::_encryptSecret") !== false, 'Google 2FA secrets must use authenticated encryption.');
@@ -110,12 +109,13 @@ assertTrueAuthenticatedEncryption(strpos($userSource, 'USER_RESET_LINK') !== fal
 assertTrueAuthenticatedEncryption(strpos($userSource, '$activationCode = App::_encryptSecret') !== false, 'Activation links must use authenticated encryption.');
 
 $balanceSource = file_get_contents($root.'/app/modules/kr-trade/src/Balance.php');
-assertTrueAuthenticatedEncryption(strpos($balanceSource, 'App::_encryptSecret($token)') !== false, 'Withdraw confirmation tokens must use authenticated encryption.');
-assertTrueAuthenticatedEncryption(strpos($balanceSource, 'App::_decryptSecret($token)') !== false, 'Withdraw confirmation tokens must decrypt through authenticated helper with legacy fallback.');
+assertTrueAuthenticatedEncryption(strpos($balanceSource, 'App::encrypt_decrypt(\'encrypt\', $token') === false, 'Retired withdraw confirmation tokens must not be newly written with legacy CBC.');
+assertTrueAuthenticatedEncryption(strpos($balanceSource, 'App::_encryptSecret($token)') === false, 'Legacy withdraw confirmation tokens are retired with custodial withdrawals.');
 
 $migrationDoc = $root.'/docs/authenticated-encryption-migration.md';
 assertTrueAuthenticatedEncryption(file_exists($migrationDoc), 'Authenticated encryption migration plan must be documented.');
 $migrationDocSource = file_get_contents($migrationDoc);
+assertTrueAuthenticatedEncryption(strpos($migrationDocSource, 'legacy custodial exchange runtime') !== false, 'Migration documentation must note that legacy exchange credential writes were retired.');
 foreach ([
     'Production Use Inventory',
     'Versioned Ciphertext Format',

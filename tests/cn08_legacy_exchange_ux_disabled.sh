@@ -39,6 +39,17 @@ assert_not_contains() {
   fi
 }
 
+assert_missing() {
+  local path="$1"
+  local message="$2"
+
+  if [[ -e "$path" ]]; then
+    fail "$message"
+  else
+    pass "$message"
+  fi
+}
+
 assert_php_lints() {
   local file="$1"
 
@@ -49,58 +60,74 @@ assert_php_lints() {
   fi
 }
 
-assert_contains app/src/App/App.php 'function _legacyExchangeConnectionsEnabled' 'legacy exchange rollback flag exists'
+assert_contains app/src/App/App.php 'function _legacyExchangeConnectionsEnabled' 'legacy exchange rollback flag exists for old settings reads'
 assert_contains install/assets/sql/krypto.sql "'legacy_exchange_connections_enabled', '0'" 'fresh installs disable legacy exchange setup'
-
-assert_not_contains app/modules/kr-user/views/account.php 'kr-user-v="(exchanges|widthdraw)"' 'account navigation has no exchange or wallet setup tabs'
-assert_not_contains app/modules/kr-coin/views/coin.php '_showThirdpartySetup|Login with' 'coin view does not prompt for exchange API login'
-assert_not_contains app/modules/kr-admin/views/trading.php '_showThirdpartySetup|kr-adm-chk-enablenativetrading|kr-admin-boxthird|Configure exchanges|Ex : BTC = Binance' 'admin trading view exposes no legacy exchange credential controls'
 assert_contains app/modules/kr-admin/views/trading.php 'ChangeNOW' 'admin trading view shows ChangeNOW provider status'
 assert_contains app/modules/kr-admin/src/actions/saveTrading.php '_legacyExchangeConnectionsEnabled\(\)' 'admin trading save ignores forged legacy settings unless rollback flag is enabled'
 
-assert_not_contains app/modules/kr-dashboard/statics/js/chartTrade.js 'connectThirdparty\.php|saveThirdpartySettings\.php|removeThirdparty\.php' 'dashboard JavaScript has no legacy exchange setup routes'
-assert_not_contains app/modules/kr-trade/statics/js/balance.js 'changeMainThirdparty\.php' 'balance JavaScript has no legacy exchange switch route'
+legacy_runtime_paths=(
+  app/modules/kr-trade/src/0Exchange.php
+  app/modules/kr-trade/src/Trade.php
+  app/modules/kr-trade/src/Widthdraw.php
+  app/modules/kr-trade/src/HiddenThirdParty.php
+  app/modules/kr-trade/src/Binance.php
+  app/modules/kr-trade/src/Kraken.php
+  app/modules/kr-trade/src/Gdax.php
+  app/modules/kr-trade/src/Yobit.php
+  app/modules/kr-trade/src/actions
+  app/modules/kr-trade/views
+  app/modules/kr-trade/statics
+  assets/img/icons/trade
+)
 
-legacy_guarded_routes=(
+for legacy_path in "${legacy_runtime_paths[@]}"; do
+  assert_missing "$legacy_path" "legacy exchange runtime files are removed: $legacy_path"
+done
+
+legacy_route_paths=(
   app/modules/kr-user/views/exchanges.php
   app/modules/kr-user/views/widthdraw.php
-  app/modules/kr-trade/views/connectThirdparty.php
-  app/modules/kr-trade/views/initWidthdraw.php
-  app/modules/kr-trade/src/actions/saveThirdpartySettings.php
-  app/modules/kr-trade/src/actions/removeThirdparty.php
-  app/modules/kr-trade/src/actions/changeMainThirdparty.php
-  app/modules/kr-trade/src/actions/balanceList.php
-  app/modules/kr-trade/src/actions/initWidthdrawAccount.php
   app/modules/kr-admin/views/walletaddress.php
   app/modules/kr-admin/views/autowithdrawconfigure.php
   app/modules/kr-admin/src/actions/saveWallets.php
   app/modules/kr-admin/src/actions/saveWithdrawExchange.php
+  app/modules/kr-payment/views/directdeposit.php
 )
 
-for route in "${legacy_guarded_routes[@]}"; do
-  assert_contains "$route" '_legacyExchangeConnectionsEnabled\(\)' "legacy flag guards $route"
+for legacy_path in "${legacy_route_paths[@]}"; do
+  assert_missing "$legacy_path" "legacy exchange or wallet route is removed: $legacy_path"
+done
+
+active_files=(
+  dashboard.php
+  app/modules/kr-user/views/account.php
+  app/modules/kr-admin/views/trading.php
+  app/modules/kr-dashboard/src/actions/loadChart.php
+  app/modules/kr-dashboard/src/actions/loadChartContent.php
+  app/modules/kr-dashboard/statics/js/chartTrade.js
+  app/modules/kr-dashboard/statics/js/leftinfos.js
+  app/modules/kr-coin/views/coin.php
+  app/modules/kr-coin/statics/js/script.js
+)
+
+for active_file in "${active_files[@]}"; do
+  assert_not_contains "$active_file" 'connectThirdparty\.php|saveThirdpartySettings\.php|removeThirdparty\.php|changeMainThirdparty\.php|balanceList\.php|initWidthdrawAccount\.php|placeTrade\.php|getOrderList\.php' "active file has no legacy exchange action routes: $active_file"
+  assert_not_contains "$active_file" 'new Trade\(|new HiddenThirdParty\(|new Widthdraw\(' "active file does not instantiate removed legacy classes: $active_file"
 done
 
 php_files=(
   app/src/App/App.php
-  app/modules/kr-user/views/account.php
-  app/modules/kr-user/views/exchanges.php
-  app/modules/kr-user/views/widthdraw.php
-  app/modules/kr-trade/views/connectThirdparty.php
-  app/modules/kr-trade/views/initWidthdraw.php
-  app/modules/kr-trade/src/actions/saveThirdpartySettings.php
-  app/modules/kr-trade/src/actions/removeThirdparty.php
-  app/modules/kr-trade/src/actions/changeMainThirdparty.php
-  app/modules/kr-trade/src/actions/balanceList.php
-  app/modules/kr-trade/src/actions/initWidthdrawAccount.php
+  app/modules/kr-trade/src/Balance.php
   app/modules/kr-admin/views/trading.php
-  app/modules/kr-admin/views/walletaddress.php
-  app/modules/kr-admin/views/autowithdrawconfigure.php
-  app/modules/kr-admin/src/actions/saveWallets.php
-  app/modules/kr-admin/src/actions/saveWithdrawExchange.php
+  app/modules/kr-admin/views/bankaccounts.php
   app/modules/kr-admin/src/actions/saveTrading.php
   app/modules/kr-dashboard/src/actions/loadChartContent.php
+  app/modules/kr-dashboard/src/actions/loadChart.php
+  app/modules/kr-dashboard/views/dashboard.php
   app/modules/kr-coin/views/coin.php
+  app/modules/kr-marketanalysis/views/marketlist.php
+  app/modules/kr-manager/views/payments.php
+  app/modules/kr-manager/views/userinfos.php
 )
 
 for php_file in "${php_files[@]}"; do

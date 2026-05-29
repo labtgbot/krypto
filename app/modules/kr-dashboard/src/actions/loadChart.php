@@ -94,25 +94,6 @@ try {
     }
 
     $internalOrderList = [];
-    if($App->_hiddenThirdpartyActive() && false){
-
-      $Trade = new Trade($User, $App);
-      $TraderUser = [];
-      foreach ($Trade->_getInternalOrderList($Coin->_getSymbol()) as $key => $orderData) {
-        if(!array_key_exists($orderData['id_user'], $TraderUser)) $TraderUser[$orderData['id_user']] = new User($orderData['id_user']);
-
-        $internalOrderList[] = [
-          'name' => $TraderUser[$orderData['id_user']]->_getName(),
-          'picture' => $TraderUser[$orderData['id_user']]->_getPicture(),
-          'type' => $orderData['side_internal_order'],
-          'me' => $orderData['id_user'] == $User->_getUserID(),
-          'amount' => $orderData['usd_amount_internal_order'],
-          'date' => date('d/m/Y H:i', $orderData['date_internal_order']).':00',
-          'order_id' => $orderData['id_internal_order']
-        ];
-      }
-
-    }
 
 
 

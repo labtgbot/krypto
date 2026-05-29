@@ -356,20 +356,7 @@ function reloadTotalAmount(){
 }
 
 function reloadTradesList(symbol, to, market, type = 'load'){
-  if($('.kr-cinf-order-filledorder').length > 0){
-    $.get($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/getOrderList.php', {symbol:symbol, currency:to, type:type, market:market.toLowerCase()}).done(function(data){
-      //console.log(data);
-      let jsonRes = jQuery.parseJSON(data);
-
-      if(jsonRes.error == 1){
-        showAlert('Oops', jsonRes.msg, 'error');
-      } else {
-        applyOrderGraphListCoinPage(jsonRes.orders, jsonRes.show_market);
-      }
-    }).fail(function(){
-      showAlert('Oops', 'Fail to reload trades list');
-    });
-  }
+  return false;
 }
 
 

@@ -214,28 +214,8 @@ function loadOrderGraphList(symbol, currency, market = null){
 
   clearTimeout(TimeoutOrderListGraph);
   TimeoutOrderListGraph = null;
-
-  $.each($('.kr-dash-orderlistpassed-lst').find('> li'), function(){
-    if($(this).attr('kr-orderlist-pair') != symbol + "" + currency) $(this).remove();
-  });
-
-  $.get($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/getOrderList.php', {symbol:symbol, currency:currency, market:market}).done(function(data){
-    let objReturn = jQuery.parseJSON(data);
-    if(objReturn.error == 1){
-      showAlert('Oops', objReturn.msg, 'error');
-    } else {
-      objReturn.native = objReturn.native == 1;
-      applyOrderGraphList(objReturn.orders, objReturn.show_market);
-
-      TimeoutOrderListGraph = setTimeout(function(){
-        updateOrderGraphList(symbol, currency, market);
-      }, 2500);
-
-      $('.kr-dash-orderlistpassed-pairname').html(" - " + (!objReturn.show_market ? objReturn.market + " - " : "") + objReturn.pair);
-    }
-  }).fail(function(){
-    showAlert('Oops', 'Fail to load order list graph', 'error');
-  })
+  $('.kr-dash-orderlistpassed-lst').find('> li').remove();
+  return false;
 }
 
 function applyOrderGraphList(orders, native = false){
