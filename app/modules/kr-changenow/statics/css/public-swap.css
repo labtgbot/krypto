@@ -56,6 +56,13 @@ body.kr-public-swap-enabled > footer {
   width: 100%;
 }
 
+.kr-public-swap-shell,
+.kr-public-swap-shell *,
+.kr-public-swap-shell *::before,
+.kr-public-swap-shell *::after {
+  box-sizing: border-box;
+}
+
 .kr-public-swap-topbar {
   display: flex;
   min-height: 44px;
