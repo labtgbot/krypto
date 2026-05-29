@@ -252,6 +252,48 @@ $validationException = assertExceptionClass('ChangeNowApiValidationException', f
 }, 'Invalid destination address should stop transaction creation');
 assertSameValue('Destination address is not valid.', $validationException->_getUserMessage(), 'Address validation error should be user-safe');
 
+$blockedClient = new ChangeNowPublicSwapFakeClient();
+$blockedMarketData = new ChangeNowPublicSwapFakeMarketData();
+$blockedRepository = new ChangeNowPublicSwapFakeRepository();
+$blockedFlow = new ChangeNowPublicSwapFlow($blockedClient, $blockedMarketData, $blockedRepository, null, null, [
+    'provider_enabled' => true,
+    'enabled_flows' => ['standard'],
+    'default_flow' => 'standard',
+    'default_from_asset' => 'btc',
+    'default_from_network' => 'btc',
+    'default_to_asset' => 'eth',
+    'default_to_network' => 'eth',
+    'request_country' => 'US',
+    'blocked_countries' => ['US'],
+    'compliance_copy' => [
+        'unsupported_region' => 'Custom unsupported-region copy.',
+    ],
+]);
+
+$blockedQuoteException = assertExceptionClass('ChangeNowApiValidationException', function() use ($blockedFlow) {
+    $blockedFlow->_getQuote([
+        'fromAsset' => 'btc:btc',
+        'toAsset' => 'eth:eth',
+        'amount' => '0.01',
+        'flow' => 'standard',
+    ]);
+}, 'Blocked request country should stop quote requests before provider calls');
+assertSameValue('Custom unsupported-region copy.', $blockedQuoteException->_getUserMessage(), 'Blocked quote should use compliance copy');
+assertSameValue(0, count($blockedMarketData->quoteRequests), 'Blocked quote should not call market data');
+
+$blockedCreateException = assertExceptionClass('ChangeNowApiValidationException', function() use ($blockedFlow) {
+    $blockedFlow->_createSwap([
+        'fromAsset' => 'btc:btc',
+        'toAsset' => 'eth:eth',
+        'amount' => '0.01',
+        'destinationAddress' => 'recipient-address',
+        'flow' => 'standard',
+    ], 'session-key-blocked', null);
+}, 'Blocked request country should stop transaction creation before provider calls');
+assertSameValue('Custom unsupported-region copy.', $blockedCreateException->_getUserMessage(), 'Blocked create should use compliance copy');
+assertSameValue(0, count($blockedClient->validated), 'Blocked create should not validate address with ChangeNOW');
+assertSameValue(0, count($blockedClient->created), 'Blocked create should not call ChangeNOW create');
+
 assertExceptionClass('ChangeNowApiValidationException', function() use ($flow) {
     $flow->_createSwap([
         'fromAsset' => 'btc:btc',

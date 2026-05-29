@@ -9,6 +9,12 @@ $ChangeNowInitialState = [
   'defaultTo' => ['currency' => 'eth', 'network' => 'eth'],
   'sourceAssets' => [],
   'destinationAssets' => [],
+  'eligibility' => [
+    'allowed' => true,
+    'state' => 'allowed',
+    'message' => '',
+    'country' => ''
+  ],
   'supportEmail' => ''
 ];
 $ChangeNowUserLogged = (isset($User) && $User->_isLogged());
@@ -26,6 +32,16 @@ try {
 }
 
 $ChangeNowStatusToken = (isset($_GET['swap_token']) ? trim((string) $_GET['swap_token']) : '');
+$ChangeNowRegionEligibility = (array_key_exists('eligibility', $ChangeNowInitialState) && is_array($ChangeNowInitialState['eligibility']) ? $ChangeNowInitialState['eligibility'] : [
+  'allowed' => true,
+  'state' => 'allowed',
+  'message' => '',
+  'country' => ''
+]);
+$ChangeNowRegionAllowed = (!array_key_exists('allowed', $ChangeNowRegionEligibility) || $ChangeNowRegionEligibility['allowed'] !== false);
+$ChangeNowRegionDisabled = ($ChangeNowRegionAllowed ? '' : ' disabled');
+$ChangeNowRegionMessage = (array_key_exists('message', $ChangeNowRegionEligibility) ? (string) $ChangeNowRegionEligibility['message'] : '');
+if(trim($ChangeNowRegionMessage) == '') $ChangeNowRegionMessage = 'ChangeNOW swaps are not available in your region under current provider or local policy.';
 
 if(!function_exists('changenow_public_asset_options')){
   function changenow_public_asset_options($assets, $selectedCurrency, $selectedNetwork){
@@ -39,12 +55,30 @@ if(!function_exists('changenow_public_asset_options')){
   }
 }
 
+if(!function_exists('changenow_public_swap_tr')){
+  function changenow_public_swap_tr($text){
+    global $Lang;
+    $text = (string) $text;
+    if(is_object($Lang) && method_exists($Lang, 'tr')){
+      try {
+        return $Lang->tr($text);
+      } catch (Throwable $e) {
+        return $text;
+      }
+    }
+
+    return $text;
+  }
+}
+
 ?>
 <section
   class="kr-public-swap-shell"
   data-action-url="<?php echo APP_URL; ?>/app/modules/kr-changenow/src/actions/publicSwap.php"
   data-user-logged="<?php echo ($ChangeNowUserLogged ? '1' : '0'); ?>"
   data-signup-allowed="<?php echo ($ChangeNowSignupAllowed ? '1' : '0'); ?>"
+  data-region-supported="<?php echo ($ChangeNowRegionAllowed ? '1' : '0'); ?>"
+  data-region-state="<?php echo htmlspecialchars((array_key_exists('state', $ChangeNowRegionEligibility) ? $ChangeNowRegionEligibility['state'] : 'allowed')); ?>"
   data-status-token="<?php echo htmlspecialchars($ChangeNowStatusToken); ?>">
   <header class="kr-public-swap-topbar">
     <div class="kr-public-swap-logo">
@@ -72,6 +106,12 @@ if(!function_exists('changenow_public_asset_options')){
         <?php else: ?>
           ChangeNOW setup is incomplete: <?php echo htmlspecialchars(join(', ', $ChangeNowInitialState['missingSettings'])); ?>.
         <?php endif; ?>
+      </section>
+    <?php endif; ?>
+
+    <?php if(!$ChangeNowRegionAllowed): ?>
+      <section class="kr-public-swap-alert kr-public-swap-alert-error" role="status">
+        <?php echo htmlspecialchars(changenow_public_swap_tr($ChangeNowRegionMessage), ENT_QUOTES, 'UTF-8'); ?>
       </section>
     <?php endif; ?>
 
@@ -151,8 +191,8 @@ if(!function_exists('changenow_public_asset_options')){
       </label>
 
       <footer class="kr-public-swap-actions">
-        <button type="button" class="kr-public-validate-address">Validate address</button>
-        <button type="button" class="kr-public-get-quote">Get quote</button>
+        <button type="button" class="kr-public-validate-address"<?php echo $ChangeNowRegionDisabled; ?>>Validate address</button>
+        <button type="button" class="kr-public-get-quote"<?php echo $ChangeNowRegionDisabled; ?>>Get quote</button>
         <button type="submit" class="kr-public-create-swap" disabled>Create swap</button>
       </footer>
     </form>

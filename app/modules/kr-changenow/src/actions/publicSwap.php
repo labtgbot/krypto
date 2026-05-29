@@ -74,6 +74,85 @@ function changenow_public_rate_limited_payload($App, $decision){
   return $payload;
 }
 
+function changenow_public_region_decision($App, $action, $server, $geoIpResolver = null){
+  $action = strtolower(trim((string) $action));
+  if(!in_array($action, ['quote', 'create'], true)){
+    return [
+      'allowed' => true,
+      'state' => 'allowed',
+      'message' => '',
+      'country' => ''
+    ];
+  }
+
+  $blockedCountries = [];
+  if(is_object($App) && method_exists($App, '_getChangeNowBlockedCountries')){
+    $blockedCountries = $App->_getChangeNowBlockedCountries();
+  }
+
+  $blockedCountries = ChangeNowEligibility::normalizeCountryList($blockedCountries);
+  if(count($blockedCountries) == 0){
+    return [
+      'allowed' => true,
+      'state' => 'allowed',
+      'message' => '',
+      'country' => ''
+    ];
+  }
+
+  if(is_object($App) && method_exists($App, '_getChangeNowRequestCountry')){
+    $countryCode = $App->_getChangeNowRequestCountry($server, $geoIpResolver);
+  } else {
+    $countryCode = ChangeNowRequestRegion::countryCode($server, $geoIpResolver);
+  }
+  $countryCode = ChangeNowRequestRegion::normalizeCountryCode($countryCode);
+
+  if(is_object($App) && method_exists($App, '_getChangeNowEligibilityForCountry')){
+    $state = $App->_getChangeNowEligibilityForCountry($countryCode);
+  } else {
+    $state = ChangeNowEligibility::countryState($countryCode, $blockedCountries);
+  }
+
+  if(!is_array($state)){
+    $state = [
+      'allowed' => true,
+      'state' => 'allowed',
+      'message' => ''
+    ];
+  }
+
+  $state['country'] = $countryCode;
+  return $state;
+}
+
+function changenow_public_translate_message($message, $Lang = null){
+  $message = (string) $message;
+  if(is_object($Lang) && method_exists($Lang, 'tr')){
+    try {
+      return $Lang->tr($message);
+    } catch (Throwable $e) {
+      return $message;
+    }
+  }
+
+  return $message;
+}
+
+function changenow_public_unsupported_region_payload($decision, $Lang = null){
+  $message = '';
+  if(is_array($decision) && array_key_exists('message', $decision)) $message = $decision['message'];
+  if(!is_string($message) || trim($message) == ''){
+    $messages = ChangeNowGuardrails::messages();
+    $message = $messages['unsupported_region'];
+  }
+
+  return [
+    'error' => 2,
+    'type' => 'unsupported_region',
+    'msg' => changenow_public_translate_message($message, $Lang)
+  ];
+}
+
 if(defined('KRYPTO_PUBLIC_SWAP_HELPERS_ONLY') && KRYPTO_PUBLIC_SWAP_HELPERS_ONLY) return;
 
 session_start();
@@ -88,11 +167,18 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/MySQL/MySQL.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/App.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/AppModule.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/User/User.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/Lang/Lang.php";
 
 header('Content-Type: application/json');
 
 $App = new App(true);
 $App->_loadModulesControllers();
+$Lang = null;
+try {
+  $Lang = new Lang(null, $App);
+} catch (Throwable $e) {
+  $Lang = null;
+}
 
 Krypto_Csrf::validateRequest();
 if(!empty($_POST)) $App->_checkReferalSource($_POST);
@@ -102,6 +188,9 @@ try {
   $rateLimitDecision = changenow_public_rate_limit_decision($App, $action, $_SERVER, $_SESSION);
   if(!$rateLimitDecision['allowed']) changenow_public_json(changenow_public_rate_limited_payload($App, $rateLimitDecision));
 
+  $regionDecision = changenow_public_region_decision($App, $action, $_SERVER);
+  if(!$regionDecision['allowed']) changenow_public_json(changenow_public_unsupported_region_payload($regionDecision, $Lang));
+
   $User = new User();
   $loggedUserId = null;
   if($User->_isLogged()) $loggedUserId = $User->_getUserID();
@@ -109,7 +198,9 @@ try {
   $Client = ChangeNowApiClient::_fromApp($App);
   $MarketData = new ChangeNowMarketData($Client, null, $App);
   $Repository = new ChangeNowPublicSwapRepository();
-  $Flow = new ChangeNowPublicSwapFlow($Client, $MarketData, $Repository, $App, ($User->_isLogged() ? $User : null));
+  $Flow = new ChangeNowPublicSwapFlow($Client, $MarketData, $Repository, $App, ($User->_isLogged() ? $User : null), [
+    'request_country' => (is_array($regionDecision) && array_key_exists('country', $regionDecision) ? $regionDecision['country'] : '')
+  ]);
 
   if($action == 'quote'){
     changenow_public_json([

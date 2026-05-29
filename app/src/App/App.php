@@ -22,6 +22,7 @@ class App extends MySQL {
    * @var Array List Krypto settings
    */
   private $settingsData = null;
+  private $changeNowGeoIpCountryCache = [];
 
   /**
    * Application constructor
@@ -2093,6 +2094,65 @@ class App extends MySQL {
 
   public function _getChangeNowEligibilityForCountry($countryCode){
     return ChangeNowEligibility::countryState($countryCode, $this->_getChangeNowBlockedCountries(), $this->_getChangeNowComplianceCopy());
+  }
+
+  public function _getChangeNowRequestCountry($server = null, $geoIpResolver = null){
+    if(is_null($server)) $server = $_SERVER;
+
+    if(is_null($geoIpResolver)){
+      $App = $this;
+      $geoIpResolver = function($clientIp) use ($App) {
+        return $App->_getChangeNowGeoIpCountryForIp($clientIp);
+      };
+    }
+
+    return ChangeNowRequestRegion::countryCode($server, $geoIpResolver);
+  }
+
+  public function _getChangeNowRequestEligibility($server = null, $geoIpResolver = null){
+    $blockedCountries = $this->_getChangeNowBlockedCountries();
+    if(count($blockedCountries) == 0){
+      return [
+        'allowed' => true,
+        'state' => 'allowed',
+        'message' => '',
+        'country' => ''
+      ];
+    }
+
+    $countryCode = $this->_getChangeNowRequestCountry($server, $geoIpResolver);
+    $state = $this->_getChangeNowEligibilityForCountry($countryCode);
+    $state['country'] = $countryCode;
+    return $state;
+  }
+
+  public function _getChangeNowGeoIpCountryForIp($clientIp){
+    $clientIp = ChangeNowRequestRegion::normalizeIp($clientIp);
+    if($clientIp == '' || !function_exists('curl_init')) return '';
+
+    $cacheKey = hash('sha256', $clientIp);
+    if(array_key_exists($cacheKey, $this->changeNowGeoIpCountryCache)) return $this->changeNowGeoIpCountryCache[$cacheKey];
+
+    $countryCode = '';
+    $ch = curl_init('http://geoip.nekudo.com/api/'.rawurlencode($clientIp));
+    if($ch !== false){
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+      curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+      curl_setopt($ch, CURLOPT_ENCODING, '');
+      curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+      curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+      $response = curl_exec($ch);
+      if(is_string($response) && $response != ''){
+        $countryCode = ChangeNowRequestRegion::countryCodeFromGeoIpPayload(json_decode($response, true));
+      }
+      curl_close($ch);
+    }
+
+    $this->changeNowGeoIpCountryCache[$cacheKey] = $countryCode;
+    return $countryCode;
   }
 
   public function _saveChangeNowGuardrailSettings($unsupportedCountries, $complianceCopy, $rateLimitConfig, $debugLogging){

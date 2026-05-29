@@ -23,3 +23,9 @@ In Krypto, open the admin payment settings and configure the ChangeNOW provider 
 ## Live Swap Guard
 
 Server-side ChangeNOW swap creation must call `App::_validateChangeNowLiveSwapSettings()` before creating a live transaction. The guard blocks live creation when the provider is disabled or when required settings, such as the public API key, are missing. This lets fresh installs and disabled-provider deployments keep loading dashboards and public pages without attempting live ChangeNOW calls.
+
+## Regional Restrictions
+
+The public swap endpoint applies the global blacklisted countries and the ChangeNOW unsupported-country list before quote or create calls reach ChangeNOW. Empty lists preserve the previous behavior and do not trigger country lookup.
+
+Krypto accepts server-provided country variables such as `GEOIP_COUNTRY_CODE` and, when a trusted proxy is configured, common proxy headers such as `CF-IPCountry`. Configure trusted proxy addresses or CIDR ranges with `KRYPTO_TRUSTED_PROXIES`; untrusted `HTTP_*` country and forwarded-IP headers are ignored. If no trusted country header is available, Krypto falls back to GeoIP lookup for the resolved client IP without logging or storing the raw IP address.
