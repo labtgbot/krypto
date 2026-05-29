@@ -1,0 +1,12 @@
+{
+  "name": "labtgbot-krypto",
+  "private": true,
+  "description": "Browser regression checks for the Krypto ChangeNOW public swap flow.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:update-snapshots": "playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
