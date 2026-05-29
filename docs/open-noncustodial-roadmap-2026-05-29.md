@@ -83,10 +83,7 @@ Each gap below was confirmed in source and maps to one new task issue.
 
 6. **Product documentation and packaging needed a refresh.** Gap 6 was addressed by issue #74. README and Composer metadata now present Krypto as an open, non-custodial ChangeNOW swap product. The README also explains that the Composer package remains marked `proprietary` until maintainers publish an explicit source license.
 
-7. **Unused legacy dependencies inflate the attack surface.** `composer.json`
-   still requires dozens of exchange/payment SDKs (CCXT, Binance, Kraken, GDAX,
-   Stripe, PayPal, Coinbase, …) that the swap product no longer uses. Pruning
-   them reduces maintenance and security exposure.
+7. **Unused legacy dependencies inflated the attack surface.** Gap 7 was addressed by issue #75. `composer.json` now retains only the runtime packages still used by ChangeNOW, OAuth, CAPTCHA, SMTP, POEditor, dashboard, template, 2FA, and currency-rate code; legacy exchange, payment, Omnipay, RSS, QR, and socket SDKs were removed from the lock file and committed vendor tree.
 
 ## New task issues
 
@@ -99,4 +96,4 @@ parent tracker is #76.
 - #72 — OPEN-04: Add end-to-end browser tests for the public swap (gap 4).
 - #73 — OPEN-05: Decommission legacy custodial exchange/wallet code and tables (gap 5).
 - #74 — OPEN-06: Refresh README, docs, and Composer metadata for the open product (gap 6, addressed).
-- #75 — OPEN-07: Prune unused legacy Composer dependencies (gap 7).
+- #75 — OPEN-07: Prune unused legacy Composer dependencies (gap 7, addressed).

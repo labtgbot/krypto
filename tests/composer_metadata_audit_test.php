@@ -28,11 +28,7 @@ assert_true(
     'composer.json must declare the PHP runtime supported by the installer.'
 );
 
-$allowedPinnedDevPackages = [
-    'codename065/coinbase-commerce',
-    'coingate/omnipay-coingate',
-    'php-curl-class/php-curl-class',
-];
+$allowedPinnedDevPackages = [];
 
 foreach ($composer['require'] as $package => $constraint) {
     if ($package === 'php') {
@@ -61,13 +57,6 @@ foreach ($composer['require'] as $package => $constraint) {
 
 $reportPath = $root.'/docs/composer-dependency-audit-2026-05-09.md';
 assert_true(is_file($reportPath), 'Composer dependency audit report must be committed.');
-$report = file_get_contents($reportPath);
-foreach ($allowedPinnedDevPackages as $package) {
-    assert_true(
-        strpos($report, $package) !== false,
-        $package.' dev-master exception must be documented in the audit report.'
-    );
-}
 
 echo "Composer metadata audit passed.\n";
 

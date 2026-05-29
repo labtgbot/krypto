@@ -44,18 +44,18 @@ class TagCycle extends AbstractTag
 	/**
 	 * @var Variable[] The variables to cycle between
 	 */
-	private $variables = array();
+	private $variables = [];
 
 	/**
 	 * Constructor
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 *
 	 * @throws \Liquid\Exception\ParseException
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
 		$simpleSyntax = new Regexp("/" . Liquid::get('QUOTED_FRAGMENT') . "/");
 		$namedSyntax = new Regexp("/(" . Liquid::get('QUOTED_FRAGMENT') . ")\s*\:\s*(.*)/");
@@ -115,7 +115,7 @@ class TagCycle extends AbstractTag
 	{
 		$regexp = new Regexp('/\s*(' . Liquid::get('QUOTED_FRAGMENT') . ')\s*/');
 		$parts = explode(',', $markup);
-		$result = array();
+		$result = [];
 
 		foreach ($parts as $part) {
 			$regexp->match($part);

@@ -75,12 +75,12 @@ class TagPaginate extends AbstractBlock
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 *
 	 * @throws \Liquid\Exception\ParseException
 	 *
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
 		parent::__construct($markup, $tokens, $fileSystem);
 
@@ -136,18 +136,18 @@ class TagPaginate extends AbstractBlock
 		// Sets the collection if it's a key of another collection (ie search.results, collection.products, blog.articles)
 		$segments = explode('.', $this->collectionName);
 		if (count($segments) == 2) {
-			$context->set($segments[0], array($segments[1] => $paginatedCollection));
+			$context->set($segments[0], [$segments[1] => $paginatedCollection]);
 		} else {
 			$context->set($this->collectionName, $paginatedCollection);
 		}
 
-		$paginate = array(
+		$paginate = [
 			'page_size' => $this->numberItems,
 			'current_page' => $this->currentPage,
 			'current_offset' => $this->currentOffset,
 			'pages' => $this->totalPages,
-			'items' => $this->collectionSize
-		);
+			'items' => $this->collectionSize,
+		];
 
 		// Get the name of the request field to use in URLs
 		$pageRequestKey = Liquid::get('PAGINATION_REQUEST_KEY');
@@ -187,7 +187,7 @@ class TagPaginate extends AbstractBlock
 	public function currentUrl($context, $queryPart = [])
 	{
 		// From here we have $url->path and $url->query
-		$url = (object) parse_url($context->get('REQUEST_URI'));
+		$url = (object) parse_url($context->get('REQUEST_URI') ?: '');
 
 		// Let's merge the query part
 		if (isset($url->query)) {

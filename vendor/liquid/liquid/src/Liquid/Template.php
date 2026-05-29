@@ -40,12 +40,17 @@ class Template
 	/**
 	 * @var array Globally included filters
 	 */
-	private $filters = array();
+	private $filters = [];
+
+	/**
+	 * @var callable|null Called "sometimes" while rendering. For example to abort the execution of a rendering.
+	 */
+	private $tickFunction = null;
 
 	/**
 	 * @var array Custom tags
 	 */
-	private static $tags = array();
+	private static $tags = [];
 
 	/**
 	 * @var Cache
@@ -78,7 +83,7 @@ class Template
 	}
 
 	/**
-	 * @param array|Cache $cache
+	 * @param array|Cache|null $cache
 	 *
 	 * @throws \Liquid\Exception\CacheException
 	 */
@@ -123,7 +128,7 @@ class Template
 	 * @param string $name
 	 * @param string $class
 	 */
-	public function registerTag($name, $class)
+	public static function registerTag($name, $class)
 	{
 		self::$tags[$name] = $class;
 	}
@@ -141,7 +146,7 @@ class Template
 	 *
 	 * @param string $filter
 	 */
-	public function registerFilter($filter, callable $callback = null)
+	public function registerFilter($filter, ?callable $callback = null)
 	{
 		// Store callback for later use
 		if ($callback) {
@@ -149,6 +154,11 @@ class Template
 		} else {
 			$this->filters[] = $filter;
 		}
+	}
+
+	public function setTickFunction(callable $tickFunction)
+	{
+		$this->tickFunction = $tickFunction;
 	}
 
 	/**
@@ -161,8 +171,8 @@ class Template
 	public static function tokenize($source)
 	{
 		return empty($source)
-			? array()
-			: preg_split(Liquid::get('TOKENIZATION_REGEXP'), $source, null, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+			? []
+			: preg_split(Liquid::get('TOKENIZATION_REGEXP'), $source, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
 	}
 
 	/**
@@ -230,9 +240,13 @@ class Template
 	 *
 	 * @return string
 	 */
-	public function render(array $assigns = array(), $filters = null, array $registers = array())
+	public function render(array $assigns = [], $filters = null, array $registers = [])
 	{
 		$context = new Context($assigns, $registers);
+
+		if ($this->tickFunction) {
+			$context->setTickFunction($this->tickFunction);
+		}
 
 		if (!is_null($filters)) {
 			if (is_array($filters)) {

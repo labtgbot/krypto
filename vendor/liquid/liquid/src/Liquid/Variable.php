@@ -41,7 +41,7 @@ class Variable
 		$this->markup = $markup;
 
 		$filterSep = new Regexp('/' . Liquid::get('FILTER_SEPARATOR') . '\s*(.*)/m');
-		$syntaxParser = new Regexp('/(' . Liquid::get('QUOTED_FRAGMENT') . ')(.*)/m');
+		$syntaxParser = new Regexp('/(' . Liquid::get('QUOTED_FRAGMENT') . ')(.*)/ms');
 		$filterParser = new Regexp('/(?:\s+|' . Liquid::get('QUOTED_FRAGMENT') . '|' . Liquid::get('ARGUMENT_SEPARATOR') . ')+/');
 		$filterArgsRegex = new Regexp('/(?:' . Liquid::get('FILTER_ARGUMENT_SEPARATOR') . '|' . Liquid::get('ARGUMENT_SEPARATOR') . ')\s*((?:\w+\s*\:\s*)?' . Liquid::get('QUOTED_FRAGMENT') . ')/');
 
@@ -60,7 +60,7 @@ class Variable
 						$filterName = $matches[0];
 						$filterArgsRegex->matchAll($filter);
 						$matches = Liquid::arrayFlatten($filterArgsRegex->matches[1]);
-						$this->filters[] = array($filterName, $matches);
+						$this->filters[] = $this->parseFilterExpressions($filterName, $matches);
 					}
 				}
 			}
@@ -78,7 +78,7 @@ class Variable
 
 			foreach ($this->filters as $filter) {
 				// with empty filters set we would just move along
-				if (in_array($filter[0], array('escape', 'escape_once', 'raw', 'newline_to_br'))) {
+				if (in_array($filter[0], ['escape', 'escape_once', 'raw', 'newline_to_br'])) {
 					// if we have any raw-like filter, stop
 					$addEscapeFilter = false;
 					break;
@@ -86,11 +86,37 @@ class Variable
 			}
 
 			if ($addEscapeFilter) {
-				$this->filters[] = array('escape', array());
+				$this->filters[] = ['escape', []];
 			}
 		}
 	}
 
+	/**
+	 * @param string $filterName
+	 * @param array $unparsedArgs
+	 * @return array
+	 */
+	private static function parseFilterExpressions($filterName, array $unparsedArgs)
+	{
+		$filterArgs = [];
+		$keywordArgs = [];
+
+		$justTagAttributes = new Regexp('/\A' . trim(Liquid::get('TAG_ATTRIBUTES'), '/') . '\z/');
+
+		foreach ($unparsedArgs as $a) {
+			if ($justTagAttributes->match($a)) {
+				$keywordArgs[$justTagAttributes->matches[1]] = $justTagAttributes->matches[2];
+			} else {
+				$filterArgs[] = $a;
+			}
+		}
+
+		if (count($keywordArgs)) {
+			$filterArgs[] = $keywordArgs;
+		}
+
+		return [$filterName, $filterArgs];
+	}
 
 	/**
 	 * Gets the variable name
@@ -125,10 +151,19 @@ class Variable
 		foreach ($this->filters as $filter) {
 			list($filtername, $filterArgKeys) = $filter;
 
-			$filterArgValues = array();
+			$filterArgValues = [];
+			$keywordArgValues = [];
 
 			foreach ($filterArgKeys as $arg_key) {
-				$filterArgValues[] = $context->get($arg_key);
+				if (is_array($arg_key)) {
+					foreach ($arg_key as $keywordArgName => $keywordArgKey) {
+						$keywordArgValues[$keywordArgName] = $context->get($keywordArgKey);
+					}
+
+					$filterArgValues[] = $keywordArgValues;
+				} else {
+					$filterArgValues[] = $context->get($arg_key);
+				}
 			}
 
 			$output = $context->invoke($filtername, $output, $filterArgValues);

@@ -50,11 +50,11 @@ class TagExtends extends AbstractTag
 	 *
 	 * @param string $markup
 	 * @param array $tokens
-	 * @param FileSystem $fileSystem
+	 * @param FileSystem|null $fileSystem
 	 *
 	 * @throws \Liquid\Exception\ParseException
 	 */
-	public function __construct($markup, array &$tokens, FileSystem $fileSystem = null)
+	public function __construct($markup, array &$tokens, ?FileSystem $fileSystem = null)
 	{
 		$regex = new Regexp('/("[^"]+"|\'[^\']+\')?/');
 
@@ -77,13 +77,19 @@ class TagExtends extends AbstractTag
 		$blockstartRegexp = new Regexp('/^' . Liquid::get('TAG_START') . '\s*block (\w+)\s*(.*)?' . Liquid::get('TAG_END') . '$/');
 		$blockendRegexp = new Regexp('/^' . Liquid::get('TAG_START') . '\s*endblock\s*?' . Liquid::get('TAG_END') . '$/');
 
-		$b = array();
+		$b = [];
 		$name = null;
 
-		foreach ($tokens as $token) {
+		for ($i = 0, $n = count($tokens); $i < $n; $i++) {
+			if ($tokens[$i] === null) {
+				continue;
+			}
+			$token = $tokens[$i];
+			$tokens[$i] = null;
+
 			if ($blockstartRegexp->match($token)) {
 				$name = $blockstartRegexp->matches[1];
-				$b[$name] = array();
+				$b[$name] = [];
 			} elseif ($blockendRegexp->match($token)) {
 				$name = null;
 			} else {
@@ -133,7 +139,7 @@ class TagExtends extends AbstractTag
 
 			$name = null;
 
-			$rest = array();
+			$rest = [];
 			$keep = false;
 
 			for ($i = 0; $i < count($maintokens); $i++) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Sonata Project package.
  *
@@ -9,23 +11,12 @@
  * file that was distributed with this source code.
  */
 
+namespace Sonata\GoogleAuthenticator;
+
 /**
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at.
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * @see https://github.com/google/google-authenticator/wiki/Key-Uri-Format
  */
-
-namespace Google\Authenticator;
-
-final class GoogleAuthenticator
+final class GoogleAuthenticator implements GoogleAuthenticatorInterface
 {
     /**
      * @var int
@@ -43,136 +34,145 @@ final class GoogleAuthenticator
     private $pinModulo;
 
     /**
-     * NEXT_MAJOR: remove this property.
+     * @var \DateTimeInterface
      */
-    private $fixBitNotation;
+    private $instanceTime;
 
     /**
-     * @param int $passCodeLength
-     * @param int $secretLength
+     * @var int
      */
-    public function __construct(int $passCodeLength = 6, int $secretLength = 10)
+    private $codePeriod;
+
+    /**
+     * @var int
+     */
+    private $periodSize = 30;
+
+    public function __construct(int $passCodeLength = 6, int $secretLength = 10, ?\DateTimeInterface $instanceTime = null, int $codePeriod = 30)
     {
+        /*
+         * codePeriod is the duration in seconds that the code is valid.
+         * periodSize is the length of a period to calculate periods since Unix epoch.
+         * periodSize cannot be larger than the codePeriod.
+         */
+
         $this->passCodeLength = $passCodeLength;
         $this->secretLength = $secretLength;
-        $this->pinModulo = pow(10, $this->passCodeLength);
+        $this->codePeriod = $codePeriod;
+        $this->periodSize = $codePeriod < $this->periodSize ? $codePeriod : $this->periodSize;
+        $this->pinModulo = 10 ** $passCodeLength;
+        $this->instanceTime = $instanceTime ?? new \DateTimeImmutable();
     }
 
     /**
-     * @param $secret
-     * @param $code
-     *
-     * @return bool
+     * @param string $secret
+     * @param string $code
+     * @param int    $discrepancy
      */
-    public function checkCode($secret, $code)
+    public function checkCode($secret, $code, $discrepancy = 1): bool
     {
-        $time = floor(time() / 30);
-        for ($i = -1; $i <= 1; ++$i) {
-            if ($this->codesEqual($this->getCode($secret, $time + $i), $code)) {
-                return true;
-            }
+        /**
+         * Discrepancy is the factor of periodSize ($discrepancy * $periodSize) allowed on either side of the
+         * given codePeriod. For example, if a code with codePeriod = 60 is generated at 10:00:00, a discrepancy
+         * of 1 will allow a periodSize of 30 seconds on either side of the codePeriod resulting in a valid code
+         * from 09:59:30 to 10:00:29.
+         *
+         * The result of each comparison is stored as a timestamp here instead of using a guard clause
+         * (https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html). This is to implement
+         * constant time comparison to make side-channel attacks harder. See
+         * https://cryptocoding.net/index.php/Coding_rules#Compare_secret_strings_in_constant_time for details.
+         * Each comparison uses hash_equals() instead of an operator to implement constant time equality comparison
+         * for each code.
+         */
+        $periods = floor($this->codePeriod / $this->periodSize);
+
+        $result = 0;
+        for ($i = -$discrepancy; $i < $periods + $discrepancy; ++$i) {
+            $dateTime = new \DateTimeImmutable('@'.($this->instanceTime->getTimestamp() - ($i * $this->periodSize)));
+            $result = hash_equals($this->getCode($secret, $dateTime), $code) ? $dateTime->getTimestamp() : $result;
         }
 
-        return false;
+        return $result > 0;
     }
 
     /**
-     * @param $secret
-     * @param null $time
+     * NEXT_MAJOR: add the interface typehint to $time and remove deprecation.
      *
-     * @return string
+     * @param string                                   $secret
+     * @param float|string|int|\DateTimeInterface|null $time
      */
-    public function getCode($secret, $time = null)
+    public function getCode($secret, /* \DateTimeInterface */ $time = null): string
     {
-        if (!$time) {
-            $time = floor(time() / 30);
+        if (null === $time) {
+            $time = $this->instanceTime;
+        }
+
+        if ($time instanceof \DateTimeInterface) {
+            $timeForCode = floor($time->getTimestamp() / $this->periodSize);
+        } else {
+            @trigger_error(
+                'Passing anything other than null or a DateTimeInterface to $time is deprecated as of 2.0 '.
+                'and will not be possible as of 3.0.',
+                \E_USER_DEPRECATED
+            );
+            $timeForCode = $time;
         }
 
         $base32 = new FixedBitNotation(5, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', true, true);
         $secret = $base32->decode($secret);
 
-        $time = pack('N', $time);
-        $time = str_pad($time, 8, chr(0), STR_PAD_LEFT);
+        $timeForCode = str_pad(pack('N', $timeForCode), 8, \chr(0), \STR_PAD_LEFT);
 
-        $hash = hash_hmac('sha1', $time, $secret, true);
-        $offset = ord(substr($hash, -1));
-        $offset = $offset & 0xF;
+        $hash = hash_hmac('sha1', $timeForCode, $secret, true);
+        $offset = \ord(substr($hash, -1));
+        $offset &= 0xF;
 
         $truncatedHash = $this->hashToInt($hash, $offset) & 0x7FFFFFFF;
-        $pinValue = str_pad($truncatedHash % $this->pinModulo, 6, '0', STR_PAD_LEFT);
 
-        return $pinValue;
+        return str_pad((string) ($truncatedHash % $this->pinModulo), $this->passCodeLength, '0', \STR_PAD_LEFT);
     }
 
     /**
-     * NEXT_MAJOR: Add a new parameter called $issuer.
+     * NEXT_MAJOR: Remove this method.
      *
      * @param string $user
      * @param string $hostname
      * @param string $secret
      *
-     * @return string
+     * @deprecated deprecated as of 2.1 and will be removed in 3.0. Use Sonata\GoogleAuthenticator\GoogleQrUrl::generate() instead.
      */
-    public function getUrl($user, $hostname, $secret)
+    public function getUrl($user, $hostname, $secret): string
     {
-        $args = func_get_args();
-        $encoder = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=';
-        $urlString = '%sotpauth://totp/%s@%s%%3Fsecret%%3D%s'.(array_key_exists(3, $args) && !is_null($args[3]) ? ('%%26issuer%%3D'.$args[3]) : '');
-        $encoderURL = sprintf($urlString, $encoder, $user, $hostname, $secret);
+        @trigger_error(sprintf(
+            'Using %s() is deprecated as of 2.1 and will be removed in 3.0. '.
+            'Use Sonata\GoogleAuthenticator\GoogleQrUrl::generate() instead.',
+            __METHOD__
+        ), \E_USER_DEPRECATED);
 
-        return $encoderURL;
+        $issuer = \func_get_args()[3] ?? null;
+        $accountName = sprintf('%s@%s', $user, $hostname);
+
+        // manually concat the issuer to avoid a change in URL
+        $url = GoogleQrUrl::generate($accountName, $secret);
+
+        if ($issuer) {
+            $url .= '%26issuer%3D'.$issuer;
+        }
+
+        return $url;
     }
 
-    /**
-     * @return string
-     */
-    public function generateSecret()
+    public function generateSecret(): string
     {
-        $secret = random_bytes($this->secretLength);
-
-        $base32 = new FixedBitNotation(5, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', true, true);
-
-        return $base32->encode($secret);
+        return (new FixedBitNotation(5, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', true, true))
+            ->encode(random_bytes($this->secretLength));
     }
 
-    /**
-     * @param string $bytes
-     * @param int    $start
-     *
-     * @return int
-     */
     private function hashToInt(string $bytes, int $start): int
     {
-        $input = substr($bytes, $start, strlen($bytes) - $start);
-        $val2 = unpack('N', substr($input, 0, 4));
-
-        return $val2[1];
-    }
-
-    /**
-     * A constant time code comparison.
-     *
-     * @param string $known known code
-     * @param string $given code received from a user
-     *
-     * @return bool
-     *
-     * @see http://codereview.stackexchange.com/q/13512/6747
-     */
-    private function codesEqual(string $known, string $given): bool
-    {
-        if (strlen($given) !== strlen($known)) {
-            return false;
-        }
-
-        $res = 0;
-
-        $knownLen = strlen($known);
-
-        for ($i = 0; $i < $knownLen; ++$i) {
-            $res |= (ord($known[$i]) ^ ord($given[$i]));
-        }
-
-        return $res === 0;
+        return unpack('N', substr(substr($bytes, $start), 0, 4))[1];
     }
 }
+
+// NEXT_MAJOR: Remove class alias
+class_alias('Sonata\GoogleAuthenticator\GoogleAuthenticator', 'Google\Authenticator\GoogleAuthenticator', false);

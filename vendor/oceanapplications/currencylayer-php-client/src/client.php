@@ -170,7 +170,7 @@ class client
      */
     public function historical()
     {
-        $this->request('/historical', [
+        return $this->request('/historical', [
             'date'       => $this->date,
             'currencies' => $this->currencies,
             'source'     => $this->source,
@@ -230,6 +230,7 @@ class client
 
         if (array_key_exists('error', $rsp)) {
             $error = $rsp['error'];
+
             throw new \InvalidArgumentException($error['info'], $error['code']);
         }
 

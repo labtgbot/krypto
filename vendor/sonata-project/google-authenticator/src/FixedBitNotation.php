@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Sonata Project package.
  *
@@ -9,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Google\Authenticator;
+namespace Sonata\GoogleAuthenticator;
 
 /**
  * FixedBitNotation.
@@ -64,10 +66,10 @@ final class FixedBitNotation
      * @param bool   $padFinalGroup     Add padding to end of encoded output
      * @param string $padCharacter      Character to use for padding
      */
-    public function __construct(int $bitsPerCharacter, string $chars = null, bool $rightPadFinalBits = false, bool $padFinalGroup = false, string $padCharacter = '=')
+    public function __construct(int $bitsPerCharacter, ?string $chars = null, bool $rightPadFinalBits = false, bool $padFinalGroup = false, string $padCharacter = '=')
     {
         // Ensure validity of $chars
-        if (!is_string($chars) || ($charLength = strlen($chars)) < 2) {
+        if (!\is_string($chars) || ($charLength = \strlen($chars)) < 2) {
             $chars =
             '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-,';
             $charLength = 64;
@@ -109,14 +111,12 @@ final class FixedBitNotation
      * Encode a string.
      *
      * @param string $rawString Binary data to encode
-     *
-     * @return string
      */
-    public function encode($rawString)
+    public function encode($rawString): string
     {
         // Unpack string into an array of bytes
         $bytes = unpack('C*', $rawString);
-        $byteCount = count($bytes);
+        $byteCount = \count($bytes);
 
         $encodedString = '';
         $byte = array_shift($bytes);
@@ -150,11 +150,11 @@ final class FixedBitNotation
                     if ($padFinalGroup) {
                         // Array of the lowest common multiples of
                         // $bitsPerCharacter and 8, divided by 8
-                        $lcmMap = array(1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 5, 6 => 3, 7 => 7, 8 => 1);
+                        $lcmMap = [1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 5, 6 => 3, 7 => 7, 8 => 1];
                         $bytesPerGroup = $lcmMap[$bitsPerCharacter];
-                        $pads = $bytesPerGroup * 8 / $bitsPerCharacter
-                        - ceil((strlen($rawString) % $bytesPerGroup)
-                        * 8 / $bitsPerCharacter);
+                        $pads = (int) ($bytesPerGroup * 8 / $bitsPerCharacter
+                        - ceil((\strlen($rawString) % $bytesPerGroup)
+                        * 8 / $bitsPerCharacter));
                         $encodedString .= str_repeat($padCharacter[0], $pads);
                     }
 
@@ -170,7 +170,7 @@ final class FixedBitNotation
             }
 
             // Read only the needed bits from this byte
-            $bits = $byte >> 8 - ($bitsRead + ($newBitCount));
+            $bits = $byte >> 8 - ($bitsRead + $newBitCount);
             $bits ^= $bits >> $newBitCount << $newBitCount;
             $bitsRead += $newBitCount;
 
@@ -192,12 +192,10 @@ final class FixedBitNotation
      * @param bool   $caseSensitive
      * @param bool   $strict        Returns null if $encodedString contains
      *                              an undecodable character
-     *
-     * @return string|null
      */
-    public function decode($encodedString, $caseSensitive = true, $strict = false)
+    public function decode($encodedString, $caseSensitive = true, $strict = false): string
     {
-        if (!$encodedString || !is_string($encodedString)) {
+        if (!$encodedString || !\is_string($encodedString)) {
             // Empty string, nothing to decode
             return '';
         }
@@ -206,14 +204,13 @@ final class FixedBitNotation
         $bitsPerCharacter = $this->bitsPerCharacter;
         $radix = $this->radix;
         $rightPadFinalBits = $this->rightPadFinalBits;
-        $padFinalGroup = $this->padFinalGroup;
         $padCharacter = $this->padCharacter;
 
         // Get index of encoded characters
         if ($this->charmap) {
             $charmap = $this->charmap;
         } else {
-            $charmap = array();
+            $charmap = [];
 
             for ($i = 0; $i < $radix; ++$i) {
                 $charmap[$chars[$i]] = $i;
@@ -223,10 +220,10 @@ final class FixedBitNotation
         }
 
         // The last encoded character is $encodedString[$lastNotatedIndex]
-        $lastNotatedIndex = strlen($encodedString) - 1;
+        $lastNotatedIndex = \strlen($encodedString) - 1;
 
         // Remove trailing padding characters
-        while ($encodedString[$lastNotatedIndex] == $padCharacter[0]) {
+        while ($encodedString[$lastNotatedIndex] === $padCharacter[0]) {
             $encodedString = substr($encodedString, 0, $lastNotatedIndex);
             --$lastNotatedIndex;
         }
@@ -239,11 +236,9 @@ final class FixedBitNotation
         for ($c = 0; $c <= $lastNotatedIndex; ++$c) {
             if (!isset($charmap[$encodedString[$c]]) && !$caseSensitive) {
                 // Encoded character was not found; try other case
-                if (isset($charmap[$cUpper
-                = strtoupper($encodedString[$c])])) {
+                if (isset($charmap[$cUpper = strtoupper($encodedString[$c])])) {
                     $charmap[$encodedString[$c]] = $charmap[$cUpper];
-                } elseif (isset($charmap[$cLower
-                = strtolower($encodedString[$c])])) {
+                } elseif (isset($charmap[$cLower = strtolower($encodedString[$c])])) {
                     $charmap[$encodedString[$c]] = $charmap[$cLower];
                 }
             }
@@ -259,7 +254,7 @@ final class FixedBitNotation
                     $newBits = $charmap[$encodedString[$c]] << $bitsNeeded
                     - $bitsPerCharacter;
                     $bitsWritten += $bitsPerCharacter;
-                } elseif ($c != $lastNotatedIndex || $rightPadFinalBits) {
+                } elseif ($c !== $lastNotatedIndex || $rightPadFinalBits) {
                     // Zero or more too many bits to complete a byte;
                     // shift right
                     $newBits = $charmap[$encodedString[$c]] >> $unusedBitCount;
@@ -272,11 +267,11 @@ final class FixedBitNotation
 
                 $byte |= $newBits;
 
-                if ($bitsWritten == 8 || $c == $lastNotatedIndex) {
+                if (8 === $bitsWritten || $c === $lastNotatedIndex) {
                     // Byte is ready to be written
                     $rawString .= pack('C', $byte);
 
-                    if ($c != $lastNotatedIndex) {
+                    if ($c !== $lastNotatedIndex) {
                         // Start the next byte
                         $bitsWritten = $unusedBitCount;
                         $byte = ($charmap[$encodedString[$c]]
@@ -292,3 +287,6 @@ final class FixedBitNotation
         return $rawString;
     }
 }
+
+// NEXT_MAJOR: Remove class alias
+class_alias('Sonata\GoogleAuthenticator\FixedBitNotation', 'Google\Authenticator\FixedBitNotation', false);
