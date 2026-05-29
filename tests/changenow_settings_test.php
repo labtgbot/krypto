@@ -39,6 +39,8 @@ $post = [
     'kr-adm-changenowratelimitsecond' => '25',
     'kr-adm-changenowratelimitminute' => '1200',
     'kr-adm-changenowquotecachettl' => '45',
+    'kr-adm-changenowretentionanonymousdays' => '14',
+    'kr-adm-changenowretentioncompleteddays' => '730',
 ];
 
 $settings = ChangeNowSettings::_adminPostToSettings($post);
@@ -59,6 +61,8 @@ assertSameValue('swaps@example.com', $settings['changenow_support_email'], 'Supp
 assertSameValue('25', $settings['changenow_rate_limit_per_second'], 'Per-second rate limit should be saved');
 assertSameValue('1200', $settings['changenow_rate_limit_per_minute'], 'Per-minute rate limit should be saved');
 assertSameValue('45', $settings['changenow_quote_cache_ttl'], 'Quote cache TTL should be saved');
+assertSameValue('14', $settings['changenow_retention_anonymous_days'], 'Anonymous retention days should be saved');
+assertSameValue('730', $settings['changenow_retention_completed_days'], 'Completed retention days should be saved');
 
 $maskedSettings = ChangeNowSettings::_adminPostToSettings([
     'kr-adm-changenowpublicapikey' => ChangeNowSettings::SECRET_MASK,
@@ -69,6 +73,8 @@ $maskedSettings = ChangeNowSettings::_adminPostToSettings([
     'kr-adm-changenowratelimitsecond' => '0',
     'kr-adm-changenowratelimitminute' => '-9',
     'kr-adm-changenowquotecachettl' => 'invalid',
+    'kr-adm-changenowretentionanonymousdays' => '0',
+    'kr-adm-changenowretentioncompleteddays' => 'bad',
 ]);
 
 assertTrueValue(!array_key_exists('changenow_public_api_key', $maskedSettings), 'Masked public API key should preserve the existing encrypted value');
@@ -80,6 +86,8 @@ assertSameValue('standard', $maskedSettings['changenow_default_flow'], 'Invalid 
 assertSameValue('30', $maskedSettings['changenow_rate_limit_per_second'], 'Invalid per-second rate limit should fall back to the safe default');
 assertSameValue('1800', $maskedSettings['changenow_rate_limit_per_minute'], 'Invalid per-minute rate limit should fall back to the safe default');
 assertSameValue('30', $maskedSettings['changenow_quote_cache_ttl'], 'Invalid quote cache TTL should fall back to the safe default');
+assertSameValue('30', $maskedSettings['changenow_retention_anonymous_days'], 'Invalid anonymous retention should fall back to the safe default');
+assertSameValue('365', $maskedSettings['changenow_retention_completed_days'], 'Invalid completed retention should fall back to the safe default');
 
 $encryptedKeys = ChangeNowSettings::_encryptedKeys();
 foreach (['changenow_public_api_key', 'changenow_private_api_key', 'changenow_callback_secret'] as $encryptedKey) {
@@ -93,6 +101,8 @@ foreach ([
     "'changenow_callback_secret', '', 1",
     "'changenow_provider_enabled', '0', 0",
     "'changenow_quote_cache_ttl', '30', 0",
+    "'changenow_retention_anonymous_days', '30', 0",
+    "'changenow_retention_completed_days', '365', 0",
 ] as $settingSeed) {
     assertTrueValue(strpos($installerSql, $settingSeed) !== false, 'Missing installer seed: '.$settingSeed);
 }
@@ -105,14 +115,15 @@ foreach ([
     'kr-adm-chk-changenowflowstandard',
     'kr-adm-chk-changenowflowfixedrate',
     'kr-adm-changenowquotecachettl',
+    'kr-adm-changenowretentionanonymousdays',
+    'kr-adm-changenowretentioncompleteddays',
     '*********************',
 ] as $viewNeedle) {
     assertTrueValue(strpos($paymentView, $viewNeedle) !== false, 'Missing admin payment view wiring: '.$viewNeedle);
 }
 
 $saveAction = file_get_contents($root.'/app/modules/kr-admin/src/actions/savePayment.php');
-assertTrueValue(strpos($saveAction, 'ChangeNowSettings::_adminPostToSettings') !== false, 'Save action should read ChangeNOW admin settings');
-assertTrueValue(strpos($saveAction, '_saveChangeNowSettings') !== false, 'Save action should persist ChangeNOW settings through App');
+assertTrueValue(strpos($saveAction, '$App->_saveChangeNowSettings($_POST);') !== false, 'Save action should pass the raw ChangeNOW admin settings payload through App');
 
 $appSource = file_get_contents($root.'/app/src/App/App.php');
 foreach ([
@@ -121,6 +132,8 @@ foreach ([
     '_getChangeNowPrivateApiKey',
     '_getChangeNowCallbackSecret',
     '_getChangeNowQuoteCacheTtl',
+    '_getChangeNowRetentionAnonymousDays',
+    '_getChangeNowRetentionCompletedDays',
     '_validateChangeNowLiveSwapSettings',
 ] as $appMethod) {
     assertTrueValue(strpos($appSource, 'function '.$appMethod.'(') !== false, 'Missing App ChangeNOW method: '.$appMethod);

@@ -4,7 +4,7 @@ Issue: https://github.com/labtgbot/krypto/issues/16
 
 ## Scope
 
-Fresh installs now receive ChangeNOW tables from `install/assets/sql/krypto.sql`. Existing installs can apply `install/assets/sql/changenow-cn12-migration.sql`.
+Fresh installs now receive ChangeNOW tables from `install/assets/sql/krypto.sql`. Existing installs can apply `install/assets/sql/changenow-cn12-migration.sql`, then `install/assets/sql/changenow-cn13-retention-migration.sql` for the retention policy settings.
 
 The migration is additive. It creates local ChangeNOW storage for:
 
@@ -26,7 +26,7 @@ API keys and callback secrets are seeded as encrypted settings:
 - `changenow_private_api_key`
 - `changenow_callback_secret`
 
-Operational defaults are seeded for standard and fixed-rate flows, BTC to ETH default assets/networks, the documented ChangeNOW rate limits of 30 requests per second and 1800 requests per minute, a 30 second quote cache TTL, and disabled debug logging.
+Operational defaults are seeded for standard and fixed-rate flows, BTC to ETH default assets/networks, the documented ChangeNOW rate limits of 30 requests per second and 1800 requests per minute, a 30 second quote cache TTL, 30 day anonymous retention, 365 day completed transaction retention, and disabled debug logging.
 
 ## Legacy Data Decision
 
@@ -40,8 +40,9 @@ Existing referral tables such as `referal_krypto` and `referal_histo_krypto` are
 
 1. Back up the database.
 2. Apply `install/assets/sql/changenow-cn12-migration.sql` to the existing Krypto database.
-3. Confirm the provider remains disabled by checking `settings_krypto.key_settings = 'changenow_provider_enabled'`.
-4. Run `php tests/changenow_schema_migration_test.php` from the repository root to verify required schema, indexes, settings, and documentation are present.
+3. Apply `install/assets/sql/changenow-cn13-retention-migration.sql` to seed retention settings when they are missing.
+4. Confirm the provider remains disabled by checking `settings_krypto.key_settings = 'changenow_provider_enabled'`.
+5. Run `php tests/changenow_schema_migration_test.php` from the repository root to verify required schema, indexes, settings, and documentation are present.
 
 The migration uses `CREATE TABLE IF NOT EXISTS` and only inserts missing settings. It does not modify, clear, or remove legacy tables.
 

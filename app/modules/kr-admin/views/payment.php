@@ -229,6 +229,22 @@ $Admin = new Admin();
         <input type="text" placeholder="30" name="kr-adm-changenowquotecachettl" value="<?php echo $App->_getChangeNowQuoteCacheTtl(); ?>">
       </div>
     </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW anonymous retention days'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="30" name="kr-adm-changenowretentionanonymousdays" value="<?php echo $App->_getChangeNowRetentionAnonymousDays(); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW completed retention days'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="365" name="kr-adm-changenowretentioncompleteddays" value="<?php echo $App->_getChangeNowRetentionCompletedDays(); ?>">
+      </div>
+    </div>
   </div>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">

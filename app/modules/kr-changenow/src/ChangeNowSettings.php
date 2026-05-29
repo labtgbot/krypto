@@ -40,6 +40,8 @@ class ChangeNowSettings {
       'changenow_rate_limit_per_second' => '30',
       'changenow_rate_limit_per_minute' => '1800',
       'changenow_quote_cache_ttl' => '30',
+      'changenow_retention_anonymous_days' => '30',
+      'changenow_retention_completed_days' => '365',
       'changenow_rate_limit_warning_state' => 'normal',
       'changenow_last_successful_sync' => '',
       'changenow_provider_health_status' => 'unknown',
@@ -89,6 +91,8 @@ class ChangeNowSettings {
     $sanitized['changenow_rate_limit_per_second'] = self::_normalizePositiveInteger($sanitized['changenow_rate_limit_per_second'], '30');
     $sanitized['changenow_rate_limit_per_minute'] = self::_normalizePositiveInteger($sanitized['changenow_rate_limit_per_minute'], '1800');
     $sanitized['changenow_quote_cache_ttl'] = self::_normalizePositiveInteger($sanitized['changenow_quote_cache_ttl'], '30');
+    $sanitized['changenow_retention_anonymous_days'] = self::_normalizePositiveInteger($sanitized['changenow_retention_anonymous_days'], '30');
+    $sanitized['changenow_retention_completed_days'] = self::_normalizePositiveInteger($sanitized['changenow_retention_completed_days'], '365');
     $sanitized['changenow_rate_limit_warning_state'] = self::_normalizeChoice($sanitized['changenow_rate_limit_warning_state'], ['normal', 'warning', 'limited'], 'normal');
     $sanitized['changenow_provider_health_status'] = self::_normalizeChoice($sanitized['changenow_provider_health_status'], ['unknown', 'healthy', 'degraded', 'outage'], 'unknown');
 
@@ -138,6 +142,8 @@ class ChangeNowSettings {
       'changenow_rate_limit_per_second' => self::_postString($post, 'kr-adm-changenowratelimitsecond'),
       'changenow_rate_limit_per_minute' => self::_postString($post, 'kr-adm-changenowratelimitminute'),
       'changenow_quote_cache_ttl' => self::_postString($post, 'kr-adm-changenowquotecachettl'),
+      'changenow_retention_anonymous_days' => self::_postString($post, 'kr-adm-changenowretentionanonymousdays'),
+      'changenow_retention_completed_days' => self::_postString($post, 'kr-adm-changenowretentioncompleteddays'),
       'changenow_rate_limit_warning_state' => self::_postString($post, 'kr-adm-changenowratelimitwarning'),
       'changenow_provider_health_status' => self::_postString($post, 'kr-adm-changenowproviderhealth'),
       'changenow_provider_health_message' => self::_postString($post, 'kr-adm-changenowproviderhealthmessage'),
