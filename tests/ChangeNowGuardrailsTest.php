@@ -60,11 +60,13 @@ $rateLimiter = new ChangeNowRateLimiter($rateLimitPath);
 $first = $rateLimiter->check('quote', '198.51.100.7', 2, 60, 1000);
 $second = $rateLimiter->check('quote', '198.51.100.7', 2, 60, 1001);
 $third = $rateLimiter->check('quote', '198.51.100.7', 2, 60, 1002);
+$nextWindow = $rateLimiter->check('quote', '198.51.100.7', 2, 60, 1020);
 $otherIdentity = $rateLimiter->check('quote', '198.51.100.8', 2, 60, 1002);
 
 kr_assert($first['allowed'], 'First request in a rate window should be allowed.');
 kr_assert($second['allowed'], 'Second request in a rate window should be allowed.');
 kr_assert(!$third['allowed'], 'Third request in a two-request window should be blocked.');
+kr_assert($nextWindow['allowed'], 'A new rate-limit window should allow requests again.');
 kr_assert($otherIdentity['allowed'], 'A different identity should have an independent rate-limit bucket.');
 
 $eligibility = ChangeNowEligibility::countryState('us', ['US'], ['unsupported_region' => 'Custom unsupported-region copy.']);
