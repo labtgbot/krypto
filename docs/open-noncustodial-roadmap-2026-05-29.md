@@ -1,16 +1,18 @@
-# Open Non-Custodial Swap Platform — Deep Analysis And Remaining Roadmap
+# Open Non-Custodial Swap Platform — Completion Roadmap
 
 Analysis date: 2026-05-29
+Completion update: 2026-05-29
 
 Related issue: https://github.com/labtgbot/krypto/issues/67
+Parent tracker: https://github.com/labtgbot/krypto/issues/76
 
 ## Purpose
 
 Issue #67 asks to review the whole project so that Krypto is an open platform
 for cross-currency exchange, without mandatory registration, and fully
-non-custodial — and to create the concrete follow-up tasks needed to finish that
-transformation professionally. This document records the current verified state
-and the gaps that justify the new task issues.
+non-custodial — and to create the concrete follow-up tasks needed to finish
+that transformation professionally. This document records the initial analysis
+and the final status of tracker #76 after the follow-up tasks were completed.
 
 ## Method
 
@@ -36,64 +38,49 @@ and the gaps that justify the new task issues.
 - Feature flags `changenow_provider_enabled` and
   `legacy_exchange_connections_enabled` both default OFF and gate the runtime
   behaviour (`app/src/App/App.php:313-325`).
-- 27 PHP tests plus shell guards, a release-readiness gate, and a CI workflow
-  (`.github/workflows/ci.yml`) run lint + tests on every PR.
+- PHP tests, shell guards, Playwright browser coverage, a release-readiness
+  gate, and CI workflow (`.github/workflows/ci.yml`) cover the primary
+  ChangeNOW paths on every PR.
 - Referral attribution is wired through to ChangeNOW: the flow sets
   `userId` and `payload.kryptoReferralAttribution`
   (`ChangeNowPublicSwapFlow.php:147,507-510`) and the client forwards both
   (`ChangeNowApiClient.php:430-431`). This was a false positive in the first
   analysis pass and needs no new task.
-- ChangeNOW transactions carry an `expires_at_changenow_transaction` column
-  (`ChangeNowPublicSwapRepository.php:738`); the quote cache has its own
-  `expires_at` (`ChangeNowMarketRepository.php`). Expiry data exists — only the
-  pruning job is missing (see gap 3).
+- Public quote, validation, and transaction creation paths enforce configured
+  ChangeNOW rate limits before calling the provider.
+- Server-side regional eligibility checks block unsupported countries before
+  transaction creation while preserving the default allow-all behaviour when no
+  unsupported countries are configured.
+- ChangeNOW transaction, event, and quote-cache retention is documented and can
+  be executed through `scripts/changenow_retention.php`.
+- Fresh installs no longer include the retired custodial exchange connector
+  runtime or custodial tables. Existing installs have an explicit archive/drop
+  path in `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`.
 
-## Verified remaining gaps at analysis time
+## Tracker #76 completion update
 
-Each gap below was confirmed in source and maps to one new task issue.
+All OPEN-01 through OPEN-07 follow-up issues are closed. The parent tracker #76
+is ready to close once the final tracker PR lands.
 
-1. **Rate limiting is built but never enforced.** `ChangeNowRateLimiter`
-   (`app/src/ChangeNow/ChangeNowGuardrails.php:244`) and
-   `App::_getChangeNowRateLimiter()` (`app/src/App/App.php:2090`) exist, but no
-   request entry point instantiates or calls the limiter. The public endpoint
-   `app/modules/kr-changenow/src/actions/publicSwap.php` performs quote, create,
-   and status with no throttle. Abuse/DoS and ChangeNOW rate-limit exhaustion
-   risk.
-
-2. **Regional eligibility is not enforced server-side.**
-   `ChangeNowGuardrails::countryState()` (`ChangeNowGuardrails.php:338`) and the
-   admin "unsupported countries" setting exist, but the public swap
-   flow/action never reference country or eligibility. Compliance risk for a
-   live deployment.
-
-3. **No retention / cleanup job.** Transactions, transaction events, and the
-   quote cache accumulate forever. Expiry columns exist but nothing prunes
-   expired or stale rows, and there is no documented retention policy. Privacy
-   and storage-growth debt.
-
-4. **No end-to-end browser coverage.** All 27 tests are PHP/shell; there are no
-   Playwright/browser tests even though CN-05 and CN-13 acceptance criteria
-   explicitly call for desktop and mobile browser tests of the swap flow.
-
-5. **Legacy custodial code has an OPEN-05 cleanup path.** The connector classes
-   under `app/modules/kr-trade/src/` and the custodial balance/order/withdraw
-   tables were removed from the fresh installer. Existing installs must archive
-   old table contents before running
-   `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`.
-
-6. **Product documentation and packaging needed a refresh.** Gap 6 was addressed by issue #74. README and Composer metadata now present Krypto as an open, non-custodial ChangeNOW swap product. The README also explains that the Composer package remains marked `proprietary` until maintainers publish an explicit source license.
-
-7. **Unused legacy dependencies inflated the attack surface.** Gap 7 was addressed by issue #75. `composer.json` now retains only the runtime packages still used by ChangeNOW, OAuth, CAPTCHA, SMTP, POEditor, dashboard, template, 2FA, and currency-rate code; legacy exchange, payment, Omnipay, RSS, QR, and socket SDKs were removed from the lock file and committed vendor tree.
-
-## New task issues
-
-The following issues were filed from this analysis and linked to #67. The
-parent tracker is #76.
-
-- #69 — OPEN-01: Enforce rate limiting on the public swap endpoints (gap 1).
-- #70 — OPEN-02: Enforce regional/eligibility gating server-side (gap 2).
-- #71 — OPEN-03: Add retention and cleanup job for ChangeNOW data (gap 3).
-- #72 — OPEN-04: Add end-to-end browser tests for the public swap (gap 4).
-- #73 — OPEN-05: Decommission legacy custodial exchange/wallet code and tables (gap 5).
-- #74 — OPEN-06: Refresh README, docs, and Composer metadata for the open product (gap 6, addressed).
-- #75 — OPEN-07: Prune unused legacy Composer dependencies (gap 7, addressed).
+- #69 — OPEN-01: completed in PR #77. Public quote, validation, and create
+  actions now call the configured `ChangeNowRateLimiter`; excess requests return
+  a structured `rate_limited` JSON error.
+- #70 — OPEN-02: completed in PR #78. Public swap creation performs
+  server-side country eligibility checks and returns the configured unsupported
+  region message before any ChangeNOW transaction call.
+- #71 — OPEN-03: completed in PR #79. `scripts/changenow_retention.php`,
+  retention settings, DB-backed tests, and `docs/changenow-retention-policy.md`
+  define and verify cleanup for expired anonymous transaction data and quote
+  cache rows.
+- #72 — OPEN-04: completed in PR #80. Playwright e2e tests cover the mocked
+  public swap flow on desktop and mobile portrait, with screenshots committed
+  under `docs/screenshots/`.
+- #73 — OPEN-05: completed in PR #81. Legacy custodial exchange connectors,
+  user routes, assets, installer tables, and retired cron endpoints were removed;
+  existing installs have the documented archive/drop SQL path.
+- #74 — OPEN-06: completed in PR #82. Gap 6 was addressed by issue #74. README and Composer metadata now present Krypto as an open, non-custodial ChangeNOW swap product. The README also explains that the Composer package remains marked `proprietary` until maintainers publish an explicit source license.
+- #75 — OPEN-07: completed in PR #83. `composer.json` now retains only the
+  runtime packages still used by ChangeNOW, OAuth, CAPTCHA, SMTP, POEditor,
+  dashboard, template, 2FA, and currency-rate code; legacy exchange, payment,
+  Omnipay, RSS, QR, and socket SDKs were removed from the lock file and
+  committed vendor tree.
