@@ -86,8 +86,20 @@ open_doc_assert_contains(
 foreach ([
     'Gap 6 was addressed by issue #74',
     'README and Composer metadata now present Krypto as an open, non-custodial ChangeNOW swap product.',
+    'Tracker #76 completion update',
+    'All OPEN-01 through OPEN-07 follow-up issues are closed',
+    '#69 — OPEN-01: completed in PR #77',
+    '#75 — OPEN-07: completed in PR #83',
 ] as $requiredRoadmapText) {
     open_doc_assert_contains($roadmap, $requiredRoadmapText, 'Roadmap should not keep stale documentation findings as current facts.');
+}
+
+foreach ([
+    'Rate limiting is built but never enforced',
+    'No retention / cleanup job',
+    'No end-to-end browser coverage',
+] as $staleRoadmapText) {
+    open_doc_assert_not_contains_ci($roadmap, $staleRoadmapText, 'Roadmap should not describe closed tracker gaps as current open work.');
 }
 
 foreach ([
