@@ -31,10 +31,13 @@ if(!$User->_isAdmin()) throw new Exception("Permission denied", 1);
 // Init language object
 $Lang = new Lang($User->_getLang(), $App);
 
-$Balance = new Balance($User, $App);
-
 // Init admin object
 $Admin = new Admin();
+$MoneyListAvailable = [];
+foreach (MySQL::querySqlRequest("SELECT code_iso_currency FROM currency_krypto ORDER BY code_iso_currency") as $currency) {
+  $MoneyListAvailable[] = $currency['code_iso_currency'];
+}
+if(count($MoneyListAvailable) == 0) $MoneyListAvailable = ['USD', 'EUR', 'GBP'];
 ?>
 <section class="kr-admin">
   <nav class="kr-admin-nav">
@@ -102,7 +105,7 @@ $Admin = new Admin();
         <select class="" name="bank_currency">
           <option value="">----</option>
           <?php
-          foreach ($Balance->_getListMoney() as $key => $value) {
+          foreach ($MoneyListAvailable as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
           }
           ?>

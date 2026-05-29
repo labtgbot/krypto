@@ -739,12 +739,7 @@ class CryptoCoin extends MySQL {
   }
 
   public function _tradingAvailable(){
-
-    $r = parent::querySqlRequest("SELECT * FROM thirdparty_crypto_krypto WHERE symbol_thirdparty_crypto=:symbol_thirdparty_crypto",
-                                [
-                                  'symbol_thirdparty_crypto' => $this->_getSymbol()
-                                ]);
-    return count($r) > 0;
+    return false;
 
   }
 

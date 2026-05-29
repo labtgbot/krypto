@@ -66,12 +66,10 @@ if(!empty($_POST) && isset($_POST['startdate']) && isset($_POST['enddate'])){
     <section class="kr-manager-stats-graph" kr-stats-mananger-xlist="<?php echo join(',', $Statistics->_generateListDate()); ?>"
                                             kr-stats-mananger-datasetlist="<?php echo join(',', $Statistics->_generateDataSet($Statistics->_getListUser())); ?>;
                                                                            <?php echo join(',', $Statistics->_generateDataSet($Statistics->_getListDeposit())); ?>;
-                                                                           <?php echo join(',', $Statistics->_generateDataSet($Statistics->_getListWidthdraw())); ?>;
                                                                            <?php echo ($App->_getIdentityEnabled() ? join(',', $Statistics->_generateDataSet($Statistics->_getListIdentity())).';' : ''); ?>
-                                                                           <?php echo join(',', $Statistics->_generateDataSet($Statistics->_getListOrderPassed())); ?>;
                                                                            <?php echo join(',', $Statistics->_generateDataSet($Statistics->_getListSubscription())); ?>"
-                                            kr-stats-mananger-datesettag="New user;Deposit;Widthdraw;<?php echo ($App->_getIdentityEnabled() ? 'Identity verification;' : ''); ?>Order;Subscription"
-                                            kr-stats-mananger-color="#4286f4,#f44141,#f4ac41,#41f47c,#c441f4,#41d9f4">
+                                            kr-stats-mananger-datesettag="New user;Deposit;<?php echo ($App->_getIdentityEnabled() ? 'Identity verification;' : ''); ?>Subscription"
+                                            kr-stats-mananger-color="#4286f4,#f44141,<?php echo ($App->_getIdentityEnabled() ? '#41f47c,' : ''); ?>#41d9f4">
       <canvas id="kr-stats-manager-chart"></canvas>
     </section>
 
@@ -84,20 +82,12 @@ if(!empty($_POST) && isset($_POST['startdate']) && isset($_POST['enddate'])){
         <label><?php echo $Lang->tr('Deposit'); ?></label>
         <span><?php echo $App->_formatNumber($Statistics->_getSumDateSet($Statistics->_getListDeposit()), 0); ?></span>
       </li>
-      <li>
-        <label><?php echo $Lang->tr('Withdraw'); ?></label>
-        <span><?php echo $App->_formatNumber($Statistics->_getSumDateSet($Statistics->_getListWidthdraw()), 0); ?></span>
-      </li>
       <?php if($App->_getIdentityEnabled()): ?>
         <li>
           <label><?php echo $Lang->tr('Identity verification'); ?></label>
           <span><?php echo $App->_formatNumber($Statistics->_getSumDateSet($Statistics->_getListIdentity()), 0); ?></span>
         </li>
       <?php endif; ?>
-      <li>
-        <label><?php echo $Lang->tr('Order passed'); ?></label>
-        <span><?php echo $App->_formatNumber($Statistics->_getSumDateSet($Statistics->_getListOrderPassed()), 0); ?></span>
-      </li>
       <li>
         <label><?php echo $Lang->tr('New subscription'); ?></label>
         <span><?php echo $App->_formatNumber($Statistics->_getSumDateSet($Statistics->_getListSubscription()), 0); ?></span>
@@ -115,9 +105,7 @@ if(!empty($_POST) && isset($_POST['startdate']) && isset($_POST['enddate'])){
       <thead>
         <tr>
           <td><?php echo $Lang->tr('Currency'); ?></td>
-          <td><?php echo $Lang->tr('Total trade'); ?></td>
           <td><?php echo $Lang->tr('Total deposit'); ?></td>
-          <td><?php echo $Lang->tr('Total withdraw'); ?></td>
           <td><?php echo $Lang->tr('Fees'); ?></td>
         </tr>
       </thead>
@@ -127,9 +115,7 @@ if(!empty($_POST) && isset($_POST['startdate']) && isset($_POST['enddate'])){
           ?>
           <tr>
             <td><?php echo $currency; ?></td>
-            <td><?php echo $App->_formatNumber($infosBenf['total_trade'], ($infosBenf['total_trade'] > 10 ? 2 : 7)); ?></td>
             <td><?php echo $App->_formatNumber($infosBenf['total_deposit'], ($infosBenf['total_deposit'] > 10 ? 2 : 7)); ?></td>
-            <td><?php echo $App->_formatNumber($infosBenf['total_withdraw'], ($infosBenf['total_withdraw'] > 10 ? 2 : 7)); ?></td>
             <td><?php echo $App->_formatNumber($infosBenf['fees'], ($infosBenf['fees'] > 10 ? 2 : 7)); ?></td>
           </tr>
           <?php

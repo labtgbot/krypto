@@ -89,22 +89,6 @@ return [
       'reason' => 'Flutterwave/Rave return cannot include a Krypto CSRF field.',
       'validation' => 'Callback transaction reference is re-queried through the configured Rave API client.'
     ],
-    'app/modules/kr-trade/src/actions/askWidthdrawApprove.php' => [
-      'reason' => 'Tokenized withdrawal approval email callback cannot include a session CSRF field.',
-      'validation' => 'Encrypted confirmation token is decrypted and matched to the pending withdrawal before approval.'
-    ],
-    'app/modules/kr-trade/src/actions/CronLimitOrder.php' => [
-      'reason' => 'Scheduled native trading limit-order processor, not a user browser action.',
-      'validation' => 'Runs only the server-side native trading order completion check and records cron status.'
-    ],
-    'app/modules/kr-trade/src/actions/generateLeaderBoard.php' => [
-      'reason' => 'Scheduled leaderboard generator, not a user browser action.',
-      'validation' => 'Requires native trading and leaderboard settings to be enabled before generation.'
-    ],
-    'app/modules/kr-trade/src/actions/syncCurrencyRate.php' => [
-      'reason' => 'Scheduled currency-rate sync, not a user browser action.',
-      'validation' => 'Runs the server-side currency-rate sync routine only.'
-    ],
     'app/modules/kr-user/src/actions/cronDemo.php' => [
       'reason' => 'Scheduled demo cleanup task, not a user browser action.',
       'validation' => 'Requires demo mode before deleting expired demo users and related rows.'

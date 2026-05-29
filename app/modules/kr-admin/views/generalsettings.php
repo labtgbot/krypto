@@ -34,7 +34,6 @@ $Lang = new Lang($User->_getLang(), $App);
 // Init admin object
 $Admin = new Admin();
 
-$Trade = new Trade($User, $App);
 $changeNowCopy = $App->_getChangeNowComplianceCopy();
 $changeNowRateLimits = $App->_getChangeNowRateLimitConfig();
 $changeNowUnsupportedCountries = $App->_getChangeNowUnsupportedCountries();

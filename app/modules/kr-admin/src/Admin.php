@@ -10,12 +10,10 @@ class Admin extends MySQL {
 
   private $cronPageList = [
     'app/src/CryptoApi/actions/CheckNotification.php' => 60,
-    'app/modules/kr-trade/src/actions/generateLeaderBoard.php' => 18000,
     'app/src/App/actions/cronCleanCache.php' => 3600,
     'app/src/CryptoApi/actions/SyncExchanges.php' => 43200,
     'app/modules/kr-changenow/src/actions/syncMarketData.php' => 3600,
-    'app/src/CryptoApi/actions/SyncCoin.php' => 43200,
-    'app/modules/kr-trade/src/actions/CronLimitOrder.php' => 60
+    'app/src/CryptoApi/actions/SyncCoin.php' => 43200
   ];
 
   public function __construct(){ }
@@ -98,17 +96,14 @@ class Admin extends MySQL {
       "[kr-side='kr-orderbook'] left" => "Order book",
       "[kr-module='marketanalysis'] left" => "Market",
       "[kr-module='blockfolio'] left" => "Blockfolio",
-      "[kr-side='kr-leaderboard'] leftleft" => "Leader board",
       "[kr-side='kr-calculator'] left" => "Calculator",
       "[kr-side='kr-infosside'] left" => "News",
       ".kr-toggle-white top" => "Theme switch",
       ".kr-current-time top" => "Time",
-      ".kr-wallet-top bottom" => "Account trading wallet",
       "[kr-action='kr-notification-center'] bottom" => "Notifications",
       ".kr-change-dashboard bottom" => "Dashboard manage",
       ".kr-addgraph-dashboard bottom" => "Add item to dashboard",
       ".kr-account bottom" => "Account profile",
-      ".kr-live-dash-trade top" => "Market history",
       ".kr-chat-right right" => "Chat bar"
     ];
 
@@ -122,36 +117,7 @@ class Admin extends MySQL {
   }
 
   public function _getWithdrawList($query = null){
-
-    $res = [];
-
-    if(!is_null($query)){
-      foreach (parent::querySqlRequest("SELECT * FROM widthdraw_history_krypto WHERE
-                                        id_user LIKE :query_search OR
-                                        ref_widthdraw_history LIKE :query_search OR
-                                        symbol_widthdraw_history LIKE :query_search OR
-                                        CONCAT(id_user, '-', id_widthdraw_history) LIKE :query_search
-                                        ORDER BY status_widthdraw_history, date_widthdraw_history DESC",
-                                        [
-                                          'query_search' => '%'.$query.'%'
-                                        ]) as $key => $value) {
-        $itemWith = $value;
-        $itemWith['user_details'] = $this->_getUserFetched($value['id_user']);
-        $res[] = $itemWith;
-      }
-    } else {
-      foreach (parent::querySqlRequest("SELECT * FROM widthdraw_history_krypto ORDER BY status_widthdraw_history, date_widthdraw_history DESC") as $key => $value) {
-        $itemWith = $value;
-        $itemWith['user_details'] = $this->_getUserFetched($value['id_user']);
-        $res[] = $itemWith;
-      }
-    }
-
-
-
-    return $res;
-
-
+    return [];
   }
 
   public function _getCronListStatus(){

@@ -6,7 +6,7 @@ Issue: https://github.com/labtgbot/krypto/issues/16
 
 Fresh installs now receive ChangeNOW tables from `install/assets/sql/krypto.sql`. Existing installs can apply `install/assets/sql/changenow-cn12-migration.sql`, then `install/assets/sql/changenow-cn13-retention-migration.sql` for the retention policy settings.
 
-The migration is additive. It creates local ChangeNOW storage for:
+The ChangeNOW migration creates local ChangeNOW storage for:
 
 - Assets and network-specific currency variants: `changenow_assets_krypto`
 - Pair availability, local enablement, and provider limits: `changenow_pairs_krypto`
@@ -18,7 +18,9 @@ The migration is additive. It creates local ChangeNOW storage for:
 
 ## Installer Defaults
 
-The provider is disabled on install with `changenow_provider_enabled = 0`. Current installs also default `legacy_exchange_connections_enabled = 0`, so direct legacy exchange connection UX stays disabled while the preserved legacy tables remain available for rollback, support, audit, and historical data access.
+The provider is disabled on install with `changenow_provider_enabled = 0`. Current installs also default `legacy_exchange_connections_enabled = 0`, and the legacy exchange/wallet connection runtime has been removed.
+
+Fresh installs no longer create legacy custodial tables such as `balance_krypto`, `order_krypto`, `internal_order_krypto`, `widthdraw_history_krypto`, `thirdparty_crypto_krypto`, `user_widthdraw_krypto`, `user_thirdparty_selected_krypto`, or exchange credential tables such as `binance_krypto`, `bitbank_krypto`, `bitmex_krypto`, `bittrex_krypto`, `cex_krypto`, `coinex_krypto`, `coinspot_krypto`, `ethfinex_krypto`, `exmo_krypto`, `gateio_krypto`, `gdax_krypto`, `gemini_krypto`, `hitbtc2_krypto`, `kraken_krypto`, `kucoin_krypto`, `livecoin_krypto`, `luno_krypto`, `okcoinusd_krypto`, `okex_krypto`, `poloniex_krypto`, `quoinex_krypto`, and `yobit_krypto`.
 
 API keys and callback secrets are seeded as encrypted settings:
 
@@ -30,9 +32,11 @@ Operational defaults are seeded for standard and fixed-rate flows, BTC to ETH de
 
 ## Legacy Data Decision
 
-Legacy exchange credential tables such as `binance_krypto`, `bitbank_krypto`, `bitmex_krypto`, `bittrex_krypto`, `cex_krypto`, `coinex_krypto`, `coinspot_krypto`, `ethfinex_krypto`, `exmo_krypto`, `gateio_krypto`, `gdax_krypto`, `gemini_krypto`, `hitbtc2_krypto`, `kraken_krypto`, `kucoin_krypto`, `livecoin_krypto`, `luno_krypto`, `okcoinusd_krypto`, `okex_krypto`, `poloniex_krypto`, `quoinex_krypto`, and `yobit_krypto` are retained. They are historical/rollback data and are not part of the new ChangeNOW schema.
+OPEN-05 decommissions the legacy custodial exchange and wallet model. The old exchange credential tables such as `binance_krypto`, `bitbank_krypto`, `bitmex_krypto`, `bittrex_krypto`, `cex_krypto`, `coinex_krypto`, `coinspot_krypto`, `ethfinex_krypto`, `exmo_krypto`, `gateio_krypto`, `gdax_krypto`, `gemini_krypto`, `hitbtc2_krypto`, `kraken_krypto`, `kucoin_krypto`, `livecoin_krypto`, `luno_krypto`, `okcoinusd_krypto`, `okex_krypto`, `poloniex_krypto`, `quoinex_krypto`, and `yobit_krypto` should be exported from existing production databases before they are dropped.
 
-Legacy market and balance tables such as `thirdparty_crypto_krypto`, `exchanges_krypto`, `balance_krypto`, `order_krypto`, `internal_order_krypto`, `deposit_history_krypto`, and `widthdraw_history_krypto` are retained for historical records, support, audit, and rollback. The new ChangeNOW flow should read and write the `changenow_*_krypto` tables instead of those legacy exchange tables.
+Legacy custodial market, balance, order, and withdraw tables such as `thirdparty_crypto_krypto`, `balance_krypto`, `order_krypto`, `internal_order_krypto`, and `widthdraw_history_krypto` are no longer part of the active schema. The new ChangeNOW flow reads and writes the `changenow_*_krypto` tables instead of those legacy exchange tables.
+
+Two historical tables are intentionally retained in the active installer: `exchanges_krypto` for public market/search metadata and `deposit_history_krypto` for payment ledger history. They are not used as custodial exchange connector state.
 
 Existing referral tables such as `referal_krypto` and `referal_histo_krypto` are retained. ChangeNOW-specific attribution is stored separately in `changenow_referral_attribution_krypto` and linked to transactions through `id_changenow_referral_attribution`.
 
@@ -41,13 +45,15 @@ Existing referral tables such as `referal_krypto` and `referal_histo_krypto` are
 1. Back up the database.
 2. Apply `install/assets/sql/changenow-cn12-migration.sql` to the existing Krypto database.
 3. Apply `install/assets/sql/changenow-cn13-retention-migration.sql` to seed retention settings when they are missing.
-4. Confirm the provider remains disabled by checking `settings_krypto.key_settings = 'changenow_provider_enabled'`.
-5. Run `php tests/changenow_schema_migration_test.php` from the repository root to verify required schema, indexes, settings, and documentation are present.
+4. Archive the legacy custody and exchange tables from the existing database backup according to the site's retention policy.
+5. Apply `install/assets/sql/changenow-open05-decommission-legacy-custody.sql`. This creates `legacy_custody_archive_manifest_krypto`, records the table archive/drop path, and drops the retired legacy custody tables.
+6. Confirm the provider remains disabled by checking `settings_krypto.key_settings = 'changenow_provider_enabled'`.
+7. Run `php tests/changenow_schema_migration_test.php` and `php tests/changenow_legacy_decommission_test.php` from the repository root to verify required schema, indexes, settings, decommission SQL, and documentation are present.
 
-The migration uses `CREATE TABLE IF NOT EXISTS` and only inserts missing settings. It does not modify, clear, or remove legacy tables.
+Existing installs should treat the OPEN-05 SQL as a post-archive cleanup step. It removes retired custodial storage after backups have been captured; it does not copy table contents into a separate archive database.
 
 ## Rollback
 
-If the migration must be rolled back before ChangeNOW traffic is enabled, leave the new tables in place and keep `changenow_provider_enabled = 0`. This is the lowest-risk rollback because it preserves historical data and avoids changing legacy tables.
+If the migration must be rolled back before ChangeNOW traffic is enabled, leave the new tables in place and keep `changenow_provider_enabled = 0`. Restore the legacy custodial tables from the database archive created before running `changenow-open05-decommission-legacy-custody.sql` if old exchange/wallet data must be inspected.
 
-If a site owner must remove the unused ChangeNOW schema from a database copy, first verify that no production traffic has written rows to the `changenow_*_krypto` tables. Then remove only the ChangeNOW tables and settings from that copy. Do not remove legacy Krypto tables unless a separate data-retention plan explicitly authorizes it.
+If a site owner must remove the unused ChangeNOW schema from a database copy, first verify that no production traffic has written rows to the `changenow_*_krypto` tables. Then remove only the ChangeNOW tables and settings from that copy. Keep the legacy archive and `legacy_custody_archive_manifest_krypto` long enough to satisfy the site's audit and retention policy.

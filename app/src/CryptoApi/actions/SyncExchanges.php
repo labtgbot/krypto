@@ -38,8 +38,6 @@ try {
   $CryptoApi = new CryptoApi(null, null, $App);
 
   $CryptoApi->_syncExchanges();
-  $Trade = new Trade(true, true);
-  $Trade->_syncTradingAvailable();
 
   $App->_saveCronStatus('app/src/CryptoApi/actions/SyncExchanges.php');
 

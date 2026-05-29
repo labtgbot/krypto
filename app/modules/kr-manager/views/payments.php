@@ -31,9 +31,6 @@ if(!$User->_isAdmin() && !$User->_isManager()) throw new Exception("Permission d
 // Init language object
 $Lang = new Lang($User->_getLang(), $App);
 
-$Balance = new Balance($User, $App);
-$Balance = $Balance->_getCurrentBalance();
-
 // Init admin object
 $Manager = new Manager($App);
 
@@ -82,7 +79,6 @@ if(!empty($_POST) && isset($_POST['filter']) && array_key_exists($_POST['filter'
       </thead>
       <tbody>
         <?php
-        $WalletListAvailable = $Balance->_getBalanceListResum();
         foreach ($Manager->_fetchPayments() as $key => $infosPayment):
           if($infosPayment['payment_type_deposit_history'] == "Initial") continue;
 
@@ -102,8 +98,7 @@ if(!empty($_POST) && isset($_POST['filter']) && array_key_exists($_POST['filter'
 
           $UserPayment = $Manager->_getUserFetched($infosPayment['id_user']);
 
-          $BalanceReceivedSymbol = $App->_getDepositSymbolNotExistConvert();
-          if(array_key_exists($infosPayment['currency_deposit_history'], $WalletListAvailable)) $BalanceReceivedSymbol = $infosPayment['currency_deposit_history'];
+          $BalanceReceivedSymbol = $infosPayment['currency_deposit_history'];
           ?>
           <tr>
              <td>

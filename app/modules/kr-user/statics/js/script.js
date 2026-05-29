@@ -208,18 +208,8 @@ function initUsercontrollers() {
   });
 
   $('.widthdraw-method-remove').off('click').click(function(){
-    let idWidthdrawMethod = $(this).attr('kr-widthdraw-idr');
-    $.post($('body').attr('hrefapp') + '/app/modules/kr-trade/src/actions/removeWithdrawAccount.php', {id:idWidthdrawMethod}).done(function(data){
-      let jsonRes = jQuery.parseJSON(data);
-      if(jsonRes.error == 1){
-        showAlert('Oops', jsonRes.msg, 'error');
-      } else {
-        showAlert('Success !', jsonRes.msg);
-        changeUserProfileView('widthdraw');
-      }
-    }).fail(function(){
-      showAlert('Oops', 'Fail to remove withdraw account', 'error');
-    });
+    showAlert('Oops', 'Legacy withdraw accounts are retired', 'error');
+    return false;
   });
 
   // User change picture object

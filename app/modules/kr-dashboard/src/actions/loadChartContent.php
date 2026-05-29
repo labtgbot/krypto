@@ -68,16 +68,8 @@ try {
   // Init CryptoOrder
   $OrderCoin = new CryptoOrder($Coin);
 
-  $legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
   $availableTrading = false;
-  if($legacyExchangeConnectionsEnabled){
-    $Trade = new Trade($User, $App);
-    $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_GET['market']);
-    $availableTrading = count($listThirdParty) > 0;
-  }
-
-
-  if(!$User->_accessAllowedFeature($App, 'tradinglive')) $availableTrading = false;
+  $listThirdParty = [];
 
 } catch (\Exception $e) {
   die(json_encode([
@@ -93,12 +85,6 @@ try {
 } catch (Exception $s) {
   $DashboardGraph = null;
 }
-
-
-// if($availableTrading){
-//   if($App->_hiddenThirdpartyActive()) $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency(), $_GET['market']);
-//   else $listThirdParty = $Trade->_thirdparySymbolTrading($Coin->_getSymbol(), $CryptoApi->_getCurrency());
-// }
 
 
 if (!$App->_tradingviewchartEnable() && (!$App->_allowSwitchChart() || !$User->_tradingviewChartLibraryUse())):
@@ -246,163 +232,17 @@ if (!$App->_tradingviewchartEnable() && (!$App->_allowSwitchChart() || !$User->_
 <?php endif; ?>
 </section>
 <?php endif; ?>
-<?php if($availableTrading):
-
-  $priceMarketUnit = $listThirdParty[0]->_getPriceTrade($listThirdParty[0]::_formatPair($Coin->_getSymbol(), $CryptoApi->_getCurrency()));
-  $infosPairMarket = $listThirdParty[0]->_getInfosPair($Coin->_getSymbol(), $CryptoApi->_getCurrency());
-
-  $Balance = new Balance($User, $App);
-  $SymbolTrade = $Balance->_symbolAbrev($CryptoApi->_getCurrencySymbol());
-  $Precision = 6;
-  if($Balance->_symbolIsMoney($CryptoApi->_getCurrencySymbol())) $Precision = 2;
-
-  ?>
-<div class="kr-dash-pan-action kr-dash-pan-action-limit" thirdparty="<?php echo $listThirdParty[0]->_getExchangeName(); ?>" container="<?php echo $container; ?>" currency="<?php echo $CryptoApi->_getCurrency(); ?>" symbol="<?php echo $Coin->_getSymbol(); ?>">
-  <?php if(false): ?>
-    <div class="kr-dash-pan-action-slcthird" <?php if($App->_hiddenThirdpartyActive()) echo 'style="display:none";'; ?>>
-      <div kr-trading-price="<?php echo $priceMarketUnit; ?>" kr-chart-trade-tp="<?php echo $listThirdParty[0]->_getExchangeName(); ?>">
-        <img src="<?php echo APP_URL; ?>/assets/img/icons/trade/<?php echo $listThirdParty[0]->_getLogo(); ?>" alt="">
-        <svg class="lnr lnr-chevron-down"><use xlink:href="#lnr-chevron-down"></use></svg>
-      </div>
-      <ul>
-        <?php
-        foreach (array_slice($listThirdParty, 1) as $ThirdPartySelector) {
-          ?>
-          <li class="kr-dash-pan-chg-exg" kr-trading-price="<?php echo $ThirdPartySelector->_getPriceTrade($ThirdPartySelector::_formatPair($Coin->_getSymbol(), $CryptoApi->_getCurrency())); ?>" kr-chart-trade-tp="<?php echo $ThirdPartySelector->_getExchangeName(); ?>"><img src="<?php echo APP_URL; ?>/assets/img/icons/trade/<?php echo $ThirdPartySelector->_getLogo(); ?>" alt=""></li>
-          <?php
-        }
-        ?>
-      </ul>
-    </div>
-  <?php endif; ?>
-  <div class="kr-dash-pan-action-amount">
-    <div class="kr-dash-pan-action-amount-s">
-      <span><?php echo $Lang->tr('Amount'); ?></span>
-      <div>
-        <span><?php echo $Coin->_getSymbol(); ?></span>
-        <input type="number" min="<?php echo $infosPairMarket['min_thirdparty_crypto']; ?>" step="<?php echo $infosPairMarket['min_thirdparty_crypto']; ?>" placeholder="<?php echo $infosPairMarket['min_thirdparty_crypto']; ?>" name="" value="<?php echo rtrim(number_format($infosPairMarket['min_thirdparty_crypto'], 10), "0"); ?>">
-      </div>
-    </div>
-    <ul>
-      <li trade-act="minus">-</li>
-      <li trade-act="plus">+</li>
-    </ul>
-    <div class="kr-dash-pan-action-amount-esyslc">
-      <ul>
-        <?php
-        for ($i=1; $i <= 5; $i++) {
-          $premadeSum = ($infosPairMarket['min_thirdparty_crypto'] * exp($i));
-          ?>
-          <li kr-premade-v="<?php echo $App->_formatNumber($premadeSum, ($Precision == 2 ? 2 : 3)); ?>">
-            <span><?php echo $App->_formatNumber($premadeSum, ($Precision == 2 ? 2 : 3)).' '.$Coin->_getSymbol(); ?></span>
-          </li>
-          <?php
-        }
-        ?>
-      </ul>
-    </div>
-  </div>
-  <div class="kr-dash-pan-action-qtd" kr-market-multticker="<?php echo $priceMarketUnit; ?>">
-    <label><?php echo $CryptoApi->_getCurrencySymbol(); ?> <?php echo $Lang->tr('quantity'); ?></label>
-    <span><?php echo $App->_formatNumber($infosPairMarket['min_thirdparty_crypto'] * $priceMarketUnit, 6); ?></span>
-  </div>
-  <div class="kr-dash-pan-action-btn kr-dash-pan-action-btn-buy">
-    <img class="kr-dash-pan-action-btn-img-b" kr-cipc="<?php echo $container; ?>" src="<?php echo APP_URL; ?>/app/modules/kr-dashboard/statics/img/icons/buy_market.svg" alt="">
-    <span><?php echo $Lang->tr('Buy'); ?></span>
-  </div>
-  <div class="kr-dash-pan-action-btn kr-dash-pan-action-btn-sell">
-    <img class="kr-dash-pan-action-btn-img-s" kr-cipc="<?php echo $container; ?>" src="<?php echo APP_URL; ?>/app/modules/kr-dashboard/statics/img/icons/sell_market.svg" alt="">
-    <span><?php echo $Lang->tr('Sell'); ?></span>
-    <div class="kr-dash-pan-action-confirm">
-
-      <header>
-        <span><?php echo $Lang->tr('Confirmation'); ?></span>
-        <div>
-          <svg class="lnr lnr-cross"><use xlink:href="#lnr-cross"></use></svg>
-        </div>
-      </header>
-      <ul>
-        <li kr-order-lmi-h="true">
-          <span><?php echo $Lang->tr('Unit price'); ?></span>
-          <span kr-confirm-v="unit_price" kr-confirm-v-up="<?php echo $priceMarketUnit; ?>"><i><?php echo $App->_formatNumber($priceMarketUnit, ($priceMarketUnit > 10 ? 2 : 6)); ?></i> <?php echo $SymbolTrade; ?></span>
-        </li>
-        <li kr-order-lmi-s="true" style="display:none;">
-          <span><?php echo $Lang->tr('Purchase price'); ?></span>
-          <span kr-confirm-v="purchase_price"><i><?php echo $App->_formatNumber($priceMarketUnit, ($priceMarketUnit > 10 ? 2 : 6)); ?></i> <?php echo $SymbolTrade; ?></span>
-        </li>
-        <li>
-          <span><?php echo $Lang->tr('Investment'); ?></span>
-          <span kr-confirm-v="amount"><i><?php echo $App->_formatNumber($infosPairMarket['min_thirdparty_crypto'] * $priceMarketUnit, $Precision); ?></i> <?php echo $SymbolTrade; ?></span>
-        </li>
-        <li kr-confirm-qntd="spvmx">
-          <span><?php echo $Coin->_getSymbol(); ?> <?php echo $Lang->tr('Quantity'); ?></span>
-          <span kr-confirm-v="investment"><i><?php echo $App->_formatNumber($infosPairMarket['min_thirdparty_crypto'], 6); ?></i></span>
-        </li>
-        <?php
-        $TotalTrade = $infosPairMarket['min_thirdparty_crypto'] * $priceMarketUnit;
-
-        if($App->_hiddenThirdpartyActive()): ?>
-          <li>
-            <span><?php echo $Lang->tr('Commission'); ?></span>
-            <span kr-confirm-v="fees" kr-confirm-v-up="<?php echo $App->_hiddenThirdpartyTradingFee(); ?>"><i class="kr-confirm-sminfc"><?php echo $App->_formatNumber($App->_hiddenThirdpartyTradingFee(), 2); ?>% =</i> <i><?php echo $App->_formatNumber($TotalTrade * ($App->_hiddenThirdpartyTradingFee() / 100), $Precision); ?></i> <?php echo $SymbolTrade; ?></span>
-          </li>
-        <?php endif; ?>
-      </ul>
-      <div>
-        <span><?php echo $Lang->tr('Total'); ?></span>
-
-        <?php if($App->_hiddenThirdpartyActive()): ?>
-          <span kr-confirm-v="total"><i><?php echo $App->_formatNumber($TotalTrade - ($TotalTrade * ($App->_hiddenThirdpartyTradingFee() / 100)), $Precision); ?></i> <?php echo $SymbolTrade; ?></span>
-        <?php else: ?>
-          <span kr-confirm-v="total"><i><?php echo $App->_formatNumber($TotalTrade, $Precision); ?></i> <?php echo $SymbolTrade; ?></span>
-        <?php endif; ?>
-      </div>
-      <a class="btn btn-green btn-kr-action-placetrade"><?php echo $Lang->tr('Confirm buying'); ?></a>
-    </div>
-  </div>
-  <div class="kr-dash-pan-action-limitprice kr-dash-pan-action-limitprice-selected">
-    <div class="kr-dash-pan-action-limitprice-form" style="display:none;">
-      <header>
-        <span><?php echo $Lang->tr('Purchase at ...'); ?></span>
-      </header>
-      <div class="kr-dash-pan-action-limitprice-select">
-        <div class="kr-dash-pan-action-limitprice-inpt" kr-lm-container="<?php echo $container; ?>">
-          <span><?php echo $Lang->tr('Asset price'); ?></span>
-          <input type="number" class="kr-limitprice-buy" placeholder="<?php echo $Lang->tr('Market price'); ?>" kr-limitprice-buy-ac="false" cc-price="<?php echo $priceMarketUnit; ?>" name="" value="">
-        </div>
-        <div class="kr-dash-pan-action-limitprice-pm" kr-lm-container="<?php echo $container; ?>" kr-lm-min="<?php echo $infosPairMarket['min_thirdparty_crypto'] * $priceMarketUnit; ?>" kr-lm-step="<?php echo (float)$infosPairMarket['min_thirdparty_crypto'] * $priceMarketUnit; ?>">
-          <div kr-lm="plus">+</div>
-          <div kr-lm="minus">-</div>
-        </div>
-      </div>
-      <div class="kr-dash-pan-action-limitprice-rst" onclick="_setOrderByMarket('<?php echo $container; ?>')">
-        <span><?php echo $Lang->tr('Revert to Market Price'); ?></span>
-      </div>
-    </div>
-    <div class="kr-dash-pan-action-limitprice-btn" onclick="_showLimitOrder('<?php echo $container; ?>')">
-      <span><?php echo $Lang->tr('Purchase at ...'); ?></span>
-    </div>
-    <div class="kr-dash-pan-action-limitprice-infos" onclick="_showLimitOrder('<?php echo $container; ?>')" style="display:none;">
-      <span>-</span>
-      <div>
-        <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="348.333px" height="348.334px" viewBox="0 0 348.333 348.334" style="enable-background:new 0 0 348.333 348.334;" xml:space="preserve"> <g> <path d="M336.559,68.611L231.016,174.165l105.543,105.549c15.699,15.705,15.699,41.145,0,56.85 c-7.844,7.844-18.128,11.769-28.407,11.769c-10.296,0-20.581-3.919-28.419-11.769L174.167,231.003L68.609,336.563 c-7.843,7.844-18.128,11.769-28.416,11.769c-10.285,0-20.563-3.919-28.413-11.769c-15.699-15.698-15.699-41.139,0-56.85 l105.54-105.549L11.774,68.611c-15.699-15.699-15.699-41.145,0-56.844c15.696-15.687,41.127-15.687,56.829,0l105.563,105.554 L279.721,11.767c15.705-15.687,41.139-15.687,56.832,0C352.258,27.466,352.258,52.912,336.559,68.611z"/> </g> </svg>
-      </div>
-    </div>
-  </div>
-</div>
-<?php endif; ?>
-<?php //var_dump($listThirdParty); ?>
 <?php if($App->_tradingviewchartEnable() || ($App->_allowSwitchChart() && $User->_tradingviewChartLibraryUse())):
   $tradingViewChartID = uniqid();
   ?>
-<div class="tradingview-widget-container" style="height:100%;<?php if($availableTrading) echo 'margin-right:121px;'; ?>">
+<div class="tradingview-widget-container" style="height:100%;">
   <div id="tradingview_<?php echo $tradingViewChartID; ?>"  style="height:100%;"></div>
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script type="text/javascript">
   tradingviewChart = new TradingView.widget(
       {
       "autosize": true,
-      "symbol": "<?php echo ($availableTrading ? strtoupper($listThirdParty[0]->_getExchangeReal()).":" : '').$Coin->_getSymbol().$CryptoApi->_getCurrency(); ?>",
+      "symbol": "<?php echo $Coin->_getSymbol().$CryptoApi->_getCurrency(); ?>",
       "interval": "1",
       "timezone": "Etc/UTC",
       "theme": "Dark",
@@ -454,7 +294,7 @@ if (!$App->_tradingviewchartEnable() && (!$App->_allowSwitchChart() || !$User->_
     ?>
 
   </div>
-<div class="kr-dash-pan-graph <?php if($availableTrading) echo 'kr-dash-pan-graph-trading-a'; ?>" market="<?php echo ($availableTrading ? $listThirdParty[0]->_getExchangeName() : 'CCCAGG'); ?>" scrollv="4" id="graph-<?php echo $container; ?>" id="container">
+<div class="kr-dash-pan-graph" market="CCCAGG" scrollv="4" id="graph-<?php echo $container; ?>" id="container">
 
 </div>
 <?php endif; ?>

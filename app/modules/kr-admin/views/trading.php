@@ -35,14 +35,12 @@ $Lang = new Lang($User->_getLang(), $App);
 // Init admin object
 $Admin = new Admin();
 
-$legacyExchangeConnectionsEnabled = $App->_legacyExchangeConnectionsEnabled();
-$nativeTradingActive = $legacyExchangeConnectionsEnabled && $App->_hiddenThirdpartyActive();
 $SymbolListAvailable = [];
-if($nativeTradingActive){
-  $Balance = new Balance($User, $App, 'real');
-
-  $SymbolListAvailable = $Balance->_getBalanceListResum();
+$MoneyListAvailable = [];
+foreach (MySQL::querySqlRequest("SELECT code_iso_currency FROM currency_krypto ORDER BY code_iso_currency") as $currency) {
+  $MoneyListAvailable[] = $currency['code_iso_currency'];
 }
+if(count($MoneyListAvailable) == 0) $MoneyListAvailable = ['USD', 'EUR', 'GBP'];
 
 ?>
 <form class="kr-admin kr-adm-post-evs" action="<?php echo APP_URL; ?>/app/modules/kr-admin/src/actions/saveTrading.php" method="post">
@@ -75,38 +73,12 @@ if($nativeTradingActive){
     </div>
   </div>
 
-  <?php if(false): ?>
-  <h3><?php echo $Lang->tr('Wallets receiver'); ?></h3>
-  <div class="kr-admin-line kr-admin-line-cls">
-    <div class="kr-admin-field">
-      <div>
-        <label><?php echo $Lang->tr('Enable direct deposit'); ?></label><br/>
-        <span><?php echo $Lang->tr('User will be able to deposit throught a QRcode direclty to your wallet'); ?></span><br/>
-        <span><?php echo $Lang->tr('The wallet link can be direclty the exchange'); ?></span>
-      </div>
-      <div>
-        <div class="ckbx-style-14">
-            <input type="checkbox" id="kr-adm-chk-directdepositenable" <?php echo ($App->_getDirectDepositEnable() ? 'checked' : ''); ?> name="kr-adm-chk-directdepositenable">
-            <label for="kr-adm-chk-directdepositenable"></label>
-        </div>
-      </div>
-    </div>
-    <div class="kr-admin-field">
-      <div>
-        <label><?php echo $Lang->tr('Configure the wallet where you want receive the cryptocurrencies'); ?></label>
-      </div>
-      <div>
-        <input type="button" onclick="changeView('admin', 'walletaddress');" class="btn btn-green btn-autowidth" name="" value="Configure my wallets">
-      </div>
-    </div>
-  </div>
-<?php endif; ?>
     <h3><?php echo $Lang->tr('Balance configuration'); ?></h3>
     <div class="kr-admin-line kr-admin-line-cls">
       <div class="kr-admin-field">
         <div>
           <label><?php echo $Lang->tr('Show balance estimation'); ?></label><br/>
-          <span><?php echo $Lang->tr('Based on all wallet'); ?></span>
+          <span><?php echo $Lang->tr('Based on payment history'); ?></span>
         </div>
         <div>
           <div class="ckbx-style-14">
@@ -131,54 +103,13 @@ if($nativeTradingActive){
           <label><?php echo $Lang->tr('Show balance estimation in'); ?></label>
         </div>
         <div>
-          <?php if(count($SymbolListAvailable) == 0): ?>
-            <span>You must activate at least 1 exchange</span>
-          <?php else: ?>
-            <select name="kr-adm-balancestimationcurrency">
-              <?php
-              foreach ($SymbolListAvailable as $symbolReceive => $value) {
-                echo '<option '.($App->_getBalanceEstimationSymbol() == $symbolReceive ? 'selected' : '').' value="'.$symbolReceive.'">'.$symbolReceive.'</option>';
-              }
-              if($nativeTradingActive){
-                foreach ($Balance->_getListMoney() as $key => $value) {
-                  echo '<option '.($App->_getBalanceEstimationSymbol() == $value ? 'selected' : '').' value="'.$value.'">'.$value.'</option>';
-                }
-              }
-              ?>
-            </select>
-          <?php endif; ?>
-        </div>
-      </div>
-    </div>
-
-
-
-    <h3><?php echo $Lang->tr('Leaderboard'); ?></h3>
-    <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Enable leaderboard (native trading need to be enabled)'); ?></label>
-        </div>
-        <div>
-          <div class="ckbx-style-14">
-              <input type="checkbox" id="kr-adm-chk-enableleaderboard" <?php echo ($App->_getLeaderboardEnabled() ? 'checked' : ''); ?> name="kr-adm-chk-enableleaderboard">
-              <label for="kr-adm-chk-enableleaderboard"></label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <h3><?php echo $Lang->tr('Markets'); ?></h3>
-    <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Hide market (native trading need to be enabled)'); ?></label>
-        </div>
-        <div>
-          <div class="ckbx-style-14">
-              <input type="checkbox" id="kr-adm-chk-hidemarket" <?php echo ($App->_getHideMarket() ? 'checked' : ''); ?> name="kr-adm-chk-hidemarket">
-              <label for="kr-adm-chk-hidemarket"></label>
-          </div>
+          <select name="kr-adm-balancestimationcurrency">
+            <?php
+            foreach ($MoneyListAvailable as $value) {
+              echo '<option '.($App->_getBalanceEstimationSymbol() == $value ? 'selected' : '').' value="'.$value.'">'.$value.'</option>';
+            }
+            ?>
+          </select>
         </div>
       </div>
     </div>
@@ -187,7 +118,7 @@ if($nativeTradingActive){
     <div class="kr-admin-line kr-admin-line-cls">
       <div class="kr-admin-field">
         <div>
-          <label><?php echo $Lang->tr('Enable referral (native trading or ChangeNOW need to be enabled)'); ?></label>
+          <label><?php echo $Lang->tr('Enable referral (ChangeNOW need to be enabled)'); ?></label>
         </div>
         <div>
           <div class="ckbx-style-14">
@@ -240,12 +171,10 @@ if($nativeTradingActive){
         <div>
           <select id="select-state-disabled" name="deposit_currencies_allowed[]" multiple class="demo-default" placeholder="Select some currencies">
             <?php
-            if($nativeTradingActive){
-              foreach ($Balance->_getListMoney() as $key => $value) {
-                ?>
-                <option <?php if(!is_null($App->_getListCurrencyDepositAvailable()) && in_array($value, $App->_getListCurrencyDepositAvailable())) echo 'selected'; ?> value="<?php echo $value; ?>"><?php echo $value; ?></option>
-                <?php
-              }
+            foreach ($MoneyListAvailable as $value) {
+              ?>
+              <option <?php if(!is_null($App->_getListCurrencyDepositAvailable()) && in_array($value, $App->_getListCurrencyDepositAvailable())) echo 'selected'; ?> value="<?php echo $value; ?>"><?php echo $value; ?></option>
+              <?php
             }
             ?>
         </select>
@@ -255,174 +184,12 @@ if($nativeTradingActive){
         </div>
       </div>
 
-
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Deposit wallet receive (if wallet real currency not available)'); ?></label>
-        </div>
-        <div>
-          <select name="kr-adm-depositrealmoneywallet">
-            <?php
-            foreach ($SymbolListAvailable as $symbolReceive => $value) {
-              echo '<option '.($App->_getDepositSymbolNotExistConvert() == $symbolReceive ? 'selected' : '').' value="'.$symbolReceive.'">'.$symbolReceive.'</option>';
-            }
-            ?>
-
-          </select>
-        </div>
-      </div>
       <div class="kr-admin-field">
         <div>
           <label><?php echo $Lang->tr('Bank transfert deposit agreement'); ?></label>
         </div>
         <div>
           <textarea name="banktransfert_alert_deposit" style="width:100%; height:161px;"><?php echo $App->_getDepositMessage(); ?></textarea>
-        </div>
-      </div>
-
-  </div>
-  <h3><?php echo $Lang->tr('Withdraw configuration'); ?></h3>
-  <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Withdraw minimum (in $)'); ?></label>
-        </div>
-        <div>
-          <input type="text" placeholder="<?php echo $Lang->tr('Withdraw minimum (in $)'); ?>" name="kr-adm-widthdrawmin" value="<?php echo $App->_getMinimumWidthdraw(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Withdraw processing time (in days)'); ?></label>
-        </div>
-        <div>
-          <input type="text" placeholder="<?php echo $Lang->tr('Withdraw processing time (in days) = ex : 3'); ?>" name="kr-adm-widthdrawdays" value="<?php echo $App->_getNumberDaysWidthdrawProcess(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Withdraw fees (in %)'); ?></label>
-        </div>
-        <div>
-          <input type="text" placeholder="<?php echo $Lang->tr('Withdraw fees (in %)'); ?>" name="kr-adm-widthdrawfees" value="<?php echo $App->_getWidthdrawFees(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Withdraw reference pattern'); ?></label><br/>
-          <span>$ : Random number (0-9)</span><br/>
-          <span>* : Random Letter (A-Z)</span>
-        </div>
-        <div>
-          <input type="text" name="kr-adm-orderpattern" placeholder="Your withdraw reference pattern (ex : WIDRAW-$**$-$$$$)" value="<?php echo $App->_getWidthdrawPattern(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Bank transfert alert when withdraw currency is not crypto-currency'); ?></label>
-        </div>
-        <div>
-          <textarea name="banktransfert_alert_withdraw" style="width:100%; height:161px;"><?php echo $App->_getWidthdrawMessage(); ?></textarea>
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Cryptocurrencies allowed for bank transfert withdraw'); ?></label>
-        </div>
-        <div>
-          <select id="select-banktransfert-cryptoallowed" name="bankwithdraw_cryptocurrency_allowed[]" multiple class="demo-default" placeholder="Select some cryptocurrencies allowed for bank transfert withdraw">
-              <?php
-
-              foreach (array_keys($SymbolListAvailable) as $key => $value) {
-                ?>
-                <option <?php echo (!is_null($App->_getWidthdrawCryptocurrencyAvailable()) && in_array($value, $App->_getWidthdrawCryptocurrencyAvailable()) ? 'selected' : ''); ?> value="<?php echo $value; ?>"><?php echo $value; ?></option>
-                <?php
-              }
-              ?>
-          </select>
-          <script type="text/javascript">
-          $('#select-banktransfert-cryptoallowed').selectize();
-          </script>
-        </div>
-      </div>
-    </div>
-    <h3><?php echo $Lang->tr('Trading configuration'); ?></h3>
-    <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Trading fees (in %)'); ?></label>
-        </div>
-        <div>
-          <input type="text" placeholder="<?php echo $Lang->tr('Trading fees (in %)'); ?>" name="kr-adm-tradingfees" value="<?php echo $App->_hiddenThirdpartyTradingFee(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Order reference pattern'); ?></label><br/>
-          <span>$ : Random number (0-9)</span><br/>
-          <span>* : Random Letter (A-Z)</span>
-        </div>
-        <div>
-          <input type="text" name="kr-adm-orderpattern" placeholder="Your order reference pattern (ex : ORDR-$**$-$$$$)" value="<?php echo $App->_hiddenTradingOrderPatternReference(); ?>">
-        </div>
-      </div>
-    </div>
-
-    <h3><?php echo $Lang->tr('Real account configuration'); ?></h3>
-    <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Enable real account'); ?></label>
-        </div>
-        <div>
-          <div class="ckbx-style-14">
-              <input type="checkbox" id="kr-adm-chk-enablerealaccount" <?php echo ($App->_getTradingEnableRealAccount() ? 'checked' : ''); ?> name="kr-adm-chk-enablerealaccount">
-              <label for="kr-adm-chk-enablerealaccount"></label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <h3><?php echo $Lang->tr('Practice account configuration'); ?></h3>
-    <div class="kr-admin-line kr-admin-line-cls">
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Enable practice account'); ?></label>
-        </div>
-        <div>
-          <div class="ckbx-style-14">
-              <input type="checkbox" id="kr-adm-chk-enablepracticeaccount" <?php echo ($App->_getTradingEnablePracticeAccount() ? 'checked' : ''); ?> name="kr-adm-chk-enablepracticeaccount">
-              <label for="kr-adm-chk-enablepracticeaccount"></label>
-          </div>
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Maximum free deposit (in $)'); ?></label>
-        </div>
-        <div>
-          <input type="text" placeholder="<?php echo $Lang->tr('Maximum free deposit (in $) ex : 10000'); ?>" name="kr-adm-maximumfreedeposit" value="<?php echo $App->_getMaximalFreeDeposit(); ?>">
-        </div>
-      </div>
-      <div class="kr-admin-field">
-        <div>
-          <label><?php echo $Lang->tr('Free deposit wallet receive'); ?></label>
-        </div>
-        <div>
-          <?php if(count($SymbolListAvailable) == 0):
-            ?>
-            <span>You must activate at least 1 exchange</span>
-            <?php
-          else :?>
-          <select name="kr-adm-symbolfreedeposit">
-            <?php
-            foreach ($SymbolListAvailable as $symbolReceive => $value) {
-              echo '<option '.($App->_getFreeDepositSymbol() == $symbolReceive ? 'selected' : '').' value="'.$symbolReceive.'">'.$symbolReceive.'</option>';
-            }
-            ?>
-
-          </select>
-        <?php endif; ?>
         </div>
       </div>
   </div>

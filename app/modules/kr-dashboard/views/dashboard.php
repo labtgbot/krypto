@@ -40,8 +40,6 @@ $GraphList = $Dashboard->_getDashboardGraphList();
 
 $nchartShown = $Dashboard->_getGraphPos();
 
-$Balance = new Balance($User, $App);
-
 $showChangeNowDashboardWidget = $App->_changeNowWidgetEnabled('dashboard');
 
 

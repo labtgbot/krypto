@@ -1944,19 +1944,7 @@ class App extends MySQL {
    * Symbol market thirdparty available
    */
   public function _syncThirdpartyMarket(){
-
-    $BittrexClient = new BittrexClient('601a6c79356041fab100a2ab81376d84', 'ccb2eed098d9434b88d093c39fc22009');
-    foreach ($BittrexClient->getMarkets() as $Market) {
-      if($Market->IsActive){
-        $r = parent::execSqlRequest("INSERT INTO thirdparty_crypto_krypto (symbol_thirdparty_crypto, to_thirdparty_crypto, name_thirdparty_crypto)
-                                    VALUES (:symbol_thirdparty_crypto, :to_thirdparty_crypto, :name_thirdparty_crypto)",
-                                    [
-                                      'symbol_thirdparty_crypto' => $Market->MarketCurrency,
-                                      'to_thirdparty_crypto' => $Market->BaseCurrency,
-                                      'name_thirdparty_crypto' => 'bittrex'
-                                    ]);
-      }
-    }
+    return false;
 
   }
 
