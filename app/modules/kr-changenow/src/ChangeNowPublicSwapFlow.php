@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/ChangeNowApiException.php';
 require_once __DIR__.'/ChangeNowReferralAttribution.php';
+require_once __DIR__.'/../../../src/ChangeNow/ChangeNowGuardrails.php';
 
 /**
  * Public no-registration ChangeNOW swap orchestration.
@@ -50,15 +51,9 @@ class ChangeNowPublicSwapFlow {
 
   public function _getInitialState(){
     $flow = $this->_getDefaultFlow();
+    $eligibility = $this->_getEligibilityState();
     $sourceAssets = [];
     $destinationAssets = [];
-
-    try {
-      $sourceAssets = $this->MarketData->_listSourceAssets(['flow' => $flow]);
-    } catch (Exception $e) {
-      $sourceAssets = [];
-    }
-
     $defaultFrom = [
       'currency' => $this->_getDefaultFromCurrency(),
       'network' => $this->_getDefaultFromNetwork()
@@ -67,6 +62,27 @@ class ChangeNowPublicSwapFlow {
       'currency' => $this->_getDefaultToCurrency(),
       'network' => $this->_getDefaultToNetwork()
     ];
+
+    if(is_array($eligibility) && array_key_exists('allowed', $eligibility) && $eligibility['allowed'] === false){
+      return [
+        'providerEnabled' => $this->_providerEnabled(),
+        'missingSettings' => $this->_missingSettings(),
+        'enabledFlows' => $this->_getEnabledFlows(),
+        'defaultFlow' => $flow,
+        'defaultFrom' => $defaultFrom,
+        'defaultTo' => $defaultTo,
+        'sourceAssets' => [],
+        'destinationAssets' => [],
+        'eligibility' => $eligibility,
+        'supportEmail' => $this->_getSupportEmail()
+      ];
+    }
+
+    try {
+      $sourceAssets = $this->MarketData->_listSourceAssets(['flow' => $flow]);
+    } catch (Exception $e) {
+      $sourceAssets = [];
+    }
 
     if(count($sourceAssets) > 0 && !$this->_assetInList($defaultFrom['currency'], $defaultFrom['network'], $sourceAssets)){
       $defaultFrom = [
@@ -97,11 +113,13 @@ class ChangeNowPublicSwapFlow {
       'defaultTo' => $defaultTo,
       'sourceAssets' => $this->_publicAssets($sourceAssets),
       'destinationAssets' => $this->_publicAssets($destinationAssets),
+      'eligibility' => $eligibility,
       'supportEmail' => $this->_getSupportEmail()
     ];
   }
 
   public function _getQuote($request){
+    $this->_assertRegionAllowed();
     $this->_validateLiveSettings();
     return $this->MarketData->_getQuote($this->_quoteRequestFromPublic($request));
   }
@@ -126,6 +144,7 @@ class ChangeNowPublicSwapFlow {
   }
 
   public function _createSwap($request, $sessionKey = null, $userId = null){
+    $this->_assertRegionAllowed();
     $this->_validateLiveSettings();
     $normalized = $this->_normalizePublicRequest($request, true);
     $this->_assertQuoteNotExpired($normalized);
@@ -604,6 +623,102 @@ class ChangeNowPublicSwapFlow {
 
     if(!$this->_providerEnabled()) throw new ChangeNowApiConfigurationException('ChangeNOW provider is disabled.');
     return true;
+  }
+
+  private function _assertRegionAllowed(){
+    $state = $this->_getEligibilityState();
+    if(is_array($state) && array_key_exists('allowed', $state) && $state['allowed'] === false){
+      $message = $this->_value($state, ['message'], '');
+      if($message == ''){
+        $copy = ChangeNowGuardrails::messages();
+        $message = $copy['unsupported_region'];
+      }
+
+      throw new ChangeNowApiValidationException(
+        $message,
+        'ChangeNOW public swap denied for request country '.$this->_value($state, ['country'], '').'.',
+        403,
+        [
+          'state' => $this->_value($state, ['state'], 'unsupported_region'),
+          'country' => $this->_value($state, ['country'], '')
+        ]
+      );
+    }
+
+    return true;
+  }
+
+  private function _getEligibilityState(){
+    $blockedCountries = $this->_getBlockedCountries();
+    if(count($blockedCountries) == 0){
+      return [
+        'allowed' => true,
+        'state' => 'allowed',
+        'message' => '',
+        'country' => ''
+      ];
+    }
+
+    $countryCode = $this->_getRequestCountryCode();
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowEligibilityForCountry')){
+      $state = $this->App->_getChangeNowEligibilityForCountry($countryCode);
+    } else {
+      $state = ChangeNowEligibility::countryState($countryCode, $blockedCountries, $this->_getComplianceCopy());
+    }
+
+    if(!is_array($state)){
+      $state = [
+        'allowed' => true,
+        'state' => 'allowed',
+        'message' => ''
+      ];
+    }
+
+    $state['country'] = $countryCode;
+    return $state;
+  }
+
+  private function _getBlockedCountries(){
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowBlockedCountries')){
+      return ChangeNowEligibility::normalizeCountryList($this->App->_getChangeNowBlockedCountries());
+    }
+
+    if(array_key_exists('blocked_countries', $this->Options)){
+      return ChangeNowEligibility::normalizeCountryList($this->Options['blocked_countries']);
+    }
+
+    return [];
+  }
+
+  private function _getComplianceCopy(){
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowComplianceCopy')){
+      return ChangeNowGuardrails::mergeComplianceCopy($this->App->_getChangeNowComplianceCopy());
+    }
+
+    if(array_key_exists('compliance_copy', $this->Options)){
+      return ChangeNowGuardrails::mergeComplianceCopy($this->Options['compliance_copy']);
+    }
+
+    return ChangeNowGuardrails::messages();
+  }
+
+  private function _getRequestCountryCode(){
+    foreach (['request_country', 'country_code'] as $optionKey) {
+      if(array_key_exists($optionKey, $this->Options)){
+        return ChangeNowRequestRegion::normalizeCountryCode($this->Options[$optionKey]);
+      }
+    }
+
+    $server = (array_key_exists('server', $this->Options) && is_array($this->Options['server']) ? $this->Options['server'] : (isset($_SERVER) ? $_SERVER : []));
+    $geoIpResolver = null;
+    if(array_key_exists('geoip_resolver', $this->Options)) $geoIpResolver = $this->Options['geoip_resolver'];
+    elseif(array_key_exists('country_resolver', $this->Options)) $geoIpResolver = $this->Options['country_resolver'];
+
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowRequestCountry')){
+      return ChangeNowRequestRegion::normalizeCountryCode($this->App->_getChangeNowRequestCountry($server, $geoIpResolver));
+    }
+
+    return ChangeNowRequestRegion::countryCode($server, $geoIpResolver);
   }
 
   private function _assertQuoteNotExpired($request){

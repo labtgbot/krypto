@@ -74,6 +74,32 @@ kr_assert(!$eligibility['allowed'], 'Blocked countries must be rejected.');
 kr_assert_equals('unsupported_region', $eligibility['state'], 'Blocked country state should be unsupported_region.');
 kr_assert_equals('Custom unsupported-region copy.', $eligibility['message'], 'Eligibility copy must be configurable.');
 
+$allowedEligibility = ChangeNowEligibility::countryState('ca', ['US'], ['unsupported_region' => 'Custom unsupported-region copy.']);
+kr_assert($allowedEligibility['allowed'], 'Allowed countries must pass eligibility checks.');
+kr_assert_equals('allowed', $allowedEligibility['state'], 'Allowed country state should be allowed.');
+
+$emptyBlocklistEligibility = ChangeNowEligibility::countryState('us', [], ['unsupported_region' => 'Custom unsupported-region copy.']);
+kr_assert($emptyBlocklistEligibility['allowed'], 'Empty unsupported-country lists must preserve existing public swap behavior.');
+kr_assert_equals('allowed', $emptyBlocklistEligibility['state'], 'Empty unsupported-country lists should not produce a regional block.');
+
+$trustedCountryServer = [
+  'REMOTE_ADDR' => '203.0.113.10',
+  'HTTP_CF_IPCOUNTRY' => 'US'
+];
+kr_assert_equals('', ChangeNowRequestRegion::countryCode($trustedCountryServer, null, []), 'Untrusted proxy country headers must be ignored.');
+kr_assert_equals('US', ChangeNowRequestRegion::countryCode($trustedCountryServer, null, ['203.0.113.10']), 'Trusted proxy country headers should determine request country.');
+
+$geoIpCountry = ChangeNowRequestRegion::countryCode([
+  'REMOTE_ADDR' => '198.51.100.45'
+], function($ip) {
+  return [
+    'country' => [
+      'code' => ($ip == '198.51.100.45' ? 'CA' : '')
+    ]
+  ];
+});
+kr_assert_equals('CA', $geoIpCountry, 'GeoIP resolver country should be used when no trusted country header is present.');
+
 $providerDown = ChangeNowEligibility::providerState(false);
 kr_assert(!$providerDown['available'], 'Unavailable provider should return an outage state.');
 kr_assert_equals('provider_down', $providerDown['state'], 'Unavailable provider state should be provider_down.');

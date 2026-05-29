@@ -409,6 +409,225 @@ class ChangeNowEligibility {
 
 }
 
+class ChangeNowRequestRegion {
+
+  public static function requestState($server, $blockedCountries, $copy = [], $geoIpResolver = null, $trustedProxies = null){
+    $countryCode = self::countryCode($server, $geoIpResolver, $trustedProxies);
+    $state = ChangeNowEligibility::countryState($countryCode, $blockedCountries, $copy);
+    $state['country'] = $countryCode;
+    return $state;
+  }
+
+  public static function countryCode($server, $geoIpResolver = null, $trustedProxies = null){
+    if(!is_array($server)) $server = [];
+
+    $serverCountry = self::serverCountryCode($server);
+    if($serverCountry != '') return $serverCountry;
+
+    $trustedHeaderCountry = self::trustedHeaderCountryCode($server, $trustedProxies);
+    if($trustedHeaderCountry != '') return $trustedHeaderCountry;
+
+    $clientIp = self::clientIp($server, $trustedProxies);
+    if($clientIp == '' || is_null($geoIpResolver)) return '';
+
+    return self::countryCodeFromGeoIpPayload(self::resolveGeoIp($clientIp, $geoIpResolver));
+  }
+
+  public static function countryCodeFromGeoIpPayload($payload){
+    if(is_string($payload)) return self::normalizeCountryCode($payload);
+    if(is_object($payload)) $payload = get_object_vars($payload);
+    if(!is_array($payload)) return '';
+
+    foreach (['country_code', 'countryCode', 'countryCode2', 'country_code2', 'code'] as $key) {
+      if(array_key_exists($key, $payload)){
+        $countryCode = self::normalizeCountryCode($payload[$key]);
+        if($countryCode != '') return $countryCode;
+      }
+    }
+
+    foreach (['country', 'location'] as $containerKey) {
+      if(!array_key_exists($containerKey, $payload)) continue;
+      $container = $payload[$containerKey];
+      if(is_object($container)) $container = get_object_vars($container);
+      if(!is_array($container)) continue;
+
+      foreach (['code', 'iso_code', 'isoCode', 'country_code', 'countryCode'] as $key) {
+        if(array_key_exists($key, $container)){
+          $countryCode = self::normalizeCountryCode($container[$key]);
+          if($countryCode != '') return $countryCode;
+        }
+      }
+    }
+
+    return '';
+  }
+
+  public static function normalizeCountryCode($value){
+    $value = strtoupper(trim((string) $value));
+    if($value == '') return '';
+
+    $value = preg_replace('/[^A-Z]/', '', $value);
+    if(!preg_match('/^[A-Z]{2}$/', $value)) return '';
+    if(in_array($value, ['XX', 'ZZ'], true)) return '';
+
+    return $value;
+  }
+
+  public static function clientIp($server, $trustedProxies = null){
+    if(!is_array($server)) $server = [];
+
+    $remoteAddr = (array_key_exists('REMOTE_ADDR', $server) ? self::normalizeIp($server['REMOTE_ADDR']) : '');
+    if($remoteAddr != '' && self::isTrustedProxy($remoteAddr, $trustedProxies)){
+      foreach (self::forwardedIps($server) as $forwardedIp) {
+        $forwardedIp = self::normalizeIp($forwardedIp);
+        if($forwardedIp != '') return $forwardedIp;
+      }
+    }
+
+    return $remoteAddr;
+  }
+
+  public static function isTrustedProxy($remoteAddr, $trustedProxies = null){
+    $remoteAddr = self::normalizeIp($remoteAddr);
+    if($remoteAddr == '') return false;
+
+    foreach (self::normalizeTrustedProxies($trustedProxies) as $trustedProxy) {
+      if($trustedProxy == '') continue;
+      if($trustedProxy == $remoteAddr) return true;
+      if(strpos($trustedProxy, '/') !== false && self::ipInCidr($remoteAddr, $trustedProxy)) return true;
+    }
+
+    return false;
+  }
+
+  public static function normalizeIp($value){
+    $value = trim((string) $value);
+    if($value == '') return '';
+
+    $value = trim($value, " \t\n\r\0\x0B[]\"");
+    if(filter_var($value, FILTER_VALIDATE_IP)) return $value;
+
+    if(preg_match('/^([0-9.]+):[0-9]+$/', $value, $matches) && filter_var($matches[1], FILTER_VALIDATE_IP)){
+      return $matches[1];
+    }
+
+    return '';
+  }
+
+  public static function normalizeTrustedProxies($trustedProxies = null){
+    if(is_null($trustedProxies)){
+      $trustedProxies = '';
+      if(defined('KRYPTO_TRUSTED_PROXIES')) $trustedProxies = KRYPTO_TRUSTED_PROXIES;
+      elseif(getenv('KRYPTO_TRUSTED_PROXIES') !== false) $trustedProxies = getenv('KRYPTO_TRUSTED_PROXIES');
+    }
+
+    if(is_string($trustedProxies)) $trustedProxies = preg_split('/[\s,]+/', $trustedProxies);
+    if(!is_array($trustedProxies)) return [];
+
+    $normalized = [];
+    foreach ($trustedProxies as $trustedProxy) {
+      $trustedProxy = trim((string) $trustedProxy);
+      if($trustedProxy != '') $normalized[] = $trustedProxy;
+    }
+
+    return $normalized;
+  }
+
+  private static function serverCountryCode($server){
+    foreach (['GEOIP_COUNTRY_CODE', 'MM_COUNTRY_CODE', 'COUNTRY_CODE', 'REDIRECT_GEOIP_COUNTRY_CODE'] as $key) {
+      if(array_key_exists($key, $server)){
+        $countryCode = self::normalizeCountryCode($server[$key]);
+        if($countryCode != '') return $countryCode;
+      }
+    }
+
+    return '';
+  }
+
+  private static function trustedHeaderCountryCode($server, $trustedProxies = null){
+    $remoteAddr = (array_key_exists('REMOTE_ADDR', $server) ? self::normalizeIp($server['REMOTE_ADDR']) : '');
+    if($remoteAddr == '' || !self::isTrustedProxy($remoteAddr, $trustedProxies)) return '';
+
+    foreach ([
+      'HTTP_CF_IPCOUNTRY',
+      'HTTP_CLOUDFRONT_VIEWER_COUNTRY',
+      'HTTP_X_APPENGINE_COUNTRY',
+      'HTTP_X_VERCEL_IP_COUNTRY',
+      'HTTP_X_GEOIP_COUNTRY_CODE',
+      'HTTP_X_COUNTRY_CODE',
+      'HTTP_GEOIP_COUNTRY_CODE'
+    ] as $key) {
+      if(array_key_exists($key, $server)){
+        $countryCode = self::normalizeCountryCode($server[$key]);
+        if($countryCode != '') return $countryCode;
+      }
+    }
+
+    return '';
+  }
+
+  private static function forwardedIps($server){
+    $ips = [];
+
+    if(array_key_exists('HTTP_X_FORWARDED_FOR', $server)){
+      foreach (explode(',', (string) $server['HTTP_X_FORWARDED_FOR']) as $ip) {
+        $ips[] = $ip;
+      }
+    }
+
+    foreach (['HTTP_X_REAL_IP', 'HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP'] as $header) {
+      if(array_key_exists($header, $server)) $ips[] = $server[$header];
+    }
+
+    if(array_key_exists('HTTP_FORWARDED', $server)){
+      foreach (explode(',', (string) $server['HTTP_FORWARDED']) as $forwardedPart) {
+        if(preg_match('/(?:^|;)\s*for="?([^";,]+)"?/i', $forwardedPart, $matches)){
+          $ips[] = $matches[1];
+        }
+      }
+    }
+
+    return $ips;
+  }
+
+  private static function resolveGeoIp($clientIp, $geoIpResolver){
+    if(is_callable($geoIpResolver)) return call_user_func($geoIpResolver, $clientIp);
+    if(is_object($geoIpResolver)){
+      foreach (['_getCountryCodeForIp', 'countryCodeForIp', 'lookup'] as $method) {
+        if(method_exists($geoIpResolver, $method)) return $geoIpResolver->{$method}($clientIp);
+      }
+    }
+
+    return null;
+  }
+
+  private static function ipInCidr($ip, $cidr){
+    $parts = explode('/', $cidr, 2);
+    if(count($parts) != 2) return false;
+
+    $network = self::normalizeIp($parts[0]);
+    $bits = intval($parts[1]);
+    $ipPacked = inet_pton($ip);
+    $networkPacked = inet_pton($network);
+
+    if($network == '' || $ipPacked === false || $networkPacked === false) return false;
+    if(strlen($ipPacked) !== strlen($networkPacked)) return false;
+
+    $maxBits = strlen($ipPacked) * 8;
+    if($bits < 0 || $bits > $maxBits) return false;
+
+    $fullBytes = intval(floor($bits / 8));
+    $remainingBits = $bits % 8;
+
+    if($fullBytes > 0 && substr($ipPacked, 0, $fullBytes) !== substr($networkPacked, 0, $fullBytes)) return false;
+    if($remainingBits == 0) return true;
+
+    $mask = (0xff << (8 - $remainingBits)) & 0xff;
+    return ((ord($ipPacked[$fullBytes]) & $mask) === (ord($networkPacked[$fullBytes]) & $mask));
+  }
+
+}
+
 class ChangeNowAccessPolicy {
 
   public static function canViewTransaction($actor, $transaction, $lookupToken = null){

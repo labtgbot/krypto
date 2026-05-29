@@ -97,6 +97,40 @@ class ChangeNowPublicRateLimitFakeApp {
   }
 }
 
+class ChangeNowPublicRegionFakeApp {
+  public $requestedCountries = [];
+
+  public function _getChangeNowBlockedCountries() {
+    return ['US'];
+  }
+
+  public function _getChangeNowRequestCountry($server = null, $geoIpResolver = null) {
+    $country = '';
+    if(is_callable($geoIpResolver)) $country = call_user_func($geoIpResolver, $server);
+    $this->requestedCountries[] = $country;
+    return $country;
+  }
+
+  public function _getChangeNowEligibilityForCountry($countryCode) {
+    return ChangeNowEligibility::countryState($countryCode, ['US'], [
+      'unsupported_region' => 'Custom unsupported-region copy.'
+    ]);
+  }
+}
+
+class ChangeNowPublicEmptyRegionFakeApp {
+  public $requestedCountries = 0;
+
+  public function _getChangeNowBlockedCountries() {
+    return [];
+  }
+
+  public function _getChangeNowRequestCountry($server = null, $geoIpResolver = null) {
+    $this->requestedCountries++;
+    return 'US';
+  }
+}
+
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('quote'), 'quote should use the quote bucket');
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('validate'), 'validate should share the quote bucket');
 assertSameValue('transaction', ChangeNowPublicRateLimit::bucketForAction('create'), 'create should use the transaction bucket');
@@ -159,6 +193,41 @@ $statusDecision = changenow_public_rate_limit_decision($statusApp, 'status', [
 assertSameValue(true, $statusDecision['allowed'], 'status should be allowed by the publicSwap rate-limit helper');
 assertSameValue(0, count($statusLimiter->calls), 'status should not consume any limiter bucket');
 assertSameValue(0, count($statusSession), 'status should not create a public swap rate-limit session key');
+
+$regionApp = new ChangeNowPublicRegionFakeApp();
+$regionDecision = changenow_public_region_decision($regionApp, 'create', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], function() {
+  return 'US';
+});
+
+assertSameValue(false, $regionDecision['allowed'], 'publicSwap action helper should deny create from a mocked blocked country');
+assertSameValue('unsupported_region', $regionDecision['state'], 'blocked region helper should expose unsupported_region state');
+assertSameValue('US', $regionDecision['country'], 'blocked region helper should expose the detected country code');
+assertSameValue('Custom unsupported-region copy.', $regionDecision['message'], 'blocked region helper should use admin compliance copy');
+assertSameValue(1, count($regionApp->requestedCountries), 'blocked region helper should use the mocked country resolver');
+
+$regionPayload = changenow_public_unsupported_region_payload($regionDecision);
+assertSameValue(2, $regionPayload['error'], 'unsupported region public response should be a validation error');
+assertSameValue('unsupported_region', $regionPayload['type'], 'unsupported region public response should expose the requested type');
+assertSameValue('Custom unsupported-region copy.', $regionPayload['msg'], 'unsupported region public response should expose the configured copy');
+
+$emptyRegionApp = new ChangeNowPublicEmptyRegionFakeApp();
+$emptyRegionDecision = changenow_public_region_decision($emptyRegionApp, 'create', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], function() {
+  return 'US';
+});
+assertSameValue(true, $emptyRegionDecision['allowed'], 'empty unsupported-country lists should preserve public create behavior');
+assertSameValue('', $emptyRegionDecision['country'], 'empty unsupported-country lists should not resolve or expose request country');
+assertSameValue(0, $emptyRegionApp->requestedCountries, 'empty unsupported-country lists should not call the country resolver');
+
+$statusRegionDecision = changenow_public_region_decision($regionApp, 'status', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], function() {
+  return 'US';
+});
+assertSameValue(true, $statusRegionDecision['allowed'], 'status should not require regional eligibility checks');
 
 echo "ChangeNOW public swap rate-limit tests passed\n";
 

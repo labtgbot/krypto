@@ -127,6 +127,11 @@ body.kr-public-swap-enabled > footer {
   display: block;
 }
 
+.kr-public-swap-alert.kr-public-swap-alert-error {
+  color: #7d1d1d;
+  background: #ffe8e8;
+}
+
 .kr-public-swap-message.kr-public-message-error {
   display: block;
   color: #7d1d1d;
