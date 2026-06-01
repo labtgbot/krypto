@@ -224,7 +224,7 @@ $changeNowLandingWidgetEnabled = (!defined('ERROR_SOFTWARE') && !is_null($App) &
   }
 
   if(!empty($_GET['rmsg']) && !empty($_GET['rtime']) && $_GET['rtime'] > (time() - 4) && $_GET['rtime'] < (time() + 4)){
-    echo '<script>$(document).ready(function(){ showAlert("Oops", "'.base64_decode($_GET['rmsg']).'", "error"); });</script>';
+    echo '<script>$(document).ready(function(){ showAlert("Oops", '.json_encode(base64_decode($_GET['rmsg']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP).', "error"); });</script>';
   }
 
   ?>

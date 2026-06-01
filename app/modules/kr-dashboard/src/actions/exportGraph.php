@@ -53,7 +53,7 @@ try {
         <svg class="lnr lnr-cross"><use xlink:href="#lnr-cross"></use></svg>
       </div>
     </header>
-    <ul container="<?php echo $_POST['container']; ?>">
+    <ul container="<?php echo htmlspecialchars($_POST['container'], ENT_QUOTES, 'UTF-8'); ?>">
       <li class="export-popup-act-pic">
         <span>Download screenshot</span>
         <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
