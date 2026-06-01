@@ -27,6 +27,9 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/CryptoApi/CryptoApi.php";
 $App = new App(true);
 $App->_loadModulesControllers();
 
+// Reject cross-site requests before reflecting any user-controlled input
+Krypto_Csrf::validateRequest();
+
 // Check if user is logged
 $User = new User();
 if(!$User->_isLogged()) die("You are not logged");
@@ -47,7 +50,7 @@ $CryptoApi = new CryptoApi($User, null, $App);
       <li kr-navview="dashboard"><?php echo $Lang->tr('Heatmap'); ?></li>
     </ul>
     <form class="kr-search-coin" action="" method="post">
-      <input type="text" name="kr-search-value" placeholder="Search coin ..." value="<?php echo (!isset($_POST['search']) || empty($_POST['search']) ? '' : $_POST['search']); ?>">
+      <input type="text" name="kr-search-value" placeholder="Search coin ..." value="<?php echo (!isset($_POST['search']) || empty($_POST['search']) ? '' : htmlspecialchars($_POST['search'], ENT_QUOTES, 'UTF-8')); ?>">
     </form>
   </nav>
 
