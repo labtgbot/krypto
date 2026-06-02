@@ -174,7 +174,7 @@ class Install {
     $status = $req->execute([
           'email_user' => $_SESSION['admin']['admin_email'],
           'name_user' => $_SESSION['admin']['admin_name'],
-          'password_user' => hash('sha512', $_SESSION['admin']['admin_password']),
+          'password_user' => password_hash($_SESSION['admin']['admin_password'], PASSWORD_DEFAULT),
           'created_date_user' => time(),
           'admin_user' => 1
         ]);
