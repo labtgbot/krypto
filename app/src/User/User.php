@@ -529,6 +529,13 @@ class User extends MySQL {
     if(is_null($name)) throw new Exception("Error : User create, name required", 1);
     if(is_null($password)) throw new Exception("Error : User create, password required", 1);
 
+    // Sanitize the display name on input as defense-in-depth against stored XSS
+    // (audit finding B2). This is the single choke point for every account
+    // creation path: signup, OAuth callbacks and admin-created users. Output
+    // sinks (admin/manager/chat) render the stored value, which is now safe.
+    // Mirrors the htmlspecialchars handling already used in updateUserprofile.
+    $name = htmlspecialchars(trim($name), ENT_QUOTES, 'UTF-8');
+
     // Check email validity
     if(!filter_var($email, FILTER_VALIDATE_EMAIL)) throw new Exception("Error : User create, email wrong format", 1);
 
