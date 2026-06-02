@@ -112,12 +112,18 @@ class RssFeedArticle
     {
         $content = $this->_getArticleDataVal('content');
 
-        // Remove article picture
-        $content = preg_replace("/<img[^>]+\>/i", "", $content);
+        // Run third-party feed HTML through the allowlist sanitizer: it drops
+        // scripts, event handlers, dangerous schemes and unknown tags while
+        // keeping safe formatting. Links are forced to open in a new tab with a
+        // hardened rel by the sanitizer, so the previous hand-rolled <img>/<a>
+        // string replacement is no longer needed (stored XSS finding B7).
+        if (class_exists('HtmlSanitizer')) {
+            return HtmlSanitizer::sanitize($content);
+        }
 
-        // Update link for new bank
-        $content = str_replace('<a', '<a target=_bank', $content);
-        return $content;
+        // Defensive fallback when the sanitizer is unavailable: emit escaped
+        // plain text rather than raw markup.
+        return htmlspecialchars(strip_tags((string) $content), ENT_QUOTES, 'UTF-8');
     }
 
     /**
