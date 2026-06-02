@@ -323,6 +323,70 @@ class User extends MySQL {
   }
 
   /**
+   * Hash a plaintext password with a modern, salted algorithm.
+   * @param  String $password Plaintext password
+   * @return String           Password hash (PASSWORD_DEFAULT)
+   */
+  public static function _hashPassword($password){
+    return password_hash($password, PASSWORD_DEFAULT);
+  }
+
+  /**
+   * Detect a legacy unsalted sha512 password hash (128 hexadecimal chars).
+   * @param  String  $hash Stored password hash
+   * @return Boolean
+   */
+  public static function _isLegacyPasswordHash($hash){
+    return is_string($hash) && strlen($hash) === 128 && ctype_xdigit($hash);
+  }
+
+  /**
+   * Verify a plaintext password against a stored hash, supporting both the
+   * modern password_hash format and the legacy unsalted sha512 hashes so that
+   * existing accounts keep working until they are migrated.
+   * @param  String  $password   Plaintext password
+   * @param  String  $storedHash Stored password hash
+   * @return Boolean
+   */
+  public static function _passwordMatches($password, $storedHash){
+    if(!is_string($storedHash) || $storedHash === '') return false;
+    if(self::_isLegacyPasswordHash($storedHash)){
+      // Constant-time comparison of the legacy unsalted sha512 digest.
+      return hash_equals($storedHash, hash('sha512', $password));
+    }
+    return password_verify($password, $storedHash);
+  }
+
+  /**
+   * Check if a stored hash should be upgraded to the current algorithm
+   * (legacy sha512 or a password_hash that no longer matches the defaults).
+   * @param  String  $storedHash Stored password hash
+   * @return Boolean
+   */
+  public static function _passwordNeedsUpgrade($storedHash){
+    if(self::_isLegacyPasswordHash($storedHash)) return true;
+    return password_needs_rehash($storedHash, PASSWORD_DEFAULT);
+  }
+
+  /**
+   * Replace a stored password hash with a freshly computed modern hash.
+   * Used to transparently migrate legacy/outdated hashes at login time.
+   * @param  String $email    Standard account email
+   * @param  String $password Plaintext password
+   * @return String           The new password hash
+   */
+  private function _rehashUserPassword($email, $password){
+    $newHash = self::_hashPassword($password);
+    parent::execSqlRequest("UPDATE user_krypto SET password_user=:password_user WHERE email_user=:email_user AND oauth_user=:oauth_user",
+                          [
+                            'email_user' => $email,
+                            'oauth_user' => 'standard',
+                            'password_user' => $newHash
+                          ]);
+    return $newHash;
+  }
+
+  /**
    * Login function
    * @param  String $email    User email
    * @param  String $password User password (not crypted)
@@ -335,16 +399,35 @@ class User extends MySQL {
     // Check email validity
     if(!filter_var($email, FILTER_VALIDATE_EMAIL)) throw new Exception("Email not valid", 1);
 
-    // Get user data
-    $r = parent::querySqlRequest("SELECT * FROM user_krypto WHERE email_user=:email_user AND password_user=:password_user AND oauth_user=:oauth_user",
-                                    [
-                                      'email_user' => $email,
-                                      'password_user' => ($oauth == 'standard' ? hash('sha512', $password) : ($setpwd ? $password : $oauth)),
-                                      'oauth_user' => $oauth
-                                    ]);
+    if($oauth == 'standard'){
+      // Standard accounts: fetch the user by email + oauth, then verify the
+      // password in PHP with password_verify (no password comparison in SQL).
+      $r = parent::querySqlRequest("SELECT * FROM user_krypto WHERE email_user=:email_user AND oauth_user=:oauth_user",
+                                      [
+                                        'email_user' => $email,
+                                        'oauth_user' => $oauth
+                                      ]);
 
-    // Check user find
-    if(count($r) == 0) throw new Exception("Invalid login", 1);
+      // Check user find + verify password
+      if(count($r) == 0 || !self::_passwordMatches($password, $r[0]['password_user'])) throw new Exception("Invalid login", 1);
+
+      // Transparently migrate legacy/outdated hashes on successful login.
+      if(self::_passwordNeedsUpgrade($r[0]['password_user'])){
+        $r[0]['password_user'] = $this->_rehashUserPassword($email, $password);
+      }
+    } else {
+      // OAuth accounts: password_user holds the provider name or uniq id and is
+      // matched as an identity token (it is never a user-chosen password).
+      $r = parent::querySqlRequest("SELECT * FROM user_krypto WHERE email_user=:email_user AND password_user=:password_user AND oauth_user=:oauth_user",
+                                      [
+                                        'email_user' => $email,
+                                        'password_user' => ($setpwd ? $password : $oauth),
+                                        'oauth_user' => $oauth
+                                      ]);
+
+      // Check user find
+      if(count($r) == 0) throw new Exception("Invalid login", 1);
+    }
 
     if($r[0]['status_user'] == 0 && $r[0]['admin_user'] == "0") throw new Exception("Your account has been disabled", 1);
     if($App->_isMaintenanceMode() && $r[0]['admin_user'] == "0") throw new Exception("Website currenly under maintenance", 1);
@@ -460,7 +543,7 @@ class User extends MySQL {
                                                           [
                                                             'email_user' => $email,
                                                             'name_user' => $name,
-                                                            'password_user' => ($oauth == 'standard' ? hash('sha512', $password) : ($setpwd ? $password : $oauth)),
+                                                            'password_user' => ($oauth == 'standard' ? self::_hashPassword($password) : ($setpwd ? $password : $oauth)),
                                                             'picture_user' => $picture,
                                                             'oauth_user' => $oauth,
                                                             'pushbullet_user' => $pushbullet,
@@ -753,7 +836,7 @@ class User extends MySQL {
                                 [
                                   'email_user' => $tokenParsed[0],
                                   'oauth_user' => 'standard',
-                                  'password_user' => hash('sha512', $password)
+                                  'password_user' => self::_hashPassword($password)
                                 ]);
 
     // Check update status
@@ -841,7 +924,7 @@ class User extends MySQL {
    * @param String $password New password
    */
   public function _setPassword($password){
-    $this->_changeDataKey('password_user', hash('sha512', $password));
+    $this->_changeDataKey('password_user', self::_hashPassword($password));
   }
 
   /**
