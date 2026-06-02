@@ -14,6 +14,7 @@ require "../../../../../config/config.settings.php";
 require_once "../../../../../app/src/bootstrap_paths.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/vendor/autoload.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/MySQL/MySQL.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/Security/HtmlSanitizer.php";
 
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/App.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/AppModule.php";
@@ -64,17 +65,17 @@ try {
 ?>
 <header>
   <div>
-    <span><?php echo $Event['title']; ?></span>
+    <span><?php echo htmlspecialchars($Event['title'], ENT_QUOTES, 'UTF-8'); ?></span>
     <svg onclick="closeCalendarItemView();" class="lnr lnr-cross"><use xlink:href="#lnr-cross"></use></svg>
   </div>
-  <span><?php echo $Event['formate_date']; ?></span>
+  <span><?php echo htmlspecialchars($Event['formate_date'], ENT_QUOTES, 'UTF-8'); ?></span>
 </header>
 <?php if(!is_null($Event['coins_kr'])): ?>
 <section class="kr-calendareventitem-coininfos">
   <div>
-    <img src="<?php echo $Event['coins_kr']->_getIcon(); ?>" alt="">
+    <img src="<?php echo htmlspecialchars(HtmlSanitizer::safeUrl($Event['coins_kr']->_getIcon()), ENT_QUOTES, 'UTF-8'); ?>" alt="">
     <div>
-      <span><?php echo $Event['coins_kr']->_getCoinName(); ?></span>
+      <span><?php echo htmlspecialchars($Event['coins_kr']->_getCoinName(), ENT_QUOTES, 'UTF-8'); ?></span>
       <span><?php echo $App->_formatNumber($Event['coins_kr']->_getPrice(), ($Event['coins_kr']->_getPrice() > 10 ? 2 : 4)).' '.$CryptoApi->_getCurrencySymbol(); ?></span>
     </div>
   </div>
@@ -89,18 +90,18 @@ try {
 <section class="kr-calendareventitem-content">
   <div class="kr-calendareventitem-content-vote">
     <div class="kr-calendareventitem-content-vote-i">
-      <span><?php echo $Event['vote_count']; ?> votes</span>
+      <span><?php echo htmlspecialchars($Event['vote_count'], ENT_QUOTES, 'UTF-8'); ?> votes</span>
       <i>&mdash;</i>
-      <span><?php echo $Event['percentage']; ?>%</span>
+      <span><?php echo htmlspecialchars($Event['percentage'], ENT_QUOTES, 'UTF-8'); ?>%</span>
     </div>
     <div class="kr-calendareventitem-content-vote-pb">
-      <div style="width:<?php echo $Event['percentage']; ?>%;"></div>
+      <div style="width:<?php echo (float) $Event['percentage']; ?>%;"></div>
     </div>
   </div>
-  <a href="<?php echo $Event['source']; ?>" class="btn btn-grey btn-small" target=_bank>Go to <?php echo substr(str_replace(['http://', 'https://'], ['', ''], $Event['source']), 0, 30).(strlen($Event['source']) > 30 ? '...' : ''); ?>
+  <a href="<?php echo htmlspecialchars(HtmlSanitizer::safeUrl($Event['source']), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-grey btn-small" target=_bank rel="noopener noreferrer nofollow">Go to <?php echo htmlspecialchars(substr(str_replace(['http://', 'https://'], ['', ''], $Event['source']), 0, 30).(strlen($Event['source']) > 30 ? '...' : ''), ENT_QUOTES, 'UTF-8'); ?>
   </a>
-  <p><?php echo $Event['description']; ?></p>
-  <img src="<?php echo $Event['proof']; ?>" alt="">
+  <p><?php echo htmlspecialchars($Event['description'], ENT_QUOTES, 'UTF-8'); ?></p>
+  <img src="<?php echo htmlspecialchars(HtmlSanitizer::safeUrl($Event['proof']), ENT_QUOTES, 'UTF-8'); ?>" alt="">
   <div class="kr-calendareventitem-content-source">
     <span>Source : <a href="https://coinmarketcal.com/" target=_bank>Coinmarketcal.com</a></span>
   </div>
