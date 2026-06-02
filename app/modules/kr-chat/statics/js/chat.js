@@ -1,3 +1,17 @@
+// Escape user/third-party controlled values before injecting them into the DOM
+// via string concatenation (defends against stored XSS in chat messages).
+// Mirrors the escapeHtml helper used in kr-changenow/public-swap.js.
+if (typeof window.krEscapeHtml !== "function") {
+  window.krEscapeHtml = function(value){
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+}
+
 function initChatRoomController(){
 
 
@@ -80,19 +94,19 @@ function addMessageRoom(roomid, msg_data, me, user_data){
   //console.log(msg_data);
 
   let addGlobalMsg = false;
-  let msgContent = '<div kr-chat-msg-id="' + msg_data.id_encrypted + '"><div>' + msg_data.value_msg_room_chat + '</div></div>';
+  let msgContent = '<div kr-chat-msg-id="' + krEscapeHtml(msg_data.id_encrypted) + '"><div>' + krEscapeHtml(msg_data.value_msg_room_chat) + '</div></div>';
   if(msg_data.type_msg_room_chat == "picture"){
     addGlobalMsg = true;
-    msgContent = '<div kr-chat-msg-id="' + msg_data.id_encrypted + '"><img src="' + msg_data.value_msg_room_chat.replace('{APP_URL}', $('body').attr('hrefapp')) + '"/></div>';
+    msgContent = '<div kr-chat-msg-id="' + krEscapeHtml(msg_data.id_encrypted) + '"><img src="' + krEscapeHtml(msg_data.value_msg_room_chat.replace('{APP_URL}', $('body').attr('hrefapp'))) + '"/></div>';
   }
 
   if(msg_data.type_msg_room_chat == "file"){
 
-    msgContent = '<div><div class="kr-chat-msg-file" onclick="window.open(\'' + msg_data.url_download + '\', \'_blank\');">' +
+    msgContent = '<div><div class="kr-chat-msg-file" onclick="window.open(\'' + krEscapeHtml(msg_data.url_download) + '\', \'_blank\');">' +
                   '<div>' +
-                    '<div class="file-icon" data-type="' + msg_data.extension + '"></div>' +
+                    '<div class="file-icon" data-type="' + krEscapeHtml(msg_data.extension) + '"></div>' +
                   '</div>' +
-                  '<span>' + msg_data.file_name + '</span>' +
+                  '<span>' + krEscapeHtml(msg_data.file_name) + '</span>' +
                 '</div></div>';
 
     //console.log(msgContent);
@@ -113,12 +127,12 @@ function addMessageRoom(roomid, msg_data, me, user_data){
   }
 
   if(addGlobalMsg && msg_data.hasOwnProperty('user_data')){
-    let elem = $('<div kr-chat-msg-id="' + msg_data.id_encrypted + '" kr-chat-msg-idu="' + msg_data.id_user + '" kr-chat-msg-time="' + msg_data.date_msg_room_chat + '" class="kr-chat-msg ' + (me ? 'kr-chat-msg-me' : '') + '">' +
+    let elem = $('<div kr-chat-msg-id="' + krEscapeHtml(msg_data.id_encrypted) + '" kr-chat-msg-idu="' + krEscapeHtml(msg_data.id_user) + '" kr-chat-msg-time="' + krEscapeHtml(msg_data.date_msg_room_chat) + '" class="kr-chat-msg ' + (me ? 'kr-chat-msg-me' : '') + '">' +
                '<div class="kr-chat-msg-picture">' + (showMessagePicture ?
-                '<div style="background-color:' + (msg_data.user_data.hasOwnProperty('associate_color') ? msg_data.user_data.associate_color : '') + ';background-image:url(\'' + msg_data.user_data.picture + '\')"></div>' : '') +
+                '<div style="background-color:' + krEscapeHtml(msg_data.user_data.hasOwnProperty('associate_color') ? msg_data.user_data.associate_color : '') + ';background-image:url(\'' + krEscapeHtml(msg_data.user_data.picture) + '\')"></div>' : '') +
                '</div>' +
                '<div class="kr-chat-msg-content">' +
-                  '<span>' + (me ? '' : user_data.name + ', ') + '' + msg_data.hours + '</span>' + msgContent +
+                  '<span>' + (me ? '' : krEscapeHtml(user_data.name) + ', ') + '' + krEscapeHtml(msg_data.hours) + '</span>' + msgContent +
                '</div>' +
                '</div>'
               );

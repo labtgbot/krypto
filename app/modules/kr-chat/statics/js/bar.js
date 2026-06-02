@@ -1,3 +1,17 @@
+// Escape user/third-party controlled values before injecting them into the DOM
+// via string concatenation (defends against stored XSS in chat metadata).
+// Mirrors the escapeHtml helper used in kr-changenow/public-swap.js.
+if (typeof window.krEscapeHtml !== "function") {
+  window.krEscapeHtml = function(value){
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+}
+
 let chatUserStatus = 1;
 let checkActivityUserStatus = null;
 $(document).ready(function(){
@@ -76,7 +90,7 @@ function _syncChatBar(){
 
       $.each(dataJson.room_list, function(room_id, infos_room){
         if($('.kr-chat-right').find('[kr-chat-rid="' + room_id + '"]').length == 0){
-          $('.kr-chat-right > ul').append('<li kr-chat-lastmsg="' + infos_room.last_msg + '" kr-chat-rid="' + room_id + '" class="" style="background-color:' + infos_room.color + '; background-image:url(\'' + infos_room.picture + '\')">' +
+          $('.kr-chat-right > ul').append('<li kr-chat-lastmsg="' + krEscapeHtml(infos_room.last_msg) + '" kr-chat-rid="' + krEscapeHtml(room_id) + '" class="" style="background-color:' + krEscapeHtml(infos_room.color) + '; background-image:url(\'' + krEscapeHtml(infos_room.picture) + '\')">' +
           '</li');
           _initPopupControllers();
         }
@@ -105,7 +119,7 @@ function _syncChatBar(){
         }
 
         if($('[kr-change-chat-rid="' + room_id + '"]').length > 0){
-          $('[kr-change-chat-rid="' + room_id + '"]').find('.kr-chat-rs-lmsg').html(msg_list[Object.keys(msg_list)[Object.keys(msg_list).length - 1]]['date_formated_lm']);
+          $('[kr-change-chat-rid="' + room_id + '"]').find('.kr-chat-rs-lmsg').text(msg_list[Object.keys(msg_list)[Object.keys(msg_list).length - 1]]['date_formated_lm']);
         }
 
       });

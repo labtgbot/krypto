@@ -79,7 +79,7 @@ Krypto_Csrf::validateRequest();
                 <span><?php echo $Room->_getRoomName(); ?></span>
                 <span class="kr-chat-ulist-lmd"><?php echo $Room->_getLastMsgSendTime(true); ?></span>
               </div>
-              <span><?php echo $Room->_getLastMsgText(); ?></span>
+              <span><?php echo htmlspecialchars($Room->_getLastMsgText(), ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
           </li>
         <?php } ?>
