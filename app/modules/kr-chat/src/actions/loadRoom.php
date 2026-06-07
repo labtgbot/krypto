@@ -129,15 +129,15 @@ Krypto_Csrf::validateRequest();
             <span><?php if(!$Message->_isUser($User)) echo $Message->_getSenderUserObj()->_getName().', '; ?><?php echo date('H:i', $Message->_getTimeSended()); ?></span>
             <div>
               <?php if($Message->_isText()): ?>
-                <div><?php echo $Message->_getValueMessage(); ?></div>
+                <div><?php echo htmlspecialchars($Message->_getValueMessage(), ENT_QUOTES, 'UTF-8'); ?></div>
               <?php elseif($Message->_isPicture()): ?>
-                <img src="<?php echo $Message->_getValueMessage(); ?>" alt="">
+                <img src="<?php echo htmlspecialchars($Message->_getValueMessage(), ENT_QUOTES, 'UTF-8'); ?>" alt="">
               <?php elseif($Message->_isFile()): ?>
-                <div class="kr-chat-msg-file" onclick="window.open('<?php echo $Message->_getFileDownloadLink(); ?>', '_blank');">
+                <div class="kr-chat-msg-file" onclick="window.open('<?php echo htmlspecialchars($Message->_getFileDownloadLink(), ENT_QUOTES, 'UTF-8'); ?>', '_blank');">
                   <div>
-                    <div class="file-icon" data-type="<?php echo $Message->_getFileExtension(); ?>"></div>
+                    <div class="file-icon" data-type="<?php echo htmlspecialchars($Message->_getFileExtension(), ENT_QUOTES, 'UTF-8'); ?>"></div>
                   </div>
-                  <span><?php echo $Message->_getFileName(); ?></span>
+                  <span><?php echo htmlspecialchars($Message->_getFileName(), ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
               <?php endif; ?>
             </div>

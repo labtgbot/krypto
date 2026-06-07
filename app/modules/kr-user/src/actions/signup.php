@@ -62,7 +62,8 @@ Krypto_Csrf::validateRequest();
 
     if($_POST['kr_usr_pwd'] != $_POST['kr_usr_rep_pwd'])  die(json_encode(['error' => 2, 'fields' => ['kr_usr_pwd' => '', 'kr_usr_rep_pwd' => $Lang->tr('Password not match')]]));
 
-    // Create user
+    // Create user. The display name is sanitized centrally in User::_createUser
+    // (defense-in-depth against stored XSS, covering signup + OAuth paths).
     $User->_createUser($_POST['kr_usr_email'], $_POST['kr_usr_name'], $_POST['kr_usr_pwd']);
 
     // Login user
