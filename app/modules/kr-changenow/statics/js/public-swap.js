@@ -32,7 +32,7 @@
     });
 
     $shell.on('input change', 'input, select', function(){
-      if($.inArray($(this).attr('name'), ['rateId', 'validUntil']) === -1) clearQuote();
+      if($.inArray($(this).attr('name'), ['quoteId', 'rateId', 'validUntil']) === -1) clearQuote();
     });
 
     $shell.on('click', '.kr-public-validate-address', function(){
@@ -227,6 +227,7 @@
     }
 
     function clearQuote(){
+      $form.find('input[name="quoteId"]').val('');
       $form.find('input[name="rateId"]').val('');
       $form.find('input[name="validUntil"]').val('');
       $shell.find('.kr-public-create-swap').prop('disabled', true);
@@ -234,9 +235,10 @@
     }
 
     function applyQuote(quote){
+      $form.find('input[name="quoteId"]').val(quote.quoteId || '');
       $form.find('input[name="rateId"]').val(quote.rateId || '');
       $form.find('input[name="validUntil"]').val(quote.validUntil || '');
-      $shell.find('.kr-public-create-swap').prop('disabled', false);
+      $shell.find('.kr-public-create-swap').prop('disabled', !quote.quoteId);
 
       var receiveAmount = quote.estimatedReceiveAmount || quote.toAmount || '';
       var details = [
@@ -256,6 +258,8 @@
       var transaction = swap.transaction || {};
       currentLookupToken = swap.lookupToken || currentLookupToken;
       currentStatusUrl = swap.statusUrl || currentStatusUrl;
+      $form.find('input[name="quoteId"]').val('');
+      $shell.find('.kr-public-create-swap').prop('disabled', true);
       renderTransaction(transaction, swap.lookupToken, swap.statusUrl, swap.supportEmail, null);
       if(swap.statusUrl && window.history && window.history.replaceState){
         try {
@@ -348,6 +352,7 @@
 
     function clearBusy($button){
       $button.text($button.data('original-text') || $button.text());
+      if($button.hasClass('kr-public-create-swap') && $form.find('input[name="quoteId"]').val() === '') return;
       if($button.hasClass('kr-public-create-swap') && $form.find('input[name="rateId"]').val() === '' && $form.find('select[name="flow"]').val() === 'fixed-rate') return;
       $button.prop('disabled', false);
     }

@@ -92,6 +92,22 @@ $transport = function($method, $url, $headers, $body, $timeout, $connectTimeout)
         ];
     }
 
+    if (strpos($url, '/v2/exchange/available-pairs') !== false) {
+        return [
+            'status' => 200,
+            'headers' => [],
+            'body' => json_encode([
+                [
+                    'fromCurrency' => 'btc',
+                    'fromNetwork' => 'btc',
+                    'toCurrency' => 'eth',
+                    'toNetwork' => 'eth',
+                    'flow' => 'standard'
+                ]
+            ])
+        ];
+    }
+
     if (strpos($url, '/v2/exchange/by-id') !== false) {
         return [
             'status' => 200,
@@ -209,6 +225,11 @@ assertSameValue('fixed-rate', $fixedQuote['flow'], 'Fixed-rate quote flow should
 assertSameValue('rate-123', $fixedQuote['rateId'], 'Fixed-rate quote should expose the rateId');
 assertTrueValue(strpos($requests[1]['url'], 'useRateId=true') !== false, 'Fixed-rate quote should request a rateId when asked');
 
+$pairs = $client->_listPairs(['flow' => 'standard']);
+assertSameValue('btc', $pairs[0]['fromCurrency'], 'Available pairs should be parsed');
+assertSameValue('public-key', $requests[2]['headers']['x-changenow-api-key'], 'Pair list should use the canonical ChangeNOW API key header');
+assertTrueValue(!array_key_exists('x-api-key', $requests[2]['headers']), 'Pair list should not send the duplicate legacy x-api-key header');
+
 $created = $client->_createTransaction([
     'fromCurrency' => 'btc',
     'toCurrency' => 'eth',
@@ -222,7 +243,7 @@ $created = $client->_createTransaction([
 ]);
 assertSameValue('tx-created', $created['id'], 'Created transaction id should be parsed');
 assertSameValue('deposit-address', $created['payinAddress'], 'Created transaction deposit address should be parsed');
-$createdBody = json_decode($requests[2]['body'], true);
+$createdBody = json_decode($requests[3]['body'], true);
 assertSameValue('recipient-address', $createdBody['address'], 'Create transaction body should include payout address');
 assertSameValue('internal-order-1', $createdBody['payload']['order'], 'Create transaction should pass partner payload server-side');
 
@@ -237,7 +258,23 @@ assertSameValue('address is not valid', $validation['message'], 'Address validat
 $list = $client->_listTransactions(['limit' => 10, 'offset' => 0, 'statuses' => ['waiting']]);
 assertSameValue(1, $list['count'], 'Transaction list count should be parsed');
 assertSameValue('tx-2', $list['exchanges'][0]['id'], 'Transaction list exchange id should be normalized');
-assertSameValue('private-key', $requests[5]['headers']['x-changenow-api-key'], 'Transaction list should use private API key');
+assertSameValue('private-key', $requests[6]['headers']['x-changenow-api-key'], 'Transaction list should use private API key');
+
+assertExceptionClass('ChangeNowApiValidationException', function() use ($client) {
+    $client->_createTransaction([
+        'fromCurrency' => 'btc',
+        'toCurrency' => 'eth',
+        'fromNetwork' => 'btc',
+        'toNetwork' => 'eth',
+        'fromAmount' => '0.003',
+        'address' => 'recipient-address',
+        'flow' => 'standard',
+        'contactEmail' => 'not-an-email'
+    ]);
+}, 'Invalid contactEmail should be rejected before ChangeNOW create');
+
+$clientSource = file_get_contents($clientFile);
+assertTrueValue(strpos($clientSource, 'CURLOPT_FOLLOWLOCATION, 0') !== false, 'cURL transport must not follow redirects with ChangeNOW API keys');
 
 $validationErrorClient = new ChangeNowApiClient(['public_api_key' => 'public-key', 'retry_count' => 0], function() {
     return [

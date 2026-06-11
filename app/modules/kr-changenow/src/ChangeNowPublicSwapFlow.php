@@ -16,6 +16,7 @@ require_once __DIR__.'/../../../src/ChangeNow/ChangeNowGuardrails.php';
 class ChangeNowPublicSwapFlow {
 
   const SESSION_KEY = 'kr_changenow_session_key';
+  const QUOTE_SESSION_KEY = 'kr_changenow_issued_quotes';
 
   private $Client = null;
   private $MarketData = null;
@@ -23,6 +24,8 @@ class ChangeNowPublicSwapFlow {
   private $App = null;
   private $User = null;
   private $Options = [];
+  private $IssuedQuotes = [];
+  private $AnonymousSessionKey = '';
 
   public function __construct($client = null, $marketData = null, $repository = null, $App = null, $User = null, $options = []){
     $this->Client = $client;
@@ -118,10 +121,12 @@ class ChangeNowPublicSwapFlow {
     ];
   }
 
-  public function _getQuote($request){
+  public function _getQuote($request, $sessionKey = null){
     $this->_assertRegionAllowed();
     $this->_validateLiveSettings();
-    return $this->MarketData->_getQuote($this->_quoteRequestFromPublic($request));
+    $quoteRequest = $this->_quoteRequestFromPublic($request);
+    $quote = $this->MarketData->_getQuote($quoteRequest);
+    return $this->_issueServerQuote($quoteRequest, $quote, $sessionKey);
   }
 
   public function _getDestinationAssets($request){
@@ -147,6 +152,9 @@ class ChangeNowPublicSwapFlow {
     $this->_assertRegionAllowed();
     $this->_validateLiveSettings();
     $normalized = $this->_normalizePublicRequest($request, true);
+    $sessionKey = $this->_effectiveSessionKey($sessionKey);
+    $serverQuote = $this->_serverQuoteForRequest($normalized, $sessionKey);
+    $normalized = $this->_applyServerQuote($normalized, $serverQuote);
     $this->_assertQuoteNotExpired($normalized);
 
     if($normalized['flow'] == 'fixed-rate' && $this->_isBlank($normalized['rateId'])){
@@ -167,8 +175,8 @@ class ChangeNowPublicSwapFlow {
 
     $transaction = $this->Client->_createSwap($swapRequest);
     $lookupToken = $this->_generateLookupToken();
-    $sessionKey = $this->_normalizeSessionKey($sessionKey);
     $record = $this->Repository->_saveCreatedSwap($normalized, $transaction, $lookupToken, $sessionKey, $userId);
+    $this->_forgetServerQuote($serverQuote['quoteId']);
 
     return [
       'lookupToken' => $lookupToken,
@@ -502,6 +510,185 @@ class ChangeNowPublicSwapFlow {
     return $quoteRequest;
   }
 
+  private function _issueServerQuote($quoteRequest, $quote, $sessionKey = null){
+    $quote = (is_array($quote) ? $quote : []);
+    $now = $this->_now();
+    $expiresAt = $this->_serverQuoteExpiresAt($quote, $now);
+    $quoteId = $this->_generateQuoteId();
+    $sessionKey = $this->_effectiveSessionKey($sessionKey);
+
+    $record = [
+      'quoteId' => $quoteId,
+      'sessionKey' => $sessionKey,
+      'fromCurrency' => $this->_normalizeCode($this->_value($quote, ['fromCurrency'], $quoteRequest['fromCurrency'])),
+      'fromNetwork' => $this->_normalizeCode($this->_value($quote, ['fromNetwork'], $quoteRequest['fromNetwork'])),
+      'toCurrency' => $this->_normalizeCode($this->_value($quote, ['toCurrency'], $quoteRequest['toCurrency'])),
+      'toNetwork' => $this->_normalizeCode($this->_value($quote, ['toNetwork'], $quoteRequest['toNetwork'])),
+      'flow' => $this->_normalizeFlow($this->_value($quote, ['flow'], $quoteRequest['flow'])),
+      'amount' => $this->_amountValue($this->_value($quote, ['fromAmount', 'amount'], $this->_value($quoteRequest, ['fromAmount'], ''))),
+      'fromAmount' => $this->_amountValue($this->_value($quote, ['fromAmount', 'amount'], $this->_value($quoteRequest, ['fromAmount'], ''))),
+      'toAmount' => $this->_amountValue($this->_value($quote, ['toAmount', 'estimatedReceiveAmount'], null)),
+      'estimatedReceiveAmount' => $this->_amountValue($this->_value($quote, ['estimatedReceiveAmount', 'toAmount'], null)),
+      'rateId' => trim((string) $this->_value($quote, ['rateId', 'rate_id'], '')),
+      'rate' => $this->_value($quote, ['rate', 'exchangeRate', 'exchange_rate'], null),
+      'validUntil' => gmdate('c', $expiresAt),
+      'expiresAt' => $expiresAt,
+      'createdAt' => $now
+    ];
+
+    $store =& $this->_quoteStore();
+    $this->_pruneServerQuotes($store, $now);
+    $store[$quoteId] = $record;
+
+    $quote['quoteId'] = $quoteId;
+    $quote['validUntil'] = $record['validUntil'];
+    foreach (['fromCurrency', 'fromNetwork', 'toCurrency', 'toNetwork', 'flow', 'amount', 'fromAmount', 'toAmount', 'estimatedReceiveAmount', 'rateId'] as $key) {
+      if(!array_key_exists($key, $quote) || $quote[$key] === null || $quote[$key] === '') $quote[$key] = $record[$key];
+    }
+
+    return $quote;
+  }
+
+  private function _serverQuoteForRequest($normalized, $sessionKey){
+    if($this->_isBlank($normalized['quoteId'])){
+      throw new ChangeNowApiValidationException('The ChangeNOW quote expired. Request a new quote before creating the swap.', 'Public swap create request is missing a server-issued quote id.');
+    }
+
+    $now = $this->_now();
+    $store =& $this->_quoteStore();
+    $this->_pruneServerQuotes($store, $now);
+    $quoteId = $normalized['quoteId'];
+
+    if(!array_key_exists($quoteId, $store) || !is_array($store[$quoteId])){
+      throw new ChangeNowApiValidationException('The ChangeNOW quote expired. Request a new quote before creating the swap.', 'Public swap create request used an unknown or expired server quote id.');
+    }
+
+    $record = $store[$quoteId];
+    if($this->_value($record, ['sessionKey'], '') !== $sessionKey){
+      throw new ChangeNowApiValidationException('The ChangeNOW quote expired. Request a new quote before creating the swap.', 'Public swap create request used a quote from a different session.');
+    }
+
+    if(intval($this->_value($record, ['expiresAt'], 0)) <= $now){
+      unset($store[$quoteId]);
+      throw new ChangeNowApiValidationException('The ChangeNOW quote expired. Request a new quote before creating the swap.', 'Public swap create request used an expired server quote.');
+    }
+
+    $this->_assertServerQuoteMatches($normalized, $record);
+    return $record;
+  }
+
+  private function _applyServerQuote($normalized, $serverQuote){
+    foreach (['fromCurrency', 'fromNetwork', 'toCurrency', 'toNetwork', 'flow'] as $key) {
+      $normalized[$key] = $serverQuote[$key];
+    }
+
+    $normalized['amount'] = $serverQuote['amount'];
+    $normalized['rateId'] = $serverQuote['rateId'];
+    $normalized['validUntil'] = $serverQuote['validUntil'];
+    return $normalized;
+  }
+
+  private function _assertServerQuoteMatches($normalized, $serverQuote){
+    foreach (['fromCurrency', 'fromNetwork', 'toCurrency', 'toNetwork', 'flow'] as $key) {
+      if((string) $normalized[$key] !== (string) $serverQuote[$key]){
+        throw new ChangeNowApiValidationException('The ChangeNOW quote no longer matches the swap details. Request a new quote before creating the swap.', 'Public swap create request did not match the server quote '.$key.'.');
+      }
+    }
+
+    if(!$this->_amountsMatch($normalized['amount'], $serverQuote['amount'])){
+      throw new ChangeNowApiValidationException('The ChangeNOW quote no longer matches the swap details. Request a new quote before creating the swap.', 'Public swap create amount did not match the server quote amount.');
+    }
+
+    return true;
+  }
+
+  private function &_quoteStore(){
+    if(array_key_exists('quote_store', $this->Options) && is_array($this->Options['quote_store'])){
+      return $this->Options['quote_store'];
+    }
+
+    if(isset($_SESSION) && is_array($_SESSION)){
+      if(!array_key_exists(self::QUOTE_SESSION_KEY, $_SESSION) || !is_array($_SESSION[self::QUOTE_SESSION_KEY])){
+        $_SESSION[self::QUOTE_SESSION_KEY] = [];
+      }
+      return $_SESSION[self::QUOTE_SESSION_KEY];
+    }
+
+    return $this->IssuedQuotes;
+  }
+
+  private function _pruneServerQuotes(&$store, $now){
+    foreach ($store as $quoteId => $record) {
+      if(!is_array($record) || intval($this->_value($record, ['expiresAt'], 0)) <= $now){
+        unset($store[$quoteId]);
+      }
+    }
+  }
+
+  private function _forgetServerQuote($quoteId){
+    $store =& $this->_quoteStore();
+    if(array_key_exists($quoteId, $store)) unset($store[$quoteId]);
+  }
+
+  private function _generateQuoteId(){
+    if(array_key_exists('quote_token_factory', $this->Options) && is_callable($this->Options['quote_token_factory'])){
+      $quoteId = call_user_func($this->Options['quote_token_factory']);
+      if(!$this->_isBlank($quoteId)) return (string) $quoteId;
+    }
+
+    return self::_randomToken();
+  }
+
+  private function _serverQuoteExpiresAt($quote, $now){
+    $expiresAt = $now + $this->_getServerQuoteTtl();
+    $providerExpiresAt = $this->_timestampFromProviderValue($this->_value($quote, ['validUntil', 'valid_until'], null));
+    if(!is_null($providerExpiresAt)) $expiresAt = min($expiresAt, $providerExpiresAt);
+    return intval($expiresAt);
+  }
+
+  private function _timestampFromProviderValue($value){
+    if($this->_isBlank($value)) return null;
+    if(is_int($value) || is_float($value) || is_numeric($value)){
+      $timestamp = intval($value);
+      if($timestamp > 20000000000) $timestamp = intval(floor($timestamp / 1000));
+      return $timestamp;
+    }
+
+    $timestamp = strtotime((string) $value);
+    return ($timestamp === false ? null : $timestamp);
+  }
+
+  private function _getServerQuoteTtl(){
+    if(array_key_exists('server_quote_ttl', $this->Options)){
+      $ttl = intval($this->Options['server_quote_ttl']);
+      if($ttl > 0) return $ttl;
+    }
+
+    if(!is_null($this->App) && method_exists($this->App, '_getChangeNowQuoteCacheTtl')){
+      $ttl = intval($this->App->_getChangeNowQuoteCacheTtl());
+      if($ttl > 0) return $ttl;
+    }
+
+    if(class_exists('ChangeNowMarketData')) return ChangeNowMarketData::DEFAULT_QUOTE_CACHE_TTL;
+    return 30;
+  }
+
+  private function _now(){
+    if(array_key_exists('time_factory', $this->Options) && is_callable($this->Options['time_factory'])){
+      return intval(call_user_func($this->Options['time_factory']));
+    }
+
+    return time();
+  }
+
+  private function _amountsMatch($left, $right){
+    $left = trim((string) $left);
+    $right = trim((string) $right);
+    if($left === $right) return true;
+    if(is_numeric($left) && is_numeric($right)) return abs(floatval($left) - floatval($right)) <= 0.000000000001;
+    return false;
+  }
+
   private function _swapRequestFromPublic($normalized){
     $swapRequest = [
       'fromCurrency' => $normalized['fromCurrency'],
@@ -573,6 +760,9 @@ class ChangeNowPublicSwapFlow {
       throw new ChangeNowApiValidationException('Destination address is required.', 'Destination address is required to create a ChangeNOW swap.');
     }
 
+    $contactEmail = trim((string) $this->_value($request, ['contactEmail', 'contact_email'], ''));
+    $contactEmail = $this->_validateContactEmail($contactEmail);
+
     return [
       'fromCurrency' => $fromAsset['currency'],
       'fromNetwork' => $fromAsset['network'],
@@ -584,10 +774,20 @@ class ChangeNowPublicSwapFlow {
       'destinationExtraId' => trim((string) $this->_value($request, ['destinationExtraId', 'extraId', 'payoutExtraId', 'payout_extra_id'], '')),
       'refundAddress' => trim((string) $this->_value($request, ['refundAddress', 'refund_address'], '')),
       'refundExtraId' => trim((string) $this->_value($request, ['refundExtraId', 'refund_extra_id'], '')),
+      'quoteId' => trim((string) $this->_value($request, ['quoteId', 'quote_id', 'serverQuoteId', 'server_quote_id'], '')),
       'rateId' => trim((string) $this->_value($request, ['rateId', 'rate_id'], '')),
       'validUntil' => trim((string) $this->_value($request, ['validUntil', 'valid_until', 'quoteValidUntil', 'quote_valid_until'], '')),
-      'contactEmail' => trim((string) $this->_value($request, ['contactEmail', 'contact_email'], ''))
+      'contactEmail' => $contactEmail
     ];
+  }
+
+  private function _validateContactEmail($email){
+    $email = trim((string) $email);
+    if($email == '') return '';
+    if(strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)){
+      throw new ChangeNowApiValidationException('Contact email is not valid.', 'Public ChangeNOW swap request included an invalid contactEmail.');
+    }
+    return $email;
   }
 
   private function _extractAsset($request, $prefix, $defaultCurrency, $defaultNetwork){
@@ -724,7 +924,7 @@ class ChangeNowPublicSwapFlow {
   private function _assertQuoteNotExpired($request){
     if($this->_isBlank($request['validUntil'])) return true;
     $expiresAt = strtotime($request['validUntil']);
-    if($expiresAt !== false && $expiresAt <= time()){
+    if($expiresAt !== false && $expiresAt <= $this->_now()){
       throw new ChangeNowApiValidationException('The ChangeNOW quote expired. Request a new quote before creating the swap.', 'Public swap create request used an expired quote.');
     }
     return true;
@@ -794,6 +994,14 @@ class ChangeNowPublicSwapFlow {
   private function _normalizeSessionKey($sessionKey){
     $sessionKey = trim((string) $sessionKey);
     return ($sessionKey == '' ? self::_randomToken() : $sessionKey);
+  }
+
+  private function _effectiveSessionKey($sessionKey){
+    if(!$this->_isBlank($sessionKey)) return $this->_normalizeSessionKey($sessionKey);
+    if(isset($_SESSION) && is_array($_SESSION)) return self::_sessionKeyFromSession($_SESSION);
+
+    if($this->AnonymousSessionKey == '') $this->AnonymousSessionKey = self::_randomToken();
+    return $this->AnonymousSessionKey;
   }
 
   private function _statusUrl($lookupToken){

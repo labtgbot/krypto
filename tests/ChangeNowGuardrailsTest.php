@@ -78,6 +78,11 @@ $allowedEligibility = ChangeNowEligibility::countryState('ca', ['US'], ['unsuppo
 kr_assert($allowedEligibility['allowed'], 'Allowed countries must pass eligibility checks.');
 kr_assert_equals('allowed', $allowedEligibility['state'], 'Allowed country state should be allowed.');
 
+$unknownCountryEligibility = ChangeNowEligibility::countryState('', ['US'], ['unsupported_region' => 'Custom unsupported-region copy.']);
+kr_assert(!$unknownCountryEligibility['allowed'], 'Unknown countries must fail closed when an unsupported-country list is configured.');
+kr_assert_equals('unsupported_region', $unknownCountryEligibility['state'], 'Unknown country state should use the regional block state.');
+kr_assert_equals('Custom unsupported-region copy.', $unknownCountryEligibility['message'], 'Unknown country blocks should use configured compliance copy.');
+
 $emptyBlocklistEligibility = ChangeNowEligibility::countryState('us', [], ['unsupported_region' => 'Custom unsupported-region copy.']);
 kr_assert($emptyBlocklistEligibility['allowed'], 'Empty unsupported-country lists must preserve existing public swap behavior.');
 kr_assert_equals('allowed', $emptyBlocklistEligibility['state'], 'Empty unsupported-country lists should not produce a regional block.');

@@ -212,6 +212,15 @@ assertSameValue(2, $regionPayload['error'], 'unsupported region public response 
 assertSameValue('unsupported_region', $regionPayload['type'], 'unsupported region public response should expose the requested type');
 assertSameValue('Custom unsupported-region copy.', $regionPayload['msg'], 'unsupported region public response should expose the configured copy');
 
+$unknownRegionDecision = changenow_public_region_decision($regionApp, 'quote', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], function() {
+  return '';
+});
+assertSameValue(false, $unknownRegionDecision['allowed'], 'publicSwap action helper should fail closed when a blocked-country list exists and country detection is unknown');
+assertSameValue('unsupported_region', $unknownRegionDecision['state'], 'unknown region helper should expose unsupported_region state');
+assertSameValue('', $unknownRegionDecision['country'], 'unknown region helper should preserve an empty country code for diagnostics');
+
 $emptyRegionApp = new ChangeNowPublicEmptyRegionFakeApp();
 $emptyRegionDecision = changenow_public_region_decision($emptyRegionApp, 'create', [
   'REMOTE_ADDR' => '198.51.100.7'

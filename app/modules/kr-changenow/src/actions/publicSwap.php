@@ -203,9 +203,10 @@ try {
   ]);
 
   if($action == 'quote'){
+    $sessionKey = ChangeNowPublicSwapFlow::_sessionKeyFromSession($_SESSION);
     changenow_public_json([
       'error' => 0,
-      'quote' => $Flow->_getQuote($_POST)
+      'quote' => $Flow->_getQuote($_POST, $sessionKey)
     ]);
   }
 
