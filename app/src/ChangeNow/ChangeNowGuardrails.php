@@ -344,7 +344,7 @@ class ChangeNowEligibility {
     $blockedCountries = self::normalizeCountryList($blockedCountries);
     $copy = ChangeNowGuardrails::mergeComplianceCopy($copy);
 
-    if(strlen($countryCode) == 0 || !in_array($countryCode, $blockedCountries)){
+    if(count($blockedCountries) == 0){
       return [
         'allowed' => true,
         'state' => 'allowed',
@@ -352,10 +352,18 @@ class ChangeNowEligibility {
       ];
     }
 
+    if(strlen($countryCode) == 0 || in_array($countryCode, $blockedCountries, true)){
+      return [
+        'allowed' => false,
+        'state' => 'unsupported_region',
+        'message' => $copy['unsupported_region']
+      ];
+    }
+
     return [
-      'allowed' => false,
-      'state' => 'unsupported_region',
-      'message' => $copy['unsupported_region']
+      'allowed' => true,
+      'state' => 'allowed',
+      'message' => ''
     ];
   }
 

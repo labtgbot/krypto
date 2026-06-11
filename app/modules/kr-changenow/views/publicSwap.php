@@ -122,6 +122,7 @@ if(!function_exists('changenow_public_swap_tr')){
       <input type="hidden" name="fromNetwork" value="<?php echo htmlspecialchars($ChangeNowInitialState['defaultFrom']['network']); ?>">
       <input type="hidden" name="toCurrency" value="<?php echo htmlspecialchars($ChangeNowInitialState['defaultTo']['currency']); ?>">
       <input type="hidden" name="toNetwork" value="<?php echo htmlspecialchars($ChangeNowInitialState['defaultTo']['network']); ?>">
+      <input type="hidden" name="quoteId" value="">
       <input type="hidden" name="rateId" value="">
       <input type="hidden" name="validUntil" value="">
 

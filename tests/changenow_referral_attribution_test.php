@@ -60,7 +60,30 @@ class ChangeNowReferralFakeClient {
     }
 }
 
-class ChangeNowReferralFakeMarketData {}
+class ChangeNowReferralFakeMarketData {
+    public function _getQuote($request) {
+        return [
+            'fromCurrency' => $request['fromCurrency'],
+            'fromNetwork' => $request['fromNetwork'],
+            'toCurrency' => $request['toCurrency'],
+            'toNetwork' => $request['toNetwork'],
+            'flow' => $request['flow'],
+            'type' => 'direct',
+            'amount' => $request['fromAmount'],
+            'fromAmount' => $request['fromAmount'],
+            'toAmount' => '0.052286',
+            'estimatedReceiveAmount' => '0.052286',
+            'minAmount' => '0.001',
+            'maxAmount' => '2',
+            'networkFee' => '0.0001',
+            'depositFee' => '0.00002',
+            'withdrawalFee' => '0.0002',
+            'rateId' => null,
+            'validUntil' => null,
+            'cached' => false,
+        ];
+    }
+}
 
 class ChangeNowReferralFakeRepository {
     public $saved = [];
@@ -121,10 +144,18 @@ $flow = new ChangeNowPublicSwapFlow($client, new ChangeNowReferralFakeMarketData
     'attribution_time_factory' => function() { return 1770000010; },
 ]);
 
+$quote = $flow->_getQuote([
+    'fromAsset' => 'btc:btc',
+    'toAsset' => 'eth:eth',
+    'amount' => '0.01',
+    'flow' => 'standard',
+], 'session-key-1');
+
 $created = $flow->_createSwap([
     'fromAsset' => 'btc:btc',
     'toAsset' => 'eth:eth',
     'amount' => '0.01',
+    'quoteId' => $quote['quoteId'],
     'destinationAddress' => 'recipient-address',
     'flow' => 'standard',
 ], 'session-key-1', null);
@@ -152,10 +183,18 @@ $flowLoggedIn = new ChangeNowPublicSwapFlow($clientLoggedIn, new ChangeNowReferr
     'attribution_time_factory' => function() { return 1770000020; },
 ]);
 
+$loggedInQuote = $flowLoggedIn->_getQuote([
+    'fromAsset' => 'btc:btc',
+    'toAsset' => 'eth:eth',
+    'amount' => '0.02',
+    'flow' => 'standard',
+], 'session-key-2');
+
 $flowLoggedIn->_createSwap([
     'fromAsset' => 'btc:btc',
     'toAsset' => 'eth:eth',
     'amount' => '0.02',
+    'quoteId' => $loggedInQuote['quoteId'],
     'destinationAddress' => 'recipient-address',
     'flow' => 'standard',
     'ref' => 'partner',

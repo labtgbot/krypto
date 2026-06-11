@@ -64,10 +64,7 @@ class ChangeNowApiClient {
 
   public function _listPairs($filters = []){
     $params = $this->_filterQuery($filters, ['fromCurrency', 'toCurrency', 'fromNetwork', 'toNetwork', 'flow']);
-    $apiKey = $this->_requirePublicApiKey();
-    $data = $this->_request('GET', '/v2/exchange/available-pairs', $params, null, [
-      'headers' => ['x-api-key' => $apiKey]
-    ]);
+    $data = $this->_request('GET', '/v2/exchange/available-pairs', $params);
     return $this->_normalizePairs($data);
   }
 
@@ -260,7 +257,7 @@ class ChangeNowApiClient {
 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_HEADER, 1);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->ConnectTimeout);
     curl_setopt($ch, CURLOPT_TIMEOUT, $this->Timeout);
@@ -428,9 +425,17 @@ class ChangeNowApiClient {
       'type',
       'rateId',
       'userId',
-      'payload',
-      'contactEmail'
+      'payload'
     ]);
+
+    $contactEmail = $this->_param($request, ['contactEmail', 'contact_email'], null);
+    if(!$this->_isBlank($contactEmail)){
+      $contactEmail = trim((string) $contactEmail);
+      if(strlen($contactEmail) > 254 || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)){
+        throw new ChangeNowApiValidationException('Contact email is not valid.', 'ChangeNOW transaction request included an invalid contactEmail.');
+      }
+      $body['contactEmail'] = $contactEmail;
+    }
 
     return $body;
   }

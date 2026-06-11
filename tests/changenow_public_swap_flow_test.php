@@ -153,6 +153,15 @@ class ChangeNowPublicSwapFakeMarketData {
     }
 }
 
+function publicSwapQuotePayload($amount = '0.01', $flow = 'standard') {
+    return [
+        'fromAsset' => 'btc:btc',
+        'toAsset' => 'eth:eth',
+        'amount' => $amount,
+        'flow' => $flow,
+    ];
+}
+
 class ChangeNowPublicSwapFakeRepository {
     public $saved = [];
     public $statusUpdates = [];
@@ -215,14 +224,16 @@ $quote = $flow->_getQuote([
     'toAsset' => 'eth:eth',
     'amount' => '0.01',
     'flow' => 'standard',
-]);
+], 'session-key-1');
 assertSameValue('0.052286', $quote['estimatedReceiveAmount'], 'Public quote should return normalized estimated amount');
 assertSameValue('btc', $marketData->quoteRequests[0]['fromCurrency'], 'Quote request should normalize source asset');
+assertTrueValue(isset($quote['quoteId']) && $quote['quoteId'] !== '', 'Public quote should return a server-side quote id');
 
 $created = $flow->_createSwap([
     'fromAsset' => 'btc:btc',
     'toAsset' => 'eth:eth',
     'amount' => '0.01',
+    'quoteId' => $quote['quoteId'],
     'destinationAddress' => 'recipient-address',
     'destinationExtraId' => 'destination-memo',
     'refundAddress' => 'refund-address',
@@ -241,16 +252,19 @@ assertSameValue('finished', $status['transaction']['status'], 'Status lookup sho
 assertSameValue('tx-created', $client->statusCalls[0], 'Status lookup should use provider transaction id');
 
 $client->addressResult = false;
-$validationException = assertExceptionClass('ChangeNowApiValidationException', function() use ($flow) {
+$invalidAddressQuote = $flow->_getQuote(publicSwapQuotePayload('0.011'), 'session-key-1');
+$validationException = assertExceptionClass('ChangeNowApiValidationException', function() use ($flow, $invalidAddressQuote) {
     $flow->_createSwap([
         'fromAsset' => 'btc:btc',
         'toAsset' => 'eth:eth',
-        'amount' => '0.01',
+        'amount' => '0.011',
+        'quoteId' => $invalidAddressQuote['quoteId'],
         'destinationAddress' => 'bad-address',
         'flow' => 'standard',
     ], 'session-key-1', null);
 }, 'Invalid destination address should stop transaction creation');
 assertSameValue('Destination address is not valid.', $validationException->_getUserMessage(), 'Address validation error should be user-safe');
+$client->addressResult = true;
 
 $blockedClient = new ChangeNowPublicSwapFakeClient();
 $blockedMarketData = new ChangeNowPublicSwapFakeMarketData();
@@ -294,17 +308,84 @@ assertSameValue('Custom unsupported-region copy.', $blockedCreateException->_get
 assertSameValue(0, count($blockedClient->validated), 'Blocked create should not validate address with ChangeNOW');
 assertSameValue(0, count($blockedClient->created), 'Blocked create should not call ChangeNOW create');
 
-assertExceptionClass('ChangeNowApiValidationException', function() use ($flow) {
-    $flow->_createSwap([
+$integrityClient = new ChangeNowPublicSwapFakeClient();
+$integrityMarketData = new ChangeNowPublicSwapFakeMarketData();
+$integrityRepository = new ChangeNowPublicSwapFakeRepository();
+$quoteStore = [];
+$integrityFlow = new ChangeNowPublicSwapFlow($integrityClient, $integrityMarketData, $integrityRepository, null, null, [
+    'provider_enabled' => true,
+    'enabled_flows' => ['standard', 'fixed-rate'],
+    'default_flow' => 'standard',
+    'default_from_asset' => 'btc',
+    'default_from_network' => 'btc',
+    'default_to_asset' => 'eth',
+    'default_to_network' => 'eth',
+    'token_factory' => function() { return 'lookup-integrity-1'; },
+    'quote_store' => &$quoteStore,
+]);
+$serverFixedQuote = $integrityFlow->_getQuote(publicSwapQuotePayload('0.03', 'fixed-rate'), 'session-key-integrity');
+$fixedCreated = $integrityFlow->_createSwap([
+    'fromAsset' => 'btc:btc',
+    'toAsset' => 'eth:eth',
+    'amount' => '0.03',
+    'quoteId' => $serverFixedQuote['quoteId'],
+    'destinationAddress' => 'recipient-address',
+    'flow' => 'fixed-rate',
+    'rateId' => 'attacker-rate-id',
+    'validUntil' => date('c', time() - 30),
+], 'session-key-integrity', null);
+assertSameValue('rate-1', $integrityClient->created[0]['rateId'], 'Create request should use the server-stored fixed-rate id instead of the client value');
+assertSameValue('0.03', $integrityClient->created[0]['fromAmount'], 'Create request should use the server-stored quote amount');
+assertSameValue('lookup-integrity-1', $fixedCreated['lookupToken'], 'Fixed-rate create should succeed when the server quote is still valid');
+
+$mismatchQuote = $integrityFlow->_getQuote(publicSwapQuotePayload('0.04'), 'session-key-integrity');
+assertExceptionClass('ChangeNowApiValidationException', function() use ($integrityFlow, $mismatchQuote) {
+    $integrityFlow->_createSwap([
         'fromAsset' => 'btc:btc',
         'toAsset' => 'eth:eth',
-        'amount' => '0.01',
+        'amount' => '0.05',
+        'quoteId' => $mismatchQuote['quoteId'],
         'destinationAddress' => 'recipient-address',
-        'flow' => 'fixed-rate',
-        'rateId' => 'expired-rate',
-        'validUntil' => date('c', time() - 30),
-    ], 'session-key-1', null);
-}, 'Expired fixed-rate quote should be rejected before create');
+        'flow' => 'standard',
+    ], 'session-key-integrity', null);
+}, 'Create should reject a client amount that does not match the server quote');
+
+assertExceptionClass('ChangeNowApiValidationException', function() use ($integrityFlow) {
+    $integrityFlow->_createSwap([
+        'fromAsset' => 'btc:btc',
+        'toAsset' => 'eth:eth',
+        'amount' => '0.04',
+        'destinationAddress' => 'recipient-address',
+        'flow' => 'standard',
+    ], 'session-key-integrity', null);
+}, 'Create should require a server-issued quote id');
+
+$now = 1000;
+$expiringQuoteStore = [];
+$expiringFlow = new ChangeNowPublicSwapFlow(new ChangeNowPublicSwapFakeClient(), new ChangeNowPublicSwapFakeMarketData(), new ChangeNowPublicSwapFakeRepository(), null, null, [
+    'provider_enabled' => true,
+    'enabled_flows' => ['standard'],
+    'default_flow' => 'standard',
+    'default_from_asset' => 'btc',
+    'default_from_network' => 'btc',
+    'default_to_asset' => 'eth',
+    'default_to_network' => 'eth',
+    'quote_store' => &$expiringQuoteStore,
+    'server_quote_ttl' => 1,
+    'time_factory' => function() use (&$now) { return $now; },
+]);
+$expiredServerQuote = $expiringFlow->_getQuote(publicSwapQuotePayload('0.06'), 'session-key-expired');
+$now = 1005;
+assertExceptionClass('ChangeNowApiValidationException', function() use ($expiringFlow, $expiredServerQuote) {
+    $expiringFlow->_createSwap([
+        'fromAsset' => 'btc:btc',
+        'toAsset' => 'eth:eth',
+        'amount' => '0.06',
+        'quoteId' => $expiredServerQuote['quoteId'],
+        'destinationAddress' => 'recipient-address',
+        'flow' => 'standard',
+    ], 'session-key-expired', null);
+}, 'Expired server-side quote should be rejected before create');
 
 assertExceptionClass('ChangeNowApiValidationException', function() use ($flow) {
     $flow->_getStatus('');
