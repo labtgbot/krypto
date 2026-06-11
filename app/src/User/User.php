@@ -1037,6 +1037,24 @@ class User extends MySQL {
     $this->resetTokensNeedInvalidation = true;
   }
 
+  public function _verifyCurrentPassword($password){
+    if($this->_getOauth() != 'standard') return false;
+    if(is_null($password) || (string) $password === '') return false;
+    return self::_passwordMatches((string) $password, $this->_getPassword());
+  }
+
+  public function _assertSensitiveChangeReauthenticated($currentPassword, $googleTfsCode = null){
+    if(!$this->_verifyCurrentPassword($currentPassword)) throw new Exception("Current password is invalid.", 1);
+
+    if($this->_googleTwoFactorEnable($this->_getUserID())){
+      if(is_null($googleTfsCode) || (string) $googleTfsCode === '' || !$this->_checkGoogleTFS((string) $googleTfsCode)){
+        throw new Exception("Code not valid.", 1);
+      }
+    }
+
+    return true;
+  }
+
   /**
    * Change user email
    * @param String $email New email
@@ -1109,6 +1127,19 @@ class User extends MySQL {
 
     if($reloadsession) $_SESSION['kr_login'] = json_encode($this->datauser);
 
+  }
+
+  public function _sendAccountSecurityNotification($App, $to, $changeDescription){
+    if(is_null($App)) throw new Exception("Error security notification : App object not given", 1);
+    if(!filter_var($to, FILTER_VALIDATE_EMAIL)) throw new Exception("Error security notification : Email not valid", 1);
+
+    $appTitle = $App->_getAppTitle();
+    $changeDescription = htmlspecialchars((string) $changeDescription, ENT_QUOTES, 'UTF-8');
+    $supportEmail = htmlspecialchars((string) $App->_getSupportEmail(), ENT_QUOTES, 'UTF-8');
+
+    $App->_sendMail($to, $appTitle.' - Account security change', '<h4>Your account security settings were changed.</h4><p>'.$changeDescription.'</p><p>If you did not make this change, contact support immediately: '.$supportEmail.'</p>');
+
+    return true;
   }
 
   /**
@@ -1237,9 +1268,10 @@ class User extends MySQL {
 
   private function _getGoogleTFSSecret($user = null){
 
-    $r = parent::querySqlRequest("SELECT * FROM googletfs_krypto WHERE id_user=:id_user",
+    $r = parent::querySqlRequest("SELECT * FROM googletfs_krypto WHERE id_user=:id_user AND status_googletfs=:status_googletfs ORDER BY date_googletfs DESC, id_googletfs DESC LIMIT 1",
                                   [
-                                    'id_user' => (!is_null($user) ? $user : $this->_getUserID())
+                                    'id_user' => (!is_null($user) ? $user : $this->_getUserID()),
+                                    'status_googletfs' => 1
                                   ]);
 
     if(count($r) == 0) return null;
@@ -1256,6 +1288,20 @@ class User extends MySQL {
 
     return $g->checkCode($secret, $code);
 
+  }
+
+  public function _confirmGoogleTFSDisable($googleTfsCode = null, $currentPassword = null){
+    if(!is_null($googleTfsCode) && (string) $googleTfsCode !== ''){
+      try {
+        if($this->_checkGoogleTFS((string) $googleTfsCode)) return true;
+      } catch (Exception $e) {
+        // Fall through to the current-password fallback below.
+      }
+    }
+
+    if($this->_verifyCurrentPassword($currentPassword)) return true;
+
+    throw new Exception("Google Authenticator removal requires a valid code or current password.", 1);
   }
 
   public function _enableGoogleTFS(){

@@ -156,6 +156,18 @@ $Charge = $User->_getCharge($App);
         <input type="password" name="kr-user-pwd-repeat" value="">
       </div>
     </div>
+    <div class="kr-user-f-l">
+      <div>
+        <label><?php echo $Lang->tr('Current password'); ?></label>
+        <input type="password" name="kr-user-current-pwd" value="">
+      </div>
+      <div>
+        <?php if($UserLogged->_googleTwoFactorEnable($UserLogged->_getUserID())): ?>
+          <label><?php echo $Lang->tr('Google Authenticator code'); ?></label>
+          <input type="text" pattern="[0-9]{6}" placeholder="******" maxlength="6" name="google_tfs_code" value="">
+        <?php endif; ?>
+      </div>
+    </div>
   <?php endif; ?>
 
   <?php if($App->_referalEnabled()): ?>

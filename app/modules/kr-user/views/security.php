@@ -63,6 +63,8 @@ if(!$User->_googleTwoFactorEnable($User->_getUserID())):
 
   <form class="kr-gogletfs-remove" action="<?php echo APP_URL; ?>/app/modules/kr-user/src/actions/removeGoogleTFS.php" method="post">
     <input type="hidden" name="kr-user-id-c" value="<?php echo $User->_getUserID(true); ?>">
+    <input type="text" pattern="[0-9]{6}" placeholder="******" maxlength="6" name="google_tfs_code" value="">
+    <input type="password" name="kr-user-current-pwd" value="" placeholder="<?php echo $Lang->tr('Current password'); ?>">
     <input type="submit" class="btn btn-shadow btn-autowidth" value="Remove Google Authenticator">
   </form>
 
