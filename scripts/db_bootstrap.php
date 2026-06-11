@@ -89,7 +89,15 @@ try {
     }
 
     if ($applyMigrations) {
-        foreach (glob($root.'/install/assets/sql/changenow-*-migration.sql') as $migrationPath) {
+        $migrationPaths = [];
+        foreach (['changenow-*-migration.sql', 'security-*-migration.sql'] as $migrationPattern) {
+            foreach (glob($root.'/install/assets/sql/'.$migrationPattern) as $migrationPath) {
+                $migrationPaths[] = $migrationPath;
+            }
+        }
+        sort($migrationPaths);
+
+        foreach ($migrationPaths as $migrationPath) {
             krypto_db_bootstrap_exec_file($pdo, $migrationPath);
             echo 'Applied migration '.basename($migrationPath).".\n";
         }

@@ -52,6 +52,7 @@ foreach ([
 $bootstrap = readDbEnvironmentFile('scripts/db_bootstrap.php');
 foreach ([
     'install/assets/sql/krypto.sql',
+    'security-*-migration.sql',
     '--reset',
     '--seed-fixtures',
     'KRYPTO_TEST_DB_HOST',

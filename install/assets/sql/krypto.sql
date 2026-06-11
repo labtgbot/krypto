@@ -4314,6 +4314,7 @@ CREATE TABLE `user_krypto` (
   `lang_user` varchar(10) DEFAULT 'EN',
   `created_date_user` varchar(12) NOT NULL,
   `reset_token_user` text,
+  `reset_token_created_user` varchar(15) DEFAULT NULL,
   `status_user` int(11) NOT NULL DEFAULT '1',
   `current_market` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
