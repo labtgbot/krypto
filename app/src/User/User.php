@@ -7,6 +7,7 @@
  * @author Ovrley <hello@ovrley.com>
  */
 require_once __DIR__.'/../Auth/AuthRateLimiter.php';
+require_once __DIR__.'/../ChangeNow/ChangeNowGuardrails.php';
 
 class User extends MySQL {
 
@@ -989,14 +990,7 @@ class User extends MySQL {
    * @return String IP Address
    */
   public function _getUserIP(){
-    if(!empty($_SERVER['HTTP_CLIENT_IP'])){
-      $ip = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])){
-      $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-      $ip = $_SERVER['REMOTE_ADDR'];
-    }
-    return $ip;
+    return ChangeNowRequestRegion::clientIp($_SERVER);
   }
 
   /**
@@ -1475,7 +1469,6 @@ class User extends MySQL {
   }
 
   public function _saveUserLoginHistory(){
-    return true;
     $CurrentUserIP = App::_getVisitorIP();
     $r = parent::querySqlRequest("SELECT * FROM user_login_history_krypto WHERE id_user=:id_user AND ip_user_login_history=:ip_user_login_history",
                                 [
@@ -1487,20 +1480,26 @@ class User extends MySQL {
 
 
     // Get geoip location
-    $ch =  curl_init('https://ipapi.co/'.rawurlencode($CurrentUserIP).'/json/');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_ENCODING,  '');
-    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
-    $s = json_decode(curl_exec($ch), true);
+    $s = [];
+    if($CurrentUserIP != '' && function_exists('curl_init')){
+      $ch =  curl_init('https://ipapi.co/'.rawurlencode($CurrentUserIP).'/json/');
+      if($ch !== false){
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_ENCODING,  '');
+        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+        $s = json_decode(curl_exec($ch), true);
+        curl_close($ch);
+      }
+    }
     if(!is_array($s)) $s = [];
 
-    $geoAdd = true;
+    $geoAdd = count($s) > 0;
     if((array_key_exists('status', $s) && $s['status'] == "fail") || (array_key_exists('error', $s) && $s['error'])){
       error_log('Error : Fail to get Geo location : '.(array_key_exists('message', $s) ? $s['message'] : (array_key_exists('reason', $s) ? $s['reason'] : 'unknown error')));
       $geoAdd = false;
