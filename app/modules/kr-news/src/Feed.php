@@ -158,7 +158,25 @@ class Feed
 		} else {
 			throw new FeedException('Cannot load feed.');
 		}
-		return new SimpleXMLElement($data, LIBXML_NOWARNING | LIBXML_NOERROR);
+		return self::parseXml($data);
+	}
+	private static function parseXml($data)
+	{
+		$previousEntityLoaderState = null;
+		if (function_exists('libxml_disable_entity_loader')) {
+			$previousEntityLoaderState = @libxml_disable_entity_loader(true);
+		}
+		$previousUseInternalErrors = libxml_use_internal_errors(true);
+
+		try {
+			return new SimpleXMLElement($data, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors($previousUseInternalErrors);
+			if ($previousEntityLoaderState !== null && function_exists('libxml_disable_entity_loader')) {
+				@libxml_disable_entity_loader($previousEntityLoaderState);
+			}
+		}
 	}
 	/**
 	 * Process HTTP request.

@@ -19,9 +19,40 @@ class BitcoinExplorer extends MySQL {
 
   }
 
+  private function _validateBitcoinAddress($address){
+    if(!is_string($address) && !is_numeric($address)) throw new InvalidArgumentException('Invalid Bitcoin address.');
+    $address = trim((string) $address);
+    if(preg_match('/\A(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{11,87})\z/i', $address) !== 1){
+      throw new InvalidArgumentException('Invalid Bitcoin address.');
+    }
+    return $address;
+  }
+
+  private function _validateBitcoinTransactionHash($tx){
+    if(!is_string($tx) && !is_numeric($tx)) throw new InvalidArgumentException('Invalid Bitcoin transaction hash.');
+    $tx = trim((string) $tx);
+    if(preg_match('/\A[a-fA-F0-9]{64}\z/', $tx) !== 1){
+      throw new InvalidArgumentException('Invalid Bitcoin transaction hash.');
+    }
+    return $tx;
+  }
+
+  private function _encodePathSegments($args){
+    if(!is_array($args)) throw new InvalidArgumentException('Invalid blockchain.info path.');
+    $encoded = [];
+    foreach ($args as $arg) {
+      if(!is_string($arg) && !is_numeric($arg)) throw new InvalidArgumentException('Invalid blockchain.info path segment.');
+      $arg = trim((string) $arg);
+      if(preg_match('/\A[A-Za-z0-9]{1,128}\z/', $arg) !== 1){
+        throw new InvalidArgumentException('Invalid blockchain.info path segment.');
+      }
+      $encoded[] = rawurlencode($arg);
+    }
+    return $encoded;
+  }
+
   public function _call($args){
-    $ch =  curl_init("https://blockchain.info/".join('/', $args));
-    var_dump("https://blockchain.info/".join('/', $args));
+    $ch =  curl_init("https://blockchain.info/".implode('/', $this->_encodePathSegments($args)));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
@@ -44,6 +75,7 @@ class BitcoinExplorer extends MySQL {
   }
 
   public function _getHistoryTransaction($address){
+    $address = $this->_validateBitcoinAddress($address);
     $transactionList = $this->_call(['rawaddr', $address])['txs'];
     $receiveTransaction = [];
     foreach ($transactionList as $key => $value) {
@@ -75,6 +107,7 @@ class BitcoinExplorer extends MySQL {
 
   public function _getTransactionInfos($tx){
 
+    $tx = $this->_validateBitcoinTransactionHash($tx);
     $transactionInfos = $this->_call(['rawtx', $tx]);
     $transactionInfos['confirmation'] = $this->_getNumberConfirmation($transactionInfos['block_height']);
     return $transactionInfos;
