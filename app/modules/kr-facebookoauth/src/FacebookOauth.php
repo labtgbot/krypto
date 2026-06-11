@@ -104,10 +104,17 @@ class FacebookOauth extends MySQL
             return $this->provider;
         }
 
-        $this->provider = new Facebook\Facebook([
-          'app_id' => $this->_getApp()->_getFacebookAppID(),
-          'app_secret' => $this->_getApp()->_getFacebookAppSecret(),
-          'default_graph_version' => 'v2.12'
+        $this->provider = new League\OAuth2\Client\Provider\Facebook([
+          'clientId' => $this->_getApp()->_getFacebookAppID(),
+          'clientSecret' => $this->_getApp()->_getFacebookAppSecret(),
+          'redirectUri' => APP_URL.'/app/modules/kr-facebookoauth/src/actions/callback.php',
+          'graphApiVersion' => 'v2.12',
+          'fields' => [
+            'id',
+            'name',
+            'email',
+            'picture.height(400){url,is_silhouette}'
+          ]
         ]);
         return $this->_getProvider();
     }
@@ -119,18 +126,40 @@ class FacebookOauth extends MySQL
     public function _getAuthorizationUrl()
     {
         // Generate new authorization url
-        $helper = $this->_getProvider()->getRedirectLoginHelper();
         $permissions = ['email', 'public_profile'];
-        return $helper->getLoginUrl(APP_URL.'/app/modules/kr-facebookoauth/src/actions/callback.php', $permissions);
+        $oauthUrl = $this->_getProvider()->getAuthorizationUrl([
+          'scope' => $permissions
+        ]);
+
+        $_SESSION['krypto_oauth_facebook_state'] = $this->_getProvider()->getState();
+
+        return $oauthUrl;
     }
 
     /**
      * Parse oauth callback
      * @param  Array $callback  Oauth callback
      */
-    public function _parseCallback()
+    public function _parseCallback($callback = null)
     {
-        $this->_loadToken();
+        if (is_null($callback)) {
+            $callback = $_GET;
+        }
+        if (empty($callback)) {
+            throw new Exception("Error : Facebook Oauth can't be parsed", 1);
+        }
+        if (!empty($callback['error'])) {
+            throw new Exception(htmlspecialchars($callback['error'], ENT_QUOTES, 'UTF-8'), 1);
+        }
+        if (empty($callback['state']) || !isset($_SESSION['krypto_oauth_facebook_state']) || ($callback['state'] !== $_SESSION['krypto_oauth_facebook_state'])) {
+            throw new Exception("Error : Facebook Oauth, state can't be checked", 1);
+        }
+        if (empty($callback['code'])) {
+            throw new Exception("Error : Facebook Oauth code is missing", 1);
+        }
+
+        unset($_SESSION['krypto_oauth_facebook_state']);
+        $this->_loadToken($callback['code']);
         return $this->_getUser()->_oauthCallbackID($this);
     }
 
@@ -138,10 +167,11 @@ class FacebookOauth extends MySQL
      * Load token
      * @param  String $code Token code
      */
-    private function _loadToken()
+    private function _loadToken($code)
     {
-      $helper = $this->_getProvider()->getRedirectLoginHelper();
-      $this->token = $helper->getAccessToken();
+      $this->token = $this->_getProvider()->getAccessToken('authorization_code', [
+        'code' => $code
+      ]);
     }
 
     /**
@@ -162,8 +192,7 @@ class FacebookOauth extends MySQL
         if (!is_null($this->ressourceOwner)) {
             return $this->ressourceOwner;
         }
-        $response = $this->_getProvider()->get('/me?fields=picture.height(400),email,name', $this->_getToken());
-        $this->ressourceOwner = $response->getGraphUser();
+        $this->ressourceOwner = $this->_getProvider()->getResourceOwner($this->_getToken());
         return $this->ressourceOwner;
     }
 
@@ -191,7 +220,7 @@ class FacebookOauth extends MySQL
      */
     public function _getAvatar()
     {
-        return $this->_getRessourceOwner()->getPicture()->getUrl();
+        return $this->_getRessourceOwner()->getPictureUrl();
     }
 
     /**

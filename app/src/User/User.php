@@ -1238,8 +1238,8 @@ class User extends MySQL {
   }
 
   public function _generateGoogleTwoFactor($App){
-    $g = new \Google\Authenticator\GoogleAuthenticator();
-    $secret = $g->generateSecret();
+    $g = new \RobThree\Auth\TwoFactorAuth($App->_getAppTitle());
+    $secret = $g->createSecret();
 
     $d = parent::execSqlRequest("DELETE FROM googletfs_krypto WHERE id_user=:id_user AND status_googletfs=:status_googletfs",
                                 [
@@ -1261,9 +1261,13 @@ class User extends MySQL {
     if(!$r) throw new Exception("Error : Fail to save user google authentification", 1);
 
     return [
-      'qrcode' => $g->getURL($this->_getEmail(), $App->_getAppTitle(), $secret)
+      'qrcode' => $this->_getGoogleTFSQRCodeUrl($g, $secret)
     ];
 
+  }
+
+  private function _getGoogleTFSQRCodeUrl($authenticator, $secret){
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.rawurlencode($authenticator->getQRText($this->_getEmail(), $secret));
   }
 
   private function _getGoogleTFSSecret($user = null){
@@ -1284,9 +1288,9 @@ class User extends MySQL {
     $secret = $this->_getGoogleTFSSecret($user);
     if(is_null($secret)) throw new Exception("Error : Invalid secret", 1);
 
-    $g = new \Google\Authenticator\GoogleAuthenticator();
+    $g = new \RobThree\Auth\TwoFactorAuth();
 
-    return $g->checkCode($secret, $code);
+    return $g->verifyCode($secret, (string) $code);
 
   }
 

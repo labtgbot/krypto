@@ -7,6 +7,8 @@
  * @author Ovrley <hello@ovrley.com>
  */
 
+require_once __DIR__.'/KryptoPOEditorClient.php';
+
 class Lang {
 
   /**
@@ -210,15 +212,7 @@ class Lang {
 
   public function _getPEOEditorClient(){
     if(!is_null($this->POEditorClient)) return $this->POEditorClient;
-    $HTTPClient = new Zend\Http\Client();
-    $HTTPClient->setOptions([
-      'ssltransport' => 'ssl',
-      'sslverifypeer' => false
-    ]);
-
-    error_log($this->_getApp()->_getPOEditorAPIKey());
-
-    $this->POEditorClient =  new Uj\Poed\Api\Client($this->_getApp()->_getPOEditorAPIKey(), $HTTPClient);
+    $this->POEditorClient =  new KryptoPOEditorClient($this->_getApp()->_getPOEditorAPIKey());
     return $this->POEditorClient;
   }
 
@@ -252,7 +246,10 @@ class Lang {
 
   public function _usePOEditor(){
     if(is_null($this->App)) return false;
-    return $this->_getApp()->_getPOEditorEnable() && !empty($this->_getApp()->_getPOEditorProject()) && !empty($this->_getApp()->_getPOEditorAPIKey() && $this->_POEditorIsValid());
+    if(!$this->_getApp()->_getPOEditorEnable()) return false;
+    if(empty($this->_getApp()->_getPOEditorProject())) return false;
+    if(empty($this->_getApp()->_getPOEditorAPIKey())) return false;
+    return $this->_POEditorIsValid();
   }
 
 }

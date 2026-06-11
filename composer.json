@@ -13,15 +13,14 @@
     "require": {
         "php": ">=7.4",
         "symfony/polyfill-mbstring": "^1.8",
-        "sonata-project/google-authenticator": "^2.0",
+        "robthree/twofactorauth": "^1.8",
         "phpmailer/phpmailer": "^6.0",
         "mobiledetect/mobiledetectlib": "^2.8",
         "liquid/liquid": "^1.4",
         "league/oauth2-google": "^2.2",
+        "league/oauth2-facebook": "^2.2",
         "league/oauth2-client": "^2.3",
         "google/recaptcha": "^1.1",
-        "facebook/graph-sdk": "^5.6",
-        "oceanapplications/currencylayer-php-client": "^1.4",
-        "milqmedia/poeditor-api-client": "^0.0.1"
+        "oceanapplications/currencylayer-php-client": "^1.4"
     }
 }

@@ -2,3 +2,6 @@
 /node_modules/
 /playwright-report/
 /test-results/
+/vendor/
+/assets/bower/
+/assets/node_modules/
