@@ -2,6 +2,7 @@
 include_once 'base_model.php';
 include_once 'PayBear.php';
 include_once 'PayBearAddress.php';
+require_once dirname(__DIR__, 5).'/src/App/KryptoUrl.php';
 
 
 
@@ -123,7 +124,10 @@ class PayBearOrder extends \base_model
         $payment = $this->findByOrderId($order_id);
         $address = '';
 
-        $callbackUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/callback.php?order_id=' . $order_id;
+        $callbackUrl = KryptoUrl::paymentCallbackUrl(
+            '/app/modules/kr-payment/src/paybear/callback.php',
+            array('order_id' => $order_id)
+        );
 
         if (empty($addressObject)) {
             $token_address_data = $this->payBear->createPayment($token, $callbackUrl);
