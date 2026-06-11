@@ -228,6 +228,26 @@ class App extends MySQL {
     return $this->settingsData[$key];
   }
 
+  private function _getRuntimeSecret($envKey, $settingsKey){
+    if(defined($envKey) && trim((string) constant($envKey)) !== '') return (string) constant($envKey);
+    if(function_exists('krypto_env_config_value')){
+      $envValue = krypto_env_config_value($envKey, '');
+      if(trim((string) $envValue) !== '') return (string) $envValue;
+    } else {
+      $envValue = getenv($envKey);
+      if($envValue !== false && trim((string) $envValue) !== '') return (string) $envValue;
+    }
+
+    $settingsValue = $this->_getSettingsAttribute($settingsKey);
+    return (is_null($settingsValue) ? '' : (string) $settingsValue);
+  }
+
+  public function _getDataApiKey(){ return $this->_getRuntimeSecret('KRYPTO_DATA_API_KEY', 'data_api_key'); }
+
+  public function _getRss2JsonApiKey(){ return $this->_getRuntimeSecret('KRYPTO_RSS2JSON_API_KEY', 'rss2json_api_key'); }
+
+  public function _getEtherscanApiKey(){ return $this->_getRuntimeSecret('KRYPTO_ETHERSCAN_API_KEY', 'etherscan_api_key'); }
+
   private function _getSettingsJsonAttribute($key, $default = []){
     $value = $this->_getSettingsAttribute($key);
     if(is_null($value) || strlen($value) == 0) return $default;

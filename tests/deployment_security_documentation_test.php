@@ -33,6 +33,10 @@ foreach ([
     'config/',
     'config/config.settings.php',
     'vendor/',
+    'app/',
+    'app/src/',
+    'app/modules/kr-api/src/Api.php',
+    'app/modules/kr-api/config.json',
     'composer.json',
     'composer.lock',
     'public/user',
@@ -54,6 +58,9 @@ foreach ([
     'requestFiltering',
     'directoryBrowse enabled="false"',
     'remove or block install/',
+    'KRYPTO_DATA_API_KEY',
+    'KRYPTO_RSS2JSON_API_KEY',
+    'KRYPTO_ETHERSCAN_API_KEY',
     'docs/upload-storage-deployment.md',
 ] as $needle) {
     assertDeploymentDoc(
@@ -68,6 +75,20 @@ assertDeploymentDoc(
     strpos($readme, 'docs/production-deployment-security.md') !== false,
     'README.md must link to the production deployment security checklist.'
 );
+
+$rootHtaccess = file_get_contents($root.'/.htaccess');
+assertDeploymentDoc($rootHtaccess !== false, 'Cannot read root .htaccess.');
+foreach ([
+    'Options -Indexes',
+    'RewriteRule ^app/src/ - [F,L]',
+    'RewriteRule ^app/modules/[^/]+/src/(?!actions(?:/|$)) - [F,L]',
+    'RewriteRule ^app/modules/[^/]+/config\.json$ - [F,L]',
+] as $needle) {
+    assertDeploymentDoc(
+        strpos($rootHtaccess, $needle) !== false,
+        'Root .htaccess missing app source guard: '.$needle
+    );
+}
 
 echo "Production deployment security documentation checks passed.\n";
 

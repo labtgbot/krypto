@@ -144,7 +144,7 @@ class GoogleOauth extends MySQL
             throw new Exception("Error : Google Oauth, state can't be checked", 1);
         }
         $this->_loadToken($callback['code']);
-        return $this->_getUser()->_oauthCallback($this);
+        return $this->_getUser()->_oauthCallbackID($this);
     }
 
     /**
@@ -198,6 +198,15 @@ class GoogleOauth extends MySQL
     }
 
     /**
+     * Get name
+     * @return String User name
+     */
+    public function _getName()
+    {
+        return $this->_getRessourceOwner()->getName();
+    }
+
+    /**
      * Get user email
      * @return String User email
      */
@@ -213,5 +222,14 @@ class GoogleOauth extends MySQL
     public function _getAvatar()
     {
         return $this->_getRessourceOwner()->getAvatar();
+    }
+
+    /**
+     * Get provider subject id
+     * @return String
+     */
+    public function _getId()
+    {
+        return $this->_getRessourceOwner()->getId();
     }
 }

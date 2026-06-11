@@ -16,20 +16,19 @@ class Etherblock extends MySQL {
   }
 
   private function _getApiKey(){
-    return "451886GWK6728IW8YQVKCFYEEHCSFRI2EI";
+    if(!is_null($this->_getApp()) && method_exists($this->_getApp(), '_getEtherscanApiKey')) return $this->_getApp()->_getEtherscanApiKey();
+    if(defined('KRYPTO_ETHERSCAN_API_KEY')) return (string) KRYPTO_ETHERSCAN_API_KEY;
+    if(function_exists('krypto_env_config_value')) return (string) krypto_env_config_value('KRYPTO_ETHERSCAN_API_KEY', '');
+    $value = getenv('KRYPTO_ETHERSCAN_API_KEY');
+    return ($value === false ? '' : (string) $value);
   }
 
   public function _call($args){
 
-    $argsString = "";
-    $n = 0;
-    foreach ($args as $key => $value) {
-      $argsString .= ($n == 0 ? "?" : "&").$key."=".$value;
-      $n++;
-    }
-    $ch =  curl_init("http://api.etherscan.io/api".$argsString);
+    $argsString = "?".http_build_query($args, '', '&');
+    $ch =  curl_init("https://api.etherscan.io/api".$argsString);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
     curl_setopt($ch, CURLOPT_ENCODING,  '');
@@ -41,6 +40,7 @@ class Etherblock extends MySQL {
 
     curl_close($ch);
 
+    if(!is_array($s)) throw new Exception("Error Etherblock : invalid response", 1);
     if(array_key_exists('status', $s) && $s['status'] != "1") throw new Exception("Error Etherblock : ".$s['message'], 1);
 
     if(array_key_exists('result', $s)) return $s['result'];
@@ -57,7 +57,7 @@ class Etherblock extends MySQL {
       'endblock' => '99999999',
       "sort" => "desc",
       'address' => $address,
-      'apiKey' => $this->_getApiKey()
+      'apikey' => $this->_getApiKey()
     ]);
 
     $TransactionFormated = [];
@@ -84,7 +84,7 @@ class Etherblock extends MySQL {
       'module' => 'proxy',
       'action' => 'eth_getTransactionByHash',
       'txhash' => $tx,
-      'apiKey' => $this->_getApiKey()
+      'apikey' => $this->_getApiKey()
     ]);
     $transactionInfos['sub_infos'] = $this->_getTransactionInfosSub($transactionInfos['to'], hexdec($transactionInfos['blockNumber']));
     return $transactionInfos;
@@ -94,13 +94,12 @@ class Etherblock extends MySQL {
 
   public function _getBlockInfos($block){
 
-    //https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=0x10d4f&boolean=true&apikey=YourApiKeyToken
     $transactionInfos = $this->_call([
       'module' => 'proxy',
       'action' => 'eth_getBlockByNumber',
       "boolean" => "true",
       'tag' => $block,
-      'apiKey' => $this->_getApiKey()
+      'apikey' => $this->_getApiKey()
     ]);
 
     return $this->_hexArrayToDecimal($transactionInfos);
@@ -129,7 +128,7 @@ class Etherblock extends MySQL {
       'startblock' => $block,
       'endblock' => $block,
       'sort' => 'desc',
-      'apiKey' => $this->_getApiKey()
+      'apikey' => $this->_getApiKey()
     ]);
 
     if(count($transactionInfos) == 0) return [];
