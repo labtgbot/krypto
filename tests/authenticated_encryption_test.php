@@ -3,9 +3,9 @@
 /**
  * Regression coverage for authenticated encryption of secrets and tokens.
  *
- * The legacy App::encrypt_decrypt() CBC helper is deterministic and has no
- * authentication tag. New secrets must use a versioned AEAD envelope while old
- * CBC values remain readable until rows are migrated.
+ * The retired App::encrypt_decrypt('encrypt', ...) CBC path was deterministic
+ * and had no authentication tag. New reversible writes must use a versioned
+ * AEAD envelope while old CBC values remain readable until rows are migrated.
  */
 
 $root = dirname(__DIR__);
@@ -47,21 +47,43 @@ function mutateAuthenticatedCiphertext($ciphertext) {
     return substr($ciphertext, 0, $payloadOffset).($current === 'A' ? 'B' : 'A').substr($ciphertext, $payloadOffset + 1);
 }
 
+function legacyAuthenticatedEncryptionCiphertext($plaintext) {
+    $output = openssl_encrypt(
+        (string) $plaintext,
+        'AES-256-CBC',
+        hash('sha256', CRYPTED_KEY),
+        0,
+        substr(hash('sha256', strrev(CRYPTED_KEY)), 0, 16)
+    );
+
+    if ($output === false) {
+        throw new Exception('Unable to build legacy CBC fixture.');
+    }
+
+    return base64_encode($output);
+}
+
 $plaintext = 'secret-api-key-'.bin2hex(random_bytes(6));
 $ciphertext = App::_encryptSecret($plaintext);
 $ciphertextAgain = App::_encryptSecret($plaintext);
+$compatCiphertext = App::encrypt_decrypt('encrypt', $plaintext);
+$compatCiphertextAgain = App::encrypt_decrypt('encrypt', $plaintext);
 
 assertTrueAuthenticatedEncryption(strpos($ciphertext, 'krypto:v2:') === 0, 'New secret ciphertext must be versioned.');
 assertTrueAuthenticatedEncryption($ciphertext !== $ciphertextAgain, 'New secret encryption must use a unique nonce.');
 assertSameAuthenticatedEncryption($plaintext, App::_decryptSecret($ciphertext), 'Versioned secret must decrypt through the secret helper.');
-assertSameAuthenticatedEncryption($plaintext, App::encrypt_decrypt('decrypt', $ciphertext), 'Legacy decrypt entry point must route versioned values.');
+assertSameAuthenticatedEncryption($plaintext, App::encrypt_decrypt('decrypt', $ciphertext), 'Compatibility decrypt entry point must route versioned values.');
+assertTrueAuthenticatedEncryption(strpos($compatCiphertext, 'krypto:v2:') === 0, 'Compatibility encrypt entry point must create versioned AEAD ciphertext.');
+assertTrueAuthenticatedEncryption($compatCiphertext !== $compatCiphertextAgain, 'Compatibility encrypt entry point must use a unique nonce.');
+assertSameAuthenticatedEncryption($plaintext, App::encrypt_decrypt('decrypt', $compatCiphertext), 'Compatibility decrypt entry point must read AEAD ciphertext.');
 
 $tampered = mutateAuthenticatedCiphertext($ciphertext);
 assertSameAuthenticatedEncryption(null, App::_decryptSecret($tampered), 'Tampered versioned ciphertext must fail authentication.');
 
-$legacyCiphertext = App::encrypt_decrypt('encrypt', 'legacy-cbc-secret');
-assertTrueAuthenticatedEncryption(strpos($legacyCiphertext, 'krypto:v2:') !== 0, 'Legacy helper must keep the old CBC envelope for opaque identifiers.');
+$legacyCiphertext = legacyAuthenticatedEncryptionCiphertext('legacy-cbc-secret');
+assertTrueAuthenticatedEncryption(strpos($legacyCiphertext, 'krypto:v2:') !== 0, 'Legacy fixture must keep the old CBC envelope.');
 assertSameAuthenticatedEncryption('legacy-cbc-secret', App::_decryptSecret($legacyCiphertext), 'Old CBC settings must remain readable.');
+assertSameAuthenticatedEncryption('legacy-cbc-secret', App::encrypt_decrypt('decrypt', $legacyCiphertext), 'Compatibility decrypt entry point must keep reading old CBC values.');
 
 $wrongKeyPhp = <<<'PHP'
 foreach ([
@@ -92,6 +114,9 @@ assertSameAuthenticatedEncryption(null, App::_decryptSecret(trim($wrongKeyCipher
 $appSource = file_get_contents($root.'/app/src/App/App.php');
 assertTrueAuthenticatedEncryption(strpos($appSource, 'function _encryptSecret(') !== false, 'App must expose a secret encryption helper.');
 assertTrueAuthenticatedEncryption(strpos($appSource, 'function _decryptSecret(') !== false, 'App must expose a secret decryption helper.');
+assertTrueAuthenticatedEncryption(strpos($appSource, "if(\$action == 'encrypt') return self::_encryptSecret(\$string);") !== false, 'Compatibility encrypt entry point must route new writes to AEAD.');
+assertTrueAuthenticatedEncryption(strpos($appSource, 'function _encryptLegacyValue(') === false, 'App must not keep a legacy CBC encryption path.');
+assertTrueAuthenticatedEncryption(strpos($appSource, '@deprecated') !== false && strpos($appSource, 'function _decryptLegacyValue(') !== false, 'Legacy CBC decrypt fallback must be marked deprecated for migration only.');
 assertTrueAuthenticatedEncryption(strpos($appSource, 'App::_decryptSecret($vSettings') !== false, 'Encrypted settings must decrypt through the versioned secret helper.');
 assertTrueAuthenticatedEncryption(strpos($appSource, 'encrypted_settings=:encrypted_settings') !== false, 'Settings updates must preserve the encrypted_settings flag.');
 

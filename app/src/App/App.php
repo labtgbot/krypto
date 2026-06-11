@@ -1801,14 +1801,14 @@ class App extends MySQL {
   }
 
   /**
-   * Legacy deterministic CBC helper. Keep encryption for opaque UI identifiers;
-   * decryption also routes versioned secret values for backward-compatible reads.
+   * Compatibility reversible encryption helper.
+   * New writes use AEAD v2; reads accept AEAD v2 and legacy CBC during migration.
    * @param  String $action Type (encrypt or decrypt)
    * @param  String $string Value to encrypt or decrypt
    * @return String|null    Value decrypted / encrypted
    */
   public static function encrypt_decrypt($action, $string) {
-    if($action == 'encrypt') return self::_encryptLegacyValue($string);
+    if($action == 'encrypt') return self::_encryptSecret($string);
     if($action == 'decrypt') return self::_decryptSecret($string);
     return null;
   }
@@ -1877,15 +1877,9 @@ class App extends MySQL {
     return null;
   }
 
-  private static function _encryptLegacyValue($string){
-    $encrypt_method = "AES-256-CBC";
-    $key = hash('sha256', CRYPTED_KEY);
-    $iv = substr(hash('sha256', strrev(CRYPTED_KEY)), 0, 16);
-
-    $output = openssl_encrypt((string) $string, $encrypt_method, $key, 0, $iv);
-    return ($output === false ? null : base64_encode($output));
-  }
-
+  /**
+   * @deprecated Legacy AES-256-CBC read fallback exists only to migrate old rows.
+   */
   private static function _decryptLegacyValue($string){
     $encrypt_method = "AES-256-CBC";
     $key = hash('sha256', CRYPTED_KEY);

@@ -1,7 +1,9 @@
 # Authenticated Encryption Migration
 
 Issue #55 replaces new reversible secret writes with a versioned authenticated
-encryption envelope while preserving reads of existing AES-CBC values.
+encryption envelope while preserving reads of existing AES-CBC values. Issue
+#103 completes that migration for the compatibility encrypt entry point so new
+`App::encrypt_decrypt('encrypt', ...)` writes also produce AEAD v2 ciphertext.
 
 ## Production Use Inventory
 
@@ -22,28 +24,30 @@ These values must use `App::_encryptSecret()` for new writes and
 - Password reset links, account activation links, and withdraw confirmation
   links that currently need to recover plaintext routing data.
 
-### Opaque UI identifiers
+### Compatibility entry point and opaque UI identifiers
 
-These values continue to use `App::encrypt_decrypt('encrypt', ...)` for now
-because the legacy helper is deterministic and several flows rely on stable
-path fragments or form identifiers:
+These values may still call `App::encrypt_decrypt('encrypt', ...)` for the
+compatibility API, but that entry point now returns `krypto:v2:*` AEAD
+ciphertext with a random nonce:
 
 - User, chat, dashboard, payment, manager, identity, blockfolio, and balance UI
   identifiers.
 - Public upload directory fragments under `public/identity`, `public/proof`,
-  and `public/bank-proof`.
+  and `public/bank-proof`; callers must reuse the generated ciphertext within a
+  single operation instead of encrypting the same plaintext path segment again.
 - Payment redirect metadata where the value is an opaque request identifier
   rather than a stored long-lived secret.
 
-These identifiers are not treated as secret storage by this migration. Replacing
-them should be handled separately with signed, purpose-scoped identifiers or
-server-side lookup tokens.
+These identifiers are not treated as long-lived secret storage by this
+migration. Replacing reversible UI identifiers should be handled separately with
+signed, purpose-scoped identifiers or server-side lookup tokens.
 
 ### Legacy compatibility
 
 Existing AES-CBC strings remain readable through `App::_decryptSecret()` and
-`App::encrypt_decrypt('decrypt', ...)`. New secret writes should produce
-`krypto:v2:*` ciphertext only.
+`App::encrypt_decrypt('decrypt', ...)`. The legacy CBC decrypt fallback is
+deprecated and exists only for migration. All new encryption writes should
+produce `krypto:v2:*` ciphertext only.
 
 ## Versioned Ciphertext Format
 
@@ -73,21 +77,23 @@ cannot be silently moved between supported algorithms.
    UPDATE.
 3. Admin payment and ChangeNOW credential saves now write AEAD ciphertext. Rows
    that are edited through those forms migrate naturally on save.
-4. Google 2FA, password reset, activation, and withdraw confirmation flows write
-   AEAD tokens/secrets immediately. Existing links and rows continue to decrypt
+4. Compatibility calls through `App::encrypt_decrypt('encrypt', ...)` now write
+   AEAD v2 ciphertext immediately. Existing links and rows continue to decrypt
    through the legacy fallback until they expire or are overwritten.
 5. For a proactive database migration, run a controlled script that reads each
    encrypted row through `App::_decryptSecret()`, writes it back through
    `App::_encryptSecret()`, and leaves rows unchanged when decrypt returns
    `null`. Do this per table with backups and row counts.
+6. After production data and active links no longer require AES-CBC reads,
+   remove the deprecated `_decryptLegacyValue()` fallback.
 
 ## Rollback Notes
 
 Do not roll back to code that only understands AES-CBC after AEAD ciphertext has
 been written. If rollback is unavoidable, first restore a database backup from
-before the AEAD deployment, or run a reverse migration that decrypts each
-`krypto:v2:*` value with the current code and writes the old CBC envelope with
-`App::encrypt_decrypt('encrypt', ...)`.
+before the AEAD deployment, or run a dedicated offline migration from audited
+maintenance code. The application no longer exposes a production legacy CBC
+encryption writer.
 
 Keep the same `CRYPTED_KEY` during rollback and forward migration. Changing the
 key makes both legacy CBC values and AEAD values unreadable.

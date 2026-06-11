@@ -89,11 +89,13 @@ class Identity extends MySQL {
     return count($r) + 1;
   }
 
-  public function _checkUserIdentityDirectory($App){
+  public function _checkUserIdentityDirectory($App, $identityDirectory = null){
 
+    if(is_null($identityDirectory)) $identityDirectory = $App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID());
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity', 0777);
-    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()), 0777);
+    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$identityDirectory)) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$identityDirectory, 0777);
 
+    return $identityDirectory;
   }
 
   public function _initUserIdentity(){
@@ -125,12 +127,12 @@ class Identity extends MySQL {
       $App::_assertUploadedFileIsSafe($content, ['pdf', 'jpg', 'jpeg', 'png'], 'Identity document');
       $fileName = $App::_getSafeUploadedFileName($content, uniqid());
 
-      $this->_checkUserIdentityDirectory($App);
+      $identityDirectory = $this->_checkUserIdentityDirectory($App);
 
 
-      move_uploaded_file($content['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()).'/'.$fileName);
+      move_uploaded_file($content['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$identityDirectory.'/'.$fileName);
 
-      $this->_saveAsset($stepInformation['id_identity_step'], $App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()).'/'.$fileName, $App, $document_type);
+      $this->_saveAsset($stepInformation['id_identity_step'], $identityDirectory.'/'.$fileName, $App, $document_type);
 
     }
 
@@ -174,11 +176,11 @@ class Identity extends MySQL {
         if(is_file($cameraTmpFile)) unlink($cameraTmpFile);
       }
 
-      $this->_checkUserIdentityDirectory($App);
+      $identityDirectory = $this->_checkUserIdentityDirectory($App);
 
-      $infosCameraUpload = file_put_contents($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()).'/'.$fileName, $data);
+      $infosCameraUpload = file_put_contents($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/identity/'.$identityDirectory.'/'.$fileName, $data);
 
-      $this->_saveAsset($step, $App::encrypt_decrypt('encrypt', $this->_getUser()->_getUserID()).'/'.$fileName, $App, $document_type);
+      $this->_saveAsset($step, $identityDirectory.'/'.$fileName, $App, $document_type);
 
     }
   }

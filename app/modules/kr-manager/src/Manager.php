@@ -134,17 +134,18 @@ class Manager extends MySQL {
     $infosProofPayment = $this->_getPaymentProofInfos($id_proof_asking);
     if($infosProofPayment['id_user'] != $User->_getUserID()) throw new Exception("Permission denied", 1);
 
+    $proofDirectory = App::encrypt_decrypt('encrypt', $id_proof_asking);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof', 0777);
-    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking), 0777);
+    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.$proofDirectory)) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.$proofDirectory, 0777);
 
     App::_assertUploadedFileIsSafe($file, ['pdf', 'jpg', 'jpeg', 'png'], 'Payment proof');
     $fileName = App::_getSafeUploadedFileName($file, uniqid());
 
-    move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking).'/'.$fileName);
+    move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.$proofDirectory.'/'.$fileName);
 
     $r = parent::execSqlRequest("UPDATE deposit_history_proof_krypto SET url_deposit_history_proof=:url_deposit_history_proof, sended_deposit_history_proof=:sended_deposit_history_proof WHERE id_deposit_history_proof=:id_deposit_history_proof",
                                 [
-                                  'url_deposit_history_proof' => '/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking).'/'.$fileName,
+                                  'url_deposit_history_proof' => '/public/proof/'.$proofDirectory.'/'.$fileName,
                                   'sended_deposit_history_proof' => time(),
                                   'id_deposit_history_proof' => $id_proof_asking
                                 ]);
