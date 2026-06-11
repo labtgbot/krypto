@@ -21,6 +21,12 @@ class AppModule {
   private $moduleConfig = null;
 
   /**
+   * Module controller/action policy
+   * @var Array
+   */
+  private static $modulePolicy = null;
+
+  /**
    * Module constructor
    * @param String $moduleDirectory Module directory
    */
@@ -63,9 +69,9 @@ class AppModule {
     if(!file_exists($this->_getModulePath().'/config.json')) throw new Exception("Error : Config file not exist for module : ".$this->_getDirectory(), 1);
 
     // Parse module configuration file from JSON
-    //$this->moduleConfig = json_decode(file_get_contents($this->_getModulePath().'/config.json'), true);
+    $this->moduleConfig = json_decode(file_get_contents($this->_getModulePath().'/config.json'), true);
 
-    //if(!$this->moduleConfig) throw new Exception("Error : Fail to open config file for module : ".$this->_getDirectory(), 1);
+    if(!is_array($this->moduleConfig)) throw new Exception("Error : Fail to open config file for module : ".$this->_getDirectory(), 1);
 
   }
 
@@ -74,9 +80,8 @@ class AppModule {
    * @return boolean Module enable status
    */
   public function _isEnable(){
-    return true;
-    if(!array_key_exists('enable', $this->moduleConfig)) return false;
-    return $this->moduleConfig['enable'];
+    if(!$this->_checkConfig()) return false;
+    return $this->moduleConfig['enable'] === true;
   }
 
   /**
@@ -84,9 +89,90 @@ class AppModule {
    * @return Boolean Module configuration file was correct
    */
   public function _checkConfig(){
-    return true;
-    if(count($this->moduleConfig) > 0) return true;
-    return false;
+    if(!is_array($this->moduleConfig)) return false;
+    if(!array_key_exists('enable', $this->moduleConfig)) return false;
+    return is_bool($this->moduleConfig['enable']);
+  }
+
+  /**
+   * Load the explicit module route policy.
+   * @return Array Module policy
+   */
+  private static function _getModulePolicy(){
+    if(!is_null(self::$modulePolicy)) return self::$modulePolicy;
+
+    $policyPath = __DIR__.'/module_policy.php';
+    if(file_exists($policyPath)){
+      $policy = require $policyPath;
+      self::$modulePolicy = (is_array($policy) ? $policy : []);
+    } else {
+      self::$modulePolicy = [];
+    }
+
+    foreach (['controllers', 'actions'] as $key) {
+      if(!array_key_exists($key, self::$modulePolicy) || !is_array(self::$modulePolicy[$key])){
+        self::$modulePolicy[$key] = [];
+      }
+    }
+
+    return self::$modulePolicy;
+  }
+
+  /**
+   * Get the configured allowlist for the module.
+   * @param  String $key Policy key
+   * @return Array      Allowlist entries
+   */
+  private function _getAllowlist($key){
+    if(is_array($this->moduleConfig)
+      && array_key_exists($key, $this->moduleConfig)
+      && is_array($this->moduleConfig[$key])){
+      return $this->moduleConfig[$key];
+    }
+
+    $policy = self::_getModulePolicy();
+    if(array_key_exists($key, $policy)
+      && array_key_exists($this->_getDirectory(), $policy[$key])
+      && is_array($policy[$key][$this->_getDirectory()])){
+      return $policy[$key][$this->_getDirectory()];
+    }
+
+    return [];
+  }
+
+  /**
+   * Normalize a module-relative allowlist path.
+   * @param  String $path Relative path
+   * @return String|null  Normalized relative path
+   */
+  private function _normalizeAllowlistPath($path){
+    if(!is_string($path)) return null;
+
+    $path = trim(str_replace('\\', '/', $path));
+    if($path == '' || $path[0] == '/' || strpos($path, "\0") !== false) return null;
+
+    $segments = explode('/', $path);
+    $normalized = [];
+    foreach ($segments as $segment) {
+      if($segment == '' || $segment == '.' || $segment == '..') return null;
+      $normalized[] = $segment;
+    }
+
+    return implode('/', $normalized);
+  }
+
+  /**
+   * Check if an allowlisted file exists inside the current module.
+   * @param  String $relativePath Module-relative path
+   * @return Boolean              File is inside module
+   */
+  private function _allowlistedFileExists($relativePath){
+    $moduleRoot = realpath($this->_getModulePath());
+    $filePath = realpath($this->_getModulePath().'/'.$relativePath);
+    if($moduleRoot === false || $filePath === false || !is_file($filePath)) return false;
+
+    $moduleRoot = rtrim($moduleRoot, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    return strpos($filePath, $moduleRoot) === 0;
   }
 
   /**
@@ -95,6 +181,8 @@ class AppModule {
    * @return Array        Assets List
    */
   public function _loadAssets($type = "css"){
+    if(!$this->_isEnable()) return [];
+
     $res = [];
     // Check if directory exist
     if(!file_exists($this->_getModulePath().'/statics/'.$type)) return [];
@@ -123,18 +211,59 @@ class AppModule {
   public function _loadControllers(){
     $res = [];
 
-    // Check if module directory controllers exist
-    if(!file_exists($this->_getModulePath().'/src')) return [];
+    if(!$this->_isEnable()) return [];
 
-    // Get list controllers list
-    foreach (scandir($this->_getModulePath().'/src') as $asset) {
-      // Check validy controllers & is not directory
-      if($asset == "." || $asset == ".." || is_dir($this->_getModulePath().'/src/'.$asset)) continue;
+    // Get explicit controllers allowlist
+    foreach ($this->_getAllowlist('controllers') as $controller) {
+      $controller = $this->_normalizeAllowlistPath($controller);
+      if(is_null($controller)) continue;
+      if(preg_match('/^src\/[^\/]+\.php$/', $controller) !== 1) continue;
+      if(!$this->_allowlistedFileExists($controller)) continue;
 
-      // Append assets
-      $res[] = $asset;
+      $res[] = $controller;
     }
-    return $res;
+
+    return array_values(array_unique($res));
+  }
+
+  /**
+   * Load module actions list
+   * @return Array Actions list
+   */
+  public function _loadActions(){
+    $res = [];
+
+    if(!$this->_isEnable()) return [];
+
+    foreach ($this->_getAllowlist('actions') as $action) {
+      $action = $this->_normalizeAllowlistPath($action);
+      if(is_null($action)) continue;
+      if(preg_match('/^(src\/actions|actions)\/.+\.php$/', $action) !== 1) continue;
+      if(!$this->_allowlistedFileExists($action)) continue;
+
+      $res[] = $action;
+    }
+
+    return array_values(array_unique($res));
+  }
+
+  /**
+   * Check if an action file is routeable for this module.
+   * @param  String $actionPath Action path
+   * @return Boolean            Action is allowlisted
+   */
+  public function _isActionAllowed($actionPath){
+    if(!$this->_isEnable()) return false;
+
+    $actionRealPath = realpath($actionPath);
+    if($actionRealPath === false) return false;
+
+    foreach ($this->_loadActions() as $action) {
+      $allowedPath = realpath($this->_getModulePath().'/'.$action);
+      if($allowedPath !== false && $allowedPath === $actionRealPath) return true;
+    }
+
+    return false;
   }
 
 }
