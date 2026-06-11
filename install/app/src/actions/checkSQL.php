@@ -1,5 +1,23 @@
 <?php
 
+require_once __DIR__.'/../../../../app/src/bootstrap_paths.php';
+require_once __DIR__.'/../../../../app/src/App/Csrf.php';
+require_once __DIR__.'/../Install.php';
+
+krypto_session_start();
+
+$Install = new Install();
+
+if($Install->_isInstalled()){
+  http_response_code(403);
+  die(json_encode([
+    "error" => 1,
+    "msg" => $Install->_installedLockMessage()
+  ]));
+}
+
+Krypto_Csrf::validateRequest();
+
 try {
 
   if(empty($_POST) || empty($_POST['sql_host']) || empty($_POST['sql_port']) || empty($_POST['sql_user']) || empty($_POST['sql_database_name'])) throw new Exception("Fields missing", 1);
