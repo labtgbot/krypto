@@ -38,7 +38,13 @@ Krypto_Csrf::validateRequest();
 
     if(empty($_POST) || !isset($_POST['kr-user-id-c']) || empty($_POST['kr-user-id-c']) || $_POST['kr-user-id-c'] != $User->_getUserID(true)) throw new Exception("Access denied", 1);
 
+    $User->_confirmGoogleTFSDisable(
+      (isset($_POST['google_tfs_code']) ? $_POST['google_tfs_code'] : null),
+      (isset($_POST['kr-user-current-pwd']) ? $_POST['kr-user-current-pwd'] : null)
+    );
+
     $User->_disableGoogleTFS();
+    $User->_sendAccountSecurityNotification($App, $User->_getEmail(), 'Google Authenticator was removed from your account.');
 
     die(json_encode([
       'error' => 0,

@@ -32,29 +32,41 @@ Krypto_Csrf::validateRequest();
     if (!$User->_isLogged()) {
         throw new Exception("User not logged", 1);
     }
+    $AuthenticatedUser = $User;
 
     $Lang = new Lang($User->_getLang(), $App);
 
-    if(!isset($_POST['kr_prof_u']) || (!$User->_isAdmin() && $_POST['kr_prof_u'] != $User->_getUserID(true))){
+    if(!isset($_POST['kr_prof_u']) || (!$AuthenticatedUser->_isAdmin() && $_POST['kr_prof_u'] != $AuthenticatedUser->_getUserID(true))){
       throw new Exception("Error : Permission denied", 1);
     }
 
     $adminAction = false;
-    if($User->_isAdmin() && $_POST['kr_prof_u'] != $User->_getUserID(true)){
+    if($AuthenticatedUser->_isAdmin() && $_POST['kr_prof_u'] != $AuthenticatedUser->_getUserID(true)){
       $User = new User(App::encrypt_decrypt('decrypt', $_POST['kr_prof_u']));
       $adminAction = true;
+    }
+
+    $passwordChangeRequested = $User->_getOauth() == "standard" && isset($_POST['kr-user-pwd']) && (string) $_POST['kr-user-pwd'] !== '';
+    $emailChangeRequested = $User->_getOauth() == "standard" && isset($_POST['kr-user-email']) && (string) $_POST['kr-user-email'] !== '' && $_POST['kr-user-email'] != $User->_getEmail();
+    $oldEmail = $User->_getEmail();
+
+    if($passwordChangeRequested || $emailChangeRequested){
+      $AuthenticatedUser->_assertSensitiveChangeReauthenticated(
+        (isset($_POST['kr-user-current-pwd']) ? $_POST['kr-user-current-pwd'] : null),
+        (isset($_POST['google_tfs_code']) ? $_POST['google_tfs_code'] : null)
+      );
     }
 
     if(isset($_POST['kr-user-name']) && !empty($_POST['kr-user-name'])){
       $User->_setName(htmlspecialchars($_POST['kr-user-name'], ENT_QUOTES, 'UTF-8'));
     }
 
-    if($User->_getOauth() == "standard" && isset($_POST['kr-user-pwd']) && !empty($_POST['kr-user-pwd'])){
+    if($passwordChangeRequested){
       if(!isset($_POST['kr-user-pwd-repeat']) || $_POST['kr-user-pwd-repeat'] != $_POST['kr-user-pwd']) throw new Exception("Password not match", 1);
       $User->_setPassword($_POST['kr-user-pwd']);
     }
 
-    if($User->_getOauth() == "standard" && isset($_POST['kr-user-email']) && !empty($_POST['kr-user-email']) && $_POST['kr-user-email'] != $User->_getEmail()){
+    if($emailChangeRequested){
       $User->_setEmail(htmlspecialchars($_POST['kr-user-email'], ENT_QUOTES, 'UTF-8'));
     }
 
@@ -107,6 +119,14 @@ Krypto_Csrf::validateRequest();
 
 
     $User->_saveChange(!$adminAction);
+
+    if($passwordChangeRequested){
+      $User->_sendAccountSecurityNotification($App, $oldEmail, 'Your account password was changed.');
+    }
+
+    if($emailChangeRequested){
+      $User->_sendAccountSecurityNotification($App, $oldEmail, 'Your account email address was changed to '.$User->_getEmail().'.');
+    }
 
     die(json_encode([
       'error' => 0,
