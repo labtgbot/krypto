@@ -177,7 +177,7 @@ session fixation.
 ## E. Секреты и цепочка поставок
 
 ### E1 — Захардкоженные секреты · High · #96
-`app/modules/kr-api/src/Api.php:5` (`'ZGz3dSbvv8EGhFBX'`),
+`app/modules/kr-api/src/Api.php:5` (`[redacted]`),
 `RssFeed.php:57` (rss2json key), `Etherblock.php:19,30`. Секреты в VCS.
 
 ### E2 — Заброшенные composer-пакеты · High (supply-chain) · #104

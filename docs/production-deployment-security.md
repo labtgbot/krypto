@@ -21,7 +21,8 @@ sensitive directories and metadata.
 Before accepting traffic:
 
 - Confirm `/` loads `index.php` and `/dashboard` resolves to `dashboard.php`.
-- Confirm direct requests to `install/`, `config/`, and `vendor/` return 403 or
+- Confirm direct requests to `install/`, `config/`, `vendor/`, `app/src/`,
+  `app/modules/kr-api/src/Api.php`, and module `config.json` files return 403 or
   404.
 - Confirm direct requests to `config/config.settings.php`, `composer.json`, and
   `composer.lock` return 403 or 404 and never render file contents.
@@ -47,11 +48,30 @@ autoload files. PHP includes `vendor/autoload.php` server-side, but browsers do
 not need direct access to `vendor/`. Block direct requests to `vendor/` to reduce
 dependency fingerprinting and accidental exposure of package tests or examples.
 
+`app/` contains PHP application source as well as legacy module endpoints and
+static module assets. Keep only the known public module views, action endpoints,
+and `app/modules/*/statics/*` assets reachable. Block direct browser access to
+`app/src/`, module controller source under `app/modules/*/src/` except
+`actions/`, and module `config.json` files.
+
 Repository metadata and operational files such as `composer.json`,
 `composer.lock`, `README.md`, `.git/`, `.github/`, `docs/`, `tests/`,
 `examples/`, `experiments/`, and `scripts/` should not be published as browsable
 web content. Keep them outside public routing where possible, or block them with
 server rules when the application root is the document root.
+
+## Runtime Secrets
+
+Do not commit deployment secrets to source control. Configure these values with
+server-provided environment variables or encrypted `settings_krypto` rows:
+
+- `KRYPTO_DATA_API_KEY` / `data_api_key` for `app/modules/kr-api`.
+- `KRYPTO_RSS2JSON_API_KEY` / `rss2json_api_key` for rss2json.
+- `KRYPTO_ETHERSCAN_API_KEY` / `etherscan_api_key` for Etherscan.
+
+Rotate any value that was previously committed or reused across installations.
+Leave the value empty to disable the corresponding privileged API integration
+instead of falling back to a shared default.
 
 ## Install-Time Permissions
 
@@ -119,6 +139,10 @@ can be translated into the application-root `.htaccess`.
     Require all denied
 </LocationMatch>
 
+<LocationMatch "^/app/(?:src/|modules/[^/]+/src/(?!actions(?:/|$))|modules/[^/]+/config\.json$)">
+    Require all denied
+</LocationMatch>
+
 <LocationMatch "^/(?:composer\.(?:json|lock)|README\.md|\.git|\.github|docs|tests|scripts|examples|experiments)(?:/|$)">
     Require all denied
 </LocationMatch>
@@ -141,6 +165,11 @@ location = /dashboard {
 }
 
 location ~ ^/(?:install|config|vendor)(?:/|$) {
+    deny all;
+    return 404;
+}
+
+location ~ ^/app/(?:src/|modules/[^/]+/src/(?!actions(?:/|$))|modules/[^/]+/config\.json$) {
     deny all;
     return 404;
 }
@@ -198,6 +227,10 @@ rules at the site level so they apply before PHP FastCGI receives the request.
           <match url="^(composer\.(json|lock)|README\.md)$" />
           <action type="CustomResponse" statusCode="404" statusReason="Not Found" statusDescription="Not Found" />
         </rule>
+        <rule name="Block Krypto app source" stopProcessing="true">
+          <match url="^app/(src/|modules/[^/]+/src/(?!actions(/|$))|modules/[^/]+/config\.json$)" />
+          <action type="CustomResponse" statusCode="404" statusReason="Not Found" statusDescription="Not Found" />
+        </rule>
       </rules>
     </rewrite>
   </system.webServer>
@@ -222,6 +255,8 @@ Then verify the deployed site with direct HTTP requests:
 - `GET /install/` returns 403 or 404 after installation.
 - `GET /config/config.settings.php` returns 403 or 404.
 - `GET /vendor/composer/installed.json` returns 403 or 404.
+- `GET /app/src/App/App.php`, `GET /app/modules/kr-api/src/Api.php`, and
+  `GET /app/modules/kr-api/config.json` return 403 or 404.
 - `GET /composer.json` and `GET /composer.lock` return 403 or 404.
 - `GET /public/chat/example/payload.php` returns 403 or 404 and is not executed.
 - `GET /public/user/example/avatar.jpg` returns a static file only when that URL

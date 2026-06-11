@@ -19,6 +19,10 @@
       if(!defined('MYSQL_DATABASE')) define('MYSQL_DATABASE', krypto_env_config_value('KRYPTO_DB_NAME', krypto_env_config_value('KRYPTO_TEST_DB_NAME', 'krypto')));
 
       if(!defined('CRYPTED_KEY')) define('CRYPTED_KEY', krypto_env_config_value('KRYPTO_CRYPTED_KEY', 'local-dev-only-change-me'));
+
+      if(!defined('KRYPTO_DATA_API_KEY')) define('KRYPTO_DATA_API_KEY', krypto_env_config_value('KRYPTO_DATA_API_KEY', ''));
+      if(!defined('KRYPTO_RSS2JSON_API_KEY')) define('KRYPTO_RSS2JSON_API_KEY', krypto_env_config_value('KRYPTO_RSS2JSON_API_KEY', ''));
+      if(!defined('KRYPTO_ETHERSCAN_API_KEY')) define('KRYPTO_ETHERSCAN_API_KEY', krypto_env_config_value('KRYPTO_ETHERSCAN_API_KEY', ''));
     }
 
     // define('APP_URL', '');
@@ -33,6 +37,10 @@
     // define('MYSQL_DATABASE', '');        // MySQL Database (Use the file sql.sql for create sql requirement)
     //
     // define('CRYPTED_KEY', '');
+    //
+    // define('KRYPTO_DATA_API_KEY', '');
+    // define('KRYPTO_RSS2JSON_API_KEY', '');
+    // define('KRYPTO_ETHERSCAN_API_KEY', '');
 
     require_once __DIR__.'/../app/src/bootstrap_paths.php';
 ?>

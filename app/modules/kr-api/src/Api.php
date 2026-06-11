@@ -2,8 +2,6 @@
 
 class Api extends MySQL {
 
-  private $api_key = 'ZGz3dSbvv8EGhFBX';
-
   private $App = null;
 
   private $route = [
@@ -21,13 +19,29 @@ class Api extends MySQL {
 
   public function __construct($App = null, $api_key = null){
 
-    if(is_null($App) || is_null($api_key) || $api_key != $this->api_key) throw new Exception("Permission denied", 1);
+    if(is_null($App)) throw new Exception("Permission denied", 1);
     $this->App = $App;
+    if(!$this->_apiKeyMatches($api_key)) throw new Exception("Permission denied", 1);
 
   }
 
   private function _getApp(){
     return $this->App;
+  }
+
+  private function _getConfiguredApiKey(){
+    if(!is_null($this->_getApp()) && method_exists($this->_getApp(), '_getDataApiKey')) return $this->_getApp()->_getDataApiKey();
+    if(defined('KRYPTO_DATA_API_KEY')) return (string) KRYPTO_DATA_API_KEY;
+    if(function_exists('krypto_env_config_value')) return (string) krypto_env_config_value('KRYPTO_DATA_API_KEY', '');
+    $value = getenv('KRYPTO_DATA_API_KEY');
+    return ($value === false ? '' : (string) $value);
+  }
+
+  private function _apiKeyMatches($apiKey){
+    if(is_null($apiKey)) return false;
+    $configuredApiKey = (string) $this->_getConfiguredApiKey();
+    if($configuredApiKey === '') return false;
+    return hash_equals($configuredApiKey, (string) $apiKey);
   }
 
   public function _route($path, $args){

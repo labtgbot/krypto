@@ -1,4 +1,9 @@
+Options -Indexes
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteRule ^dashboard$ dashboard.php [L]
+  RewriteRule ^app/src/ - [F,L]
+  RewriteRule ^app/modules/[^/]+/src/(?!actions(?:/|$)) - [F,L]
+  RewriteRule ^app/modules/[^/]+/config\.json$ - [F,L]
 </IfModule>

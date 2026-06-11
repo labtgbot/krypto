@@ -54,14 +54,54 @@ class RssFeed
     public function _loadRssFeed()
     {
         // Get rss feed json data & parse
-        $dataRssJSON = json_decode(file_get_contents('https://api.rss2json.com/v1/api.json?rss_url='.urlencode($this->_getUrl()).'&api_key=gv8lphuigsa1voxctrcugwwqwdfh8f2gv4fluhdp'), true);
+        $dataRssJSON = json_decode(file_get_contents($this->_getRss2JsonUrl()), true);
 
         // Check rss feed result
-        if ($dataRssJSON['status'] == "ok") {
+        if (is_array($dataRssJSON) && array_key_exists('status', $dataRssJSON) && $dataRssJSON['status'] == "ok") {
             $this->feedData = $dataRssJSON;
         } else {
             error_log('Fail to parse rss feed : '.$this->_getUrl());
         }
+    }
+
+    private function _getRss2JsonUrl()
+    {
+        $query = ['rss_url' => $this->_getUrl()];
+        $apiKey = $this->_getRss2JsonApiKey();
+        if ($apiKey !== '') {
+            $query['api_key'] = $apiKey;
+        }
+
+        return 'https://api.rss2json.com/v1/api.json?'.http_build_query($query, '', '&');
+    }
+
+    private function _getRss2JsonApiKey()
+    {
+        if (defined('KRYPTO_RSS2JSON_API_KEY') && trim((string) KRYPTO_RSS2JSON_API_KEY) !== '') {
+            return (string) KRYPTO_RSS2JSON_API_KEY;
+        }
+        if (function_exists('krypto_env_config_value')) {
+            $envValue = krypto_env_config_value('KRYPTO_RSS2JSON_API_KEY', '');
+            if (trim((string) $envValue) !== '') {
+                return (string) $envValue;
+            }
+        } else {
+            $envValue = getenv('KRYPTO_RSS2JSON_API_KEY');
+            if ($envValue !== false && trim((string) $envValue) !== '') {
+                return (string) $envValue;
+            }
+        }
+
+        if (class_exists('App')) {
+            try {
+                $App = new App(false);
+                return $App->_getRss2JsonApiKey();
+            } catch (Exception $e) {
+                error_log('Fail to load rss2json API key from settings : '.$e->getMessage());
+            }
+        }
+
+        return '';
     }
 
     /**
