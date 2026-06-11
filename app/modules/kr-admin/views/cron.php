@@ -73,7 +73,7 @@ if(!empty($_POST) && !empty($_POST['page']) && is_numeric($_POST['page'])) $page
            <tr>
             <td>
               <div class="kr-admin-coin-nsa">
-                <span><?php echo APP_URL.'/'.$url; ?></span>
+                <span><?php echo htmlspecialchars(krypto_cron_url($url), ENT_QUOTES, 'UTF-8'); ?></span>
               </div>
             </td>
             <td><?php echo $Lang->tr('Every').' '.($infosUrl['every'] / 60).' minute'.(($infosUrl['every'] / 60) > 1 ? 's' : ''); ?></td>

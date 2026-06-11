@@ -33,7 +33,10 @@ try {
 
   $Statistics = new Statistics();
 
-  var_dump($Statistics->_generateListDate());
+  die(json_encode([
+    'error' => 0,
+    'dates' => $Statistics->_generateListDate()
+  ]));
 
 } catch (\Exception $e) {
   die(json_encode([

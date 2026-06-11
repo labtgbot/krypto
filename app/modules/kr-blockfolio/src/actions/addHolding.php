@@ -42,9 +42,6 @@ Krypto_Csrf::validateRequest();
     $BlockFolio = new Blockfolio($User);
     $BlockFolio->_addHolding($_POST['trading_symbol'], $_POST['type_trading'], $_POST['trading_price'], $_POST['quantity'], $_POST['trading_date']);
 
-    var_dump($_POST);
-
-
     die(json_encode([
       'error' => 0,
       'msg' => 'Done !'

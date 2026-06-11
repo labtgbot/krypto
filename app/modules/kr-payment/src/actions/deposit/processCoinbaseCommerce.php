@@ -30,6 +30,7 @@ try {
 
 
 } catch (Exception $e) {
-    error_log($e->getMessage());
-    die('Error : '.$e->getMessage());
+    krypto_log_exception('Coinbase Commerce webhook processing failed', $e);
+    http_response_code(500);
+    die('Payment processing failed.');
 }

@@ -43,6 +43,7 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log($e->getMessage());
-    die('Error : '.$e->getMessage());
+    krypto_log_exception('CoinGate deposit processing failed', $e);
+    http_response_code(500);
+    die('Payment processing failed.');
 }

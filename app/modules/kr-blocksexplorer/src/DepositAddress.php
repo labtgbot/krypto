@@ -50,7 +50,6 @@ class DepositAddress extends MySQL {
 
   public function _getTransactionHistory(){
     if(is_null($this->_getLinkedBlockExplorer())) return [];
-    var_dump($this->_getAddress());
     return $this->_getLinkedBlockExplorer()->_getHistoryTransaction($this->_getAddress(), $this->_getSymbol());
   }
 

@@ -62,7 +62,7 @@ class Api extends MySQL {
 
   private function _getDataCoin($symbol){
 
-    var_dump($symbol);
+    return [];
 
   }
 

@@ -116,7 +116,8 @@ class Install {
 
       return true;
     } catch (\Exception $e) {
-      return $e->getMessage();
+      krypto_log_exception('Installer database setup failed', $e);
+      return 'Database setup failed. Check the server logs for details.';
     }
 
   }
@@ -213,6 +214,7 @@ class Install {
     define('MYSQL_DATABASE', '".addslashes($_SESSION['bdd']['sql_database_name'])."');        // MySQL Database (Use the file sql.sql for create sql requirement)
 
     define('CRYPTED_KEY', '".$this->generateScretkey()."');
+    define('KRYPTO_CRON_TOKEN', '".$this->generateScretkey()."');
 
     require_once __DIR__.'/../app/src/bootstrap_paths.php';
 	?>";
@@ -239,6 +241,13 @@ class Install {
 
   public function _installedLockMessage(){
     return 'Krypto is already installed. Remove the install directory instead of running the installer again.';
+  }
+
+  public function _getCronActionUrl($path){
+    $url = rtrim($_SESSION['configure']['website_url'], '/').'/'.ltrim((string) $path, '/');
+    $token = $this->_getConfiguredCronToken();
+    if($token !== '') $url .= (strpos($url, '?') === false ? '?' : '&').'cron_token='.rawurlencode($token);
+    return $url;
   }
 
   private function validateCsrf(){
@@ -279,6 +288,16 @@ class Install {
     $name = preg_quote($name, '/');
     if(preg_match('/define\s*\(\s*([\'"])'.$name.'\1\s*,\s*([\'"])(.*?)\2\s*\)\s*;/s', $source, $matches) !== 1) return false;
     return trim(stripslashes($matches[3])) !== '';
+  }
+
+  private function _getConfiguredCronToken(){
+    if(defined('KRYPTO_CRON_TOKEN')) return (string) KRYPTO_CRON_TOKEN;
+    if(!is_file($this->configPath)) return '';
+    $source = file_get_contents($this->configPath);
+    if($source === false) return '';
+    $source = $this->stripPhpComments($source);
+    if(preg_match('/define\s*\(\s*([\'"])KRYPTO_CRON_TOKEN\1\s*,\s*([\'"])(.*?)\2\s*\)\s*;/s', $source, $matches) !== 1) return '';
+    return trim(stripslashes($matches[3]));
   }
 
 }

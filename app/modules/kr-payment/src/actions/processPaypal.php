@@ -59,5 +59,6 @@ try {
     // Redirect user
     header('Location: '.APP_URL.'/dashboard.php?c=paypal&k='.md5($dataPayment->getId()).'&t='.time());
 } catch (Exception $e) {
-    header('Location: '.APP_URL.'/dashboard.php?c=paypal&m='.base64_encode($e->getMessage()).'&t='.time());
+    krypto_log_exception('PayPal payment processing failed', $e);
+    header('Location: '.APP_URL.'/dashboard.php?c=paypal&m='.base64_encode('Payment processing failed.').'&t='.time());
 }

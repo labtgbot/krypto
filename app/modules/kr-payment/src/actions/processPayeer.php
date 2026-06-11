@@ -54,10 +54,10 @@ try {
 
     die();
 } catch (Exception $e) {
-  var_dump($e->getMessage());
+  krypto_log_exception('Payeer payment processing failed', $e);
   error_log(json_encode([
     'error' => 1,
-    'msg' => $e->getMessage()
+    'msg' => krypto_generic_error_message()
   ]));
 }
 

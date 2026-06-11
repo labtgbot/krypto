@@ -29,7 +29,10 @@ Krypto_Csrf::validateRequest();
 
 
 $User = new User();
-var_dump($User->_getListUserSubscribeNotification($App));
+die(json_encode([
+  'error' => 0,
+  'count' => count($User->_getListUserSubscribeNotification($App))
+]));
 
 
 ?>

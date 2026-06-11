@@ -47,5 +47,6 @@ try {
     header('Location: '.APP_URL.'/dashboard.php?v='.$paymentResult->getId().'&c=paypal&t='.time());
 
 } catch (Exception $e) {
-    header('Location: '.APP_URL.'/dashboard.php?c=paypal&m='.base64_encode($e->getMessage()).'&t='.time());
+    krypto_log_exception('PayPal deposit processing failed', $e);
+    header('Location: '.APP_URL.'/dashboard.php?c=paypal&m='.base64_encode('Payment processing failed.').'&t='.time());
 }

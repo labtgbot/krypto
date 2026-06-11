@@ -91,7 +91,7 @@ class BitcoinExplorer extends MySQL {
       // code...
     }
 
-    var_dump($receiveTransaction);
+    return $receiveTransaction;
   }
 
   private $CurrentBlockHeight = null;

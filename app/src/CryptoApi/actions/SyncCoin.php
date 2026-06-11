@@ -9,6 +9,8 @@
 
 require "../../../../config/config.settings.php";
 
+krypto_require_cron_access();
+
 krypto_session_start();
 
 require_once "../../../../app/src/bootstrap_paths.php";
@@ -47,8 +49,11 @@ try {
   ]));
 
 } catch (Exception $e) {
-  error_log($e->getMessage());
-  die($e->getMessage());
+  krypto_log_exception('Coin sync cron failed', $e);
+  die(json_encode([
+    'error' => 1,
+    'msg' => krypto_generic_error_message()
+  ]));
 }
 
 

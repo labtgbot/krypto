@@ -141,7 +141,6 @@ try {
     <?php endif; ?>
     <?php if(!is_null($BankTransfertItem)):
       $BankAccountList = $App->_getListBankAccountAvailable();
-        //var_dump($BankTransfertItem);
       ?>
       <?php if($BankTransfertItem['status_banktransfert'] != "3"): ?>
       <?php if(is_null($BankTransfertItem['bankaccount_banktransfert'])): ?>
