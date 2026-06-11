@@ -110,6 +110,7 @@ function iniLoginViewControllers(){
     $('.kr-login-field').find('div').find('span').html('');
     $('input[type="submit"]').attr('disabled', 'true').addClass('btn-grey');
     $.post($(this).attr('action'), $(this).serialize()).done(function(data){
+      if($('.kr-lgs-v-login').find('.g-recaptcha').length > 0 && typeof grecaptcha !== 'undefined') grecaptcha.reset();
       let respond = jQuery.parseJSON(data);
       if(respond.error == 0){
         $('section.kr-login-loading-full').css('display', 'flex');
@@ -143,6 +144,7 @@ function iniLoginViewControllers(){
     showLoadingForm();
     $.post($(this).attr('action'), $(this).serialize()).done(function(data){
       hideLoadingForm();
+      if($('.kr-lgs-v-resetPassword').find('.g-recaptcha').length > 0 && typeof grecaptcha !== 'undefined') grecaptcha.reset();
       let respond = jQuery.parseJSON(data);
       if(respond.error == 0){
         showAlert('Succes !', respond.msg, 'success');
@@ -211,6 +213,14 @@ function kryptoLogin(){
   $('.kr-lgs-v-login').submit();
 }
 
+function kryptoResetPassword(){
+  $('.kr-lgs-v-resetPassword').submit();
+}
+
+function kryptoGoogleAuthenticator(){
+  $('.kr-login-authentificator-act').submit();
+}
+
 function initGoogleAuthenticator(){
 
   showLoadingForm();
@@ -223,6 +233,7 @@ function initGoogleAuthenticator(){
     $('.kr-login-tfs > section > .sk-folding-cube').show();
 
     $.post($(this).attr('action'), $(this).serialize()).done(function(data){
+        if($('.kr-login-authentificator-act').find('.g-recaptcha').length > 0 && typeof grecaptcha !== 'undefined') grecaptcha.reset();
         let respond = jQuery.parseJSON(data);
         console.log(respond);
         if(respond.error == 0){

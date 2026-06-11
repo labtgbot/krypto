@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/../ChangeNow/ChangeNowGuardrails.php';
+require_once __DIR__.'/../Auth/AuthRateLimiter.php';
 require_once __DIR__.'/Csrf.php';
 
 /**
@@ -2088,6 +2089,14 @@ class App extends MySQL {
 
   public function _getChangeNowRateLimiter($storagePath = null){
     return new ChangeNowRateLimiter($storagePath);
+  }
+
+  public function _getAuthRateLimitConfig($bucket = null){
+    return KryptoAuthRateLimit::defaultConfig($bucket);
+  }
+
+  public function _getAuthRateLimiter($storagePath = null){
+    return new KryptoAuthRateLimiter($storagePath);
   }
 
   public function _getChangeNowEligibilityForCountry($countryCode){

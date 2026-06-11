@@ -87,13 +87,26 @@ Krypto_Csrf::validateRequest();
           ]));
         }
 
+        $authBucket = 'reset_password';
+        $authLimiter = $App->_getAuthRateLimiter();
+        $authConfig = $App->_getAuthRateLimitConfig($authBucket);
+        $authCaptchaEnabled = KryptoAuthRateLimit::captchaEnabled($App);
+        $authDecision = KryptoAuthRateLimit::check($authBucket, $_POST['kr_usr_email'], $_SERVER, $authLimiter, $authConfig);
+
+        if(!$authDecision['allowed']){
+          die(json_encode(KryptoAuthRateLimit::failurePayload($authDecision, KryptoAuthRateLimit::RATE_LIMIT_MESSAGE, $authCaptchaEnabled)));
+        }
+
+        if(KryptoAuthRateLimit::captchaRequired($authDecision, $App) && !KryptoAuthRateLimit::verifyCaptcha($App, $_POST, $_SERVER)){
+          $authDecision = KryptoAuthRateLimit::recordFailure($authBucket, $_POST['kr_usr_email'], $_SERVER, $authLimiter, $authConfig);
+          die(json_encode(KryptoAuthRateLimit::failurePayload($authDecision, KryptoAuthRateLimit::RATE_LIMIT_MESSAGE, $authCaptchaEnabled)));
+        }
+
         // Reset user password (send mail)
         $User->_resetPassword($_POST['kr_usr_email'], $App);
+        $authDecision = KryptoAuthRateLimit::recordFailure($authBucket, $_POST['kr_usr_email'], $_SERVER, $authLimiter, $authConfig);
 
-        echo json_encode([
-          'error' => 0,
-          'msg' => 'Your new password in on the way !'
-        ]);
+        echo json_encode(KryptoAuthRateLimit::resetPasswordPayload($authDecision, $authCaptchaEnabled));
     }
 } catch (Exception $e) {
     die(json_encode([

@@ -36,7 +36,15 @@ try {
       <input type="hidden" name="kr_usr_email" value="<?php echo $_POST['user']; ?>">
       <input type="hidden" name="kr_usr_pwd" value="<?php echo $_POST['pwd']; ?>">
       <input id="google_tfs_inpt" type="text" pattern="[0-9]{6}" placeholder="******" maxlength="6" name="kr_login_code" value="">
-      <input type="submit" class="btn btn-shadow btn-black" name="" value="Enter">
+      <?php if($App->_captchaSignup()): ?>
+      <button
+        class="g-recaptcha btn btn-shadow btn-black"
+        data-sitekey="<?php echo $App->_getGoogleRecaptchaSiteKey(); ?>"
+        data-size="invisible"
+        data-callback="kryptoGoogleAuthenticator">Enter</button>
+      <?php else: ?>
+        <input type="submit" class="btn btn-shadow btn-black" name="" value="Enter">
+      <?php endif; ?>
     </form>
   </section>
 </section>

@@ -51,10 +51,21 @@ if(isset($_GET) && isset($_GET['token'])){
     <?php endif; ?>
     <footer>
       <a class="kr-gologin-view"><?php echo $Lang->tr('Back to login'); ?></a>
-      <input type="submit" class="btn-shadow" name="" value="<?php echo strtoupper($Lang->tr('Next')); ?>">
+      <?php if($App->_captchaSignup() && !$resetPwdAction): ?>
+      <button
+        class="g-recaptcha btn-shadow"
+        data-sitekey="<?php echo $App->_getGoogleRecaptchaSiteKey(); ?>"
+        data-size="invisible"
+        data-callback="kryptoResetPassword"><?php echo strtoupper($Lang->tr('Next')); ?></button>
+      <?php else: ?>
+        <input type="submit" class="btn-shadow" name="" value="<?php echo strtoupper($Lang->tr('Next')); ?>">
+      <?php endif; ?>
     </footer>
   </section>
 </section>
 <footer>
 
 </footer>
+<?php if($App->_captchaSignup() && !$resetPwdAction): ?>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<?php endif; ?>

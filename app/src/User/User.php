@@ -6,6 +6,8 @@
  * @package Krypto
  * @author Ovrley <hello@ovrley.com>
  */
+require_once __DIR__.'/../Auth/AuthRateLimiter.php';
+
 class User extends MySQL {
 
   /**
@@ -409,7 +411,7 @@ class User extends MySQL {
                                       ]);
 
       // Check user find + verify password
-      if(count($r) == 0 || !self::_passwordMatches($password, $r[0]['password_user'])) throw new Exception("Invalid login", 1);
+      if(count($r) == 0 || !self::_passwordMatches($password, $r[0]['password_user'])) throw new Exception(KryptoAuthRateLimit::GENERIC_AUTH_MESSAGE, 1);
 
       // Transparently migrate legacy/outdated hashes on successful login.
       if(self::_passwordNeedsUpgrade($r[0]['password_user'])){
@@ -426,14 +428,13 @@ class User extends MySQL {
                                       ]);
 
       // Check user find
-      if(count($r) == 0) throw new Exception("Invalid login", 1);
+      if(count($r) == 0) throw new Exception(KryptoAuthRateLimit::GENERIC_AUTH_MESSAGE, 1);
     }
 
-    if($r[0]['status_user'] == 0 && $r[0]['admin_user'] == "0") throw new Exception("Your account has been disabled", 1);
+    if($r[0]['status_user'] == 0 && $r[0]['admin_user'] == "0") throw new Exception(KryptoAuthRateLimit::GENERIC_AUTH_MESSAGE, 1);
     if($App->_isMaintenanceMode() && $r[0]['admin_user'] == "0") throw new Exception("Website currenly under maintenance", 1);
     if($r[0]['status_user'] == 2 && $r[0]['admin_user'] == "0" && $oauth == "standard" && $App->_getUserActivationRequire()){
-      $this->_sendActivationEmailLink($email);
-      throw new Exception("You need to enable your account. A new email have need sended to your email.", 1);
+      throw new Exception(KryptoAuthRateLimit::GENERIC_AUTH_MESSAGE, 1);
     }
 
 
@@ -746,15 +747,17 @@ class User extends MySQL {
     if(is_null($Email)) throw new Exception("Error reset password : Email not given", 1);
     if(!filter_var($Email, FILTER_VALIDATE_EMAIL)) throw new Exception("Error reset password : Email not valid", 1);
 
-    // Generate new user token
-    $generateResetToken = $this->_generateUserResetToken($Email);
-
     // Check infos user
     $infosUser = parent::querySqlRequest("SELECT name_user FROM user_krypto WHERE email_user=:email_user AND oauth_user=:oauth_user",
                                           [
                                             'email_user' => $Email,
                                             'oauth_user' => 'standard'
                                           ]);
+
+    if(count($infosUser) == 0) return true;
+
+    // Generate new user token
+    $generateResetToken = $this->_generateUserResetToken($Email);
 
     // Generate email template sended to user
     $template = new Liquid\Template();
@@ -766,7 +769,7 @@ class User extends MySQL {
       'APP_TITLE' => $App->_getAppTitle(),
       'LOGO_BLACK' => $App->_getLogoBlackPath(),
       'SUBJECT' => 'Password reset',
-      'USER_NAME' => (count($infosUser) > 0 ? $infosUser[0]['name_user'] : ''),
+      'USER_NAME' => $infosUser[0]['name_user'],
       'USER_RESET_LINK' => APP_URL.'/?a=pwdr&token='.rawurlencode(App::_encryptSecret($Email.'||--||'.$generateResetToken))
     ]));
 
