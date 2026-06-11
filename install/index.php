@@ -1,6 +1,8 @@
 <?php
 
-session_start();
+require_once "../app/src/bootstrap_paths.php";
+
+krypto_session_start();
 
 require("app/src/Install.php");
 

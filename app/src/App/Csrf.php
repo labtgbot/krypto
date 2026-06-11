@@ -88,7 +88,10 @@ class Krypto_Csrf {
 
   private static function ensureSession(){
     if(function_exists('session_status') && session_status() === PHP_SESSION_NONE && !headers_sent()){
-      session_start();
+      if(!function_exists('krypto_session_start')){
+        require_once __DIR__.'/../bootstrap_paths.php';
+      }
+      krypto_session_start();
     }
   }
 
