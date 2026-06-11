@@ -2161,10 +2161,11 @@ class App extends MySQL {
     if(array_key_exists($cacheKey, $this->changeNowGeoIpCountryCache)) return $this->changeNowGeoIpCountryCache[$cacheKey];
 
     $countryCode = '';
-    $ch = curl_init('http://geoip.nekudo.com/api/'.rawurlencode($clientIp));
+    $ch = curl_init('https://ipapi.co/'.rawurlencode($clientIp).'/json/');
     if($ch !== false){
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
       curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
       curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
       curl_setopt($ch, CURLOPT_ENCODING, '');
@@ -2204,9 +2205,10 @@ class App extends MySQL {
 
   public function _getVisitorLocation(){
     if(!is_null($this->visitorLocation)) return $this->visitorLocation;
-    $ch =  curl_init('http://geoip.nekudo.com/api/'.App::_getVisitorIP());
+    $ch =  curl_init('https://ipapi.co/'.rawurlencode(App::_getVisitorIP()).'/json/');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
     curl_setopt($ch, CURLOPT_ENCODING,  '');
@@ -2214,6 +2216,7 @@ class App extends MySQL {
     curl_setopt($ch, CURLOPT_TIMEOUT, 3);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
     $s = json_decode(curl_exec($ch), true);
+    if(!is_array($s)) $s = [];
     $this->visitorLocation = $s;
     return $s;
   }
@@ -2222,9 +2225,9 @@ class App extends MySQL {
     if(is_null($this->_getVisitorLocation()) || count($this->_getVisitorLocation()) == 0) return true;
     $locationInformations = $this->_getVisitorLocation();
     if(is_null($locationInformations)) return true;
-    if(!array_key_exists('country', $locationInformations)) return true;
-    if(!array_key_exists('code', $locationInformations['country'])) return true;
-    return !in_array($locationInformations['country']['code'], $this->_getBlacklistedCountries());
+    $countryCode = ChangeNowRequestRegion::countryCodeFromGeoIpPayload($locationInformations);
+    if($countryCode == '') return true;
+    return !in_array($countryCode, $this->_getBlacklistedCountries());
   }
 
   public function _getListBankAccountAvailable(){

@@ -1487,9 +1487,10 @@ class User extends MySQL {
 
 
     // Get geoip location
-    $ch =  curl_init('http://ip-api.com/json/'.$CurrentUserIP);
+    $ch =  curl_init('https://ipapi.co/'.rawurlencode($CurrentUserIP).'/json/');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
     curl_setopt($ch, CURLOPT_ENCODING,  '');
@@ -1497,12 +1498,18 @@ class User extends MySQL {
     curl_setopt($ch, CURLOPT_TIMEOUT, 3);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
     $s = json_decode(curl_exec($ch), true);
+    if(!is_array($s)) $s = [];
 
     $geoAdd = true;
-    if(array_key_exists('type', $s) && $s['status'] == "fail"){
-      error_log('Error : Fail to get Geo location : '.$s['msg']);
+    if((array_key_exists('status', $s) && $s['status'] == "fail") || (array_key_exists('error', $s) && $s['error'])){
+      error_log('Error : Fail to get Geo location : '.(array_key_exists('message', $s) ? $s['message'] : (array_key_exists('reason', $s) ? $s['reason'] : 'unknown error')));
       $geoAdd = false;
     }
+
+    $geoCity = (array_key_exists('city', $s) ? (string) $s['city'] : '');
+    $geoCountry = (array_key_exists('country_name', $s) ? (string) $s['country_name'] : (array_key_exists('country', $s) ? (string) $s['country'] : ''));
+    $geoCountryCode = (array_key_exists('country_code', $s) ? (string) $s['country_code'] : (array_key_exists('countryCode', $s) ? (string) $s['countryCode'] : ''));
+    $geoLocation = ($geoCity != '' && $geoCity != 'false' ? $geoCity.' ('.$geoCountry.')' : $geoCountry);
 
     $r = parent::execSqlRequest("INSERT INTO user_login_history_krypto (id_user, date_user_login_history, ip_user_login_history, device_user_login_history, location_user_login_history, country_code_user_login_history)
                                 VALUES (:id_user, :date_user_login_history, :ip_user_login_history, :device_user_login_history, :location_user_login_history, :country_code_user_login_history)",
@@ -1511,8 +1518,8 @@ class User extends MySQL {
                                   'date_user_login_history' => time(),
                                   'ip_user_login_history' => $CurrentUserIP,
                                   'device_user_login_history' => $_SERVER['HTTP_USER_AGENT'],
-                                  'location_user_login_history' => ($geoAdd ? ($s['city'] != 'false' ? $s['city'].' ('.$s['country'].')' : $s['country']) : ''),
-                                  'country_code_user_login_history' => ($geoAdd ? $s['countryCode'] : '')
+                                  'location_user_login_history' => ($geoAdd ? $geoLocation : ''),
+                                  'country_code_user_login_history' => ($geoAdd ? $geoCountryCode : '')
                                 ]);
 
       if(!$r) throw new Exception("Error : Fail to add user login history", 1);
@@ -1533,7 +1540,7 @@ class User extends MySQL {
             'USER_NAME' => $this->_getName(),
             'EMAIL' => $this->_getEmail(),
             'IP' => $CurrentUserIP,
-            'LOCATION' => ($geoAdd ? ($s['city'] != 'false' ? $s['city'].' ('.$s['country'].')' : $s['country']) : 'Unknow'),
+            'LOCATION' => ($geoAdd ? $geoLocation : 'Unknow'),
             'DATE' => date('d/m/Y H:i:s', time())
           ]));
         }

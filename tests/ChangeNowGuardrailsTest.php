@@ -99,6 +99,9 @@ $geoIpCountry = ChangeNowRequestRegion::countryCode([
   ];
 });
 kr_assert_equals('CA', $geoIpCountry, 'GeoIP resolver country should be used when no trusted country header is present.');
+kr_assert_equals('DE', ChangeNowRequestRegion::countryCodeFromGeoIpPayload([
+  'country_code' => 'de'
+]), 'GeoIP payloads with a top-level country_code should be normalized.');
 
 $providerDown = ChangeNowEligibility::providerState(false);
 kr_assert(!$providerDown['available'], 'Unavailable provider should return an outage state.');
