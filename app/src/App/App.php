@@ -20,6 +20,12 @@ class App extends MySQL {
   private $modulesList = [];
 
   /**
+   * Explicitly routeable module actions.
+   * @var Array
+   */
+  private $moduleActionAllowlist = [];
+
+  /**
    * Settings data
    * @var Array List Krypto settings
    */
@@ -41,7 +47,10 @@ class App extends MySQL {
     }
 
     // If loadmodule, load modules
-    if($loadmodules) $this->_loadModules();
+    if($loadmodules){
+      $this->_loadModules();
+      $this->_guardCurrentModuleActionRequest();
+    }
 
     // Load application settings in Database
     $this->_loadAppSettings();
@@ -88,6 +97,8 @@ class App extends MySQL {
    * Load module function
    */
   public function _loadModules(){
+    $this->modulesList = [];
+    $this->moduleActionAllowlist = [];
 
     // Get list modules available in application
     foreach (scandir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/app/modules') as $directory) {
@@ -121,8 +132,72 @@ class App extends MySQL {
       if($ModuleLoad->_isEnable()){
         // If enabled, save in module list
         $this->modulesList[$directory] = $ModuleLoad;
+        $this->_registerModuleActions($directory, $ModuleLoad);
       }
     }
+  }
+
+  /**
+   * Register routeable action endpoints for an enabled module.
+   * @param String    $directory  Module directory
+   * @param AppModule $ModuleLoad Module object
+   */
+  private function _registerModuleActions($directory, $ModuleLoad){
+    foreach ($ModuleLoad->_loadActions() as $action) {
+      $actionPath = realpath($ModuleLoad->_getModulePath().'/'.$action);
+      if($actionPath === false) continue;
+      $this->moduleActionAllowlist[$actionPath] = [
+        'module' => $directory,
+        'action' => $action
+      ];
+    }
+  }
+
+  /**
+   * Check if a script is a direct module action endpoint.
+   * @param  String|null $scriptPath Script path
+   * @return Boolean                 Script is a module action request
+   */
+  public function _isModuleActionRequest($scriptPath = null){
+    if(is_null($scriptPath) && isset($_SERVER['SCRIPT_FILENAME'])) $scriptPath = $_SERVER['SCRIPT_FILENAME'];
+    if(is_null($scriptPath) || $scriptPath == '') return false;
+
+    $modulesRoot = realpath($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/app/modules');
+    if($modulesRoot === false) return false;
+
+    $modulesRoot = rtrim(str_replace('\\', '/', $modulesRoot), '/').'/';
+    $scriptRealPath = realpath($scriptPath);
+    $scriptCandidate = str_replace('\\', '/', ($scriptRealPath === false ? $scriptPath : $scriptRealPath));
+
+    if(strpos($scriptCandidate, $modulesRoot) !== 0){
+      $scriptCandidate = str_replace('\\', '/', $scriptPath);
+      if(strpos($scriptCandidate, $modulesRoot) !== 0) return false;
+    }
+
+    $relativePath = substr($scriptCandidate, strlen($modulesRoot));
+    return preg_match('/^[^\/]+\/(src\/actions|actions)\/.+\.php$/', $relativePath) === 1;
+  }
+
+  /**
+   * Check if a module action is explicitly routeable.
+   * @param  String $scriptPath Script path
+   * @return Boolean            Action is allowlisted
+   */
+  public function _isModuleActionAllowed($scriptPath){
+    $scriptRealPath = realpath($scriptPath);
+    if($scriptRealPath === false) return false;
+    return array_key_exists($scriptRealPath, $this->moduleActionAllowlist);
+  }
+
+  /**
+   * Deny direct requests to disabled or non-allowlisted module actions.
+   */
+  private function _guardCurrentModuleActionRequest(){
+    if(!$this->_isModuleActionRequest()) return;
+    if($this->_isModuleActionAllowed($_SERVER['SCRIPT_FILENAME'])) return;
+
+    http_response_code(404);
+    die('Not found');
   }
 
   /**
@@ -153,7 +228,7 @@ class App extends MySQL {
       foreach ($moduleObject->_loadControllers() as $controlers) {
         // Require controllers class
         if($controlers == "error_log") continue;
-        require_once $moduleObject->_getModulePath().'/src/'.$controlers;
+        require_once $moduleObject->_getModulePath().'/'.$controlers;
       }
     }
 
