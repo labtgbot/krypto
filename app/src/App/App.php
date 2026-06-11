@@ -3,6 +3,7 @@
 require_once __DIR__.'/../ChangeNow/ChangeNowGuardrails.php';
 require_once __DIR__.'/../Auth/AuthRateLimiter.php';
 require_once __DIR__.'/Csrf.php';
+require_once __DIR__.'/KryptoUrl.php';
 
 /**
  * Main application class
@@ -1709,12 +1710,33 @@ class App extends MySQL {
    */
   public function _checkDomain(){
     if(!APP_URL_FORCE) return true;
-    $url = (((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://") . $_SERVER['HTTP_HOST'].$_SERVER['CONTEXT_PREFIX'];
-    if(!empty($_GET) && isset($_GET['r']) && (time() - base64_decode($_GET['r'])) < 5 && APP_URL != $url && !APP_URL_FORCE) die('Application error looping, if you want force excecution, set [APP_URL_FORCE] => true in [config/config.settings.php] or change the url application [APP_URL] in [config/config.settings.php]');
-    if(substr($url, -1) == '/' && $url != APP_URL) $url = substr($url, 0, -1);
-    // var_dump($_SERVER);
-    //die(APP_URL.' - '.$url);
-    if(APP_URL != $url && !APP_URL_FORCE) header('Location: '.APP_URL.$_SERVER['PHP_SELF'].'?r='.base64_encode(time()));
+    try {
+      if(!KryptoUrl::requestMatchesCanonicalHost($_SERVER)){
+        $this->_rejectInvalidHost();
+      }
+
+      if(KryptoUrl::requestScheme($_SERVER) != KryptoUrl::canonicalScheme()){
+        header('Location: '.KryptoUrl::canonicalUrlForRequest($_SERVER), true, 302);
+        exit;
+      }
+    } catch (InvalidArgumentException $e) {
+      error_log('[krypto] invalid APP_URL configuration: '.$e->getMessage());
+      if(!headers_sent()){
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+      }
+      die('Application URL is not configured.');
+    }
+
+    return true;
+  }
+
+  private function _rejectInvalidHost(){
+    if(!headers_sent()){
+      http_response_code(400);
+      header('Content-Type: text/plain; charset=utf-8');
+    }
+    die('Invalid Host header.');
   }
 
   /**
