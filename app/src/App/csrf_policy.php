@@ -15,11 +15,11 @@ return [
     ],
     'app/modules/kr-changenow/src/actions/syncMarketData.php' => [
       'reason' => 'Scheduled ChangeNOW market-data sync, not a user browser action.',
-      'validation' => 'Uses configured ChangeNOW API credentials and records cron status after provider sync.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before provider sync.'
     ],
     'app/modules/kr-chat/src/actions/clearCron.php' => [
       'reason' => 'Scheduled chat attachment cleanup task, not a user browser action.',
-      'validation' => 'Only clears expired chat pictures through the server-side Chat cleanup routine.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before cleanup.'
     ],
     'app/modules/kr-facebookoauth/src/actions/callback.php' => [
       'reason' => 'Facebook OAuth provider callback cannot include a Krypto CSRF field.',
@@ -91,23 +91,23 @@ return [
     ],
     'app/modules/kr-user/src/actions/cronDemo.php' => [
       'reason' => 'Scheduled demo cleanup task, not a user browser action.',
-      'validation' => 'Requires demo mode before deleting expired demo users and related rows.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN, then demo mode before deleting expired demo users.'
     ],
     'app/src/App/actions/cronCleanCache.php' => [
       'reason' => 'Scheduled cache cleanup task, not a user browser action.',
-      'validation' => 'Runs the server-side cache cleanup routine only.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before cache cleanup.'
     ],
     'app/src/CryptoApi/actions/CheckNotification.php' => [
       'reason' => 'Scheduled notification check task, not a user browser action.',
-      'validation' => 'Loads saved notification records and sends only server-side notification events.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before notification checks.'
     ],
     'app/src/CryptoApi/actions/SyncCoin.php' => [
       'reason' => 'Scheduled coin-list sync task, not a user browser action.',
-      'validation' => 'Runs the configured CryptoApi coin sync routine and records cron status.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before coin sync.'
     ],
     'app/src/CryptoApi/actions/SyncExchanges.php' => [
       'reason' => 'Scheduled exchange-list sync task, not a user browser action.',
-      'validation' => 'Runs configured CryptoApi exchange sync and trading availability sync routines.'
+      'validation' => 'Requires CLI execution or a matching KRYPTO_CRON_TOKEN before exchange sync.'
     ]
   ]
 ];

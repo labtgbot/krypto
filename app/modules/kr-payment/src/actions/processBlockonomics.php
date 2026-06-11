@@ -30,6 +30,7 @@ try {
     $Blockonomics->_validPayment($_GET['txid'], $_GET['addr']);
 
 } catch (Exception $e) {
-    error_log('Blockonomics payment error : '.$e->getMessage());
-    die('Error : '.$e->getMessage());
+    krypto_log_exception('Blockonomics payment error', $e);
+    http_response_code(500);
+    die('Payment processing failed.');
 }

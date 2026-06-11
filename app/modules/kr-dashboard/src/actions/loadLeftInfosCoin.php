@@ -56,7 +56,9 @@ try {
   ];
 
 } catch (\Exception $e) {
-  die($e->getMessage());
+  krypto_log_exception('Left coin details load failed', $e);
+  http_response_code(500);
+  die(krypto_generic_error_message());
 }
 
 

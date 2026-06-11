@@ -390,9 +390,6 @@ class CryptoApi extends MySQL {
     $coinList = [];
 
     $listCoinAPI = $this->_getData('all/coinlist', null);
-    echo '<pre>';
-    // var_dump($this->_getAllCoinsSymbolAvailable());
-    // return false;
     foreach ($listCoinAPI as $key => $value) {
       $this->_addCoin($value['Id'], $value['Symbol'], $value['FullName'], $value['CoinName'], $value['SortOrder'], $value['Algorithm'], $value['ProofType'], $value['Url'], "cryptocompare");
     }

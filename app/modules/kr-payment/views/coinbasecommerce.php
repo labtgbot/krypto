@@ -45,14 +45,13 @@ try {
     $order = $CoinbaseCommerce->_createOrder($User, $_GET['g']);
   }
 
-  var_dump($order);
-
   header('Location: '.$order);
 
 } catch (Exception $e) {
+  krypto_log_exception('Coinbase Commerce payment creation failed', $e);
   die(json_encode([
     'error' => 1,
-    'msg' => $e->getMessage()
+    'msg' => krypto_generic_error_message()
   ]));
 } finally {
   ?>

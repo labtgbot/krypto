@@ -9,6 +9,8 @@
 
 require "../../../../config/config.settings.php";
 
+krypto_require_cron_access();
+
 krypto_session_start();
 
 require_once "../../../../app/src/bootstrap_paths.php";
@@ -32,7 +34,7 @@ $App = new App();
 try {
   $App->_cleanCache();
 } catch (\Exception $e) {
-  error_log($e->getMessage());
+  krypto_log_exception('Cache cleanup cron failed', $e);
 }
 
 

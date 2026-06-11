@@ -7,7 +7,7 @@ $allValid = true;
 <section><center>
 <ul>
   <?php foreach ($Install->_getListPageCalled() as $key => $value) { ?>
-    <li kr-sync-link="<?php echo $_SESSION['configure']['website_url'].'/'.$key; ?>"><i>Waiting ...</i> <?php echo $value; ?></li>
+    <li kr-sync-link="<?php echo htmlspecialchars($Install->_getCronActionUrl($key), ENT_QUOTES, 'UTF-8'); ?>"><i>Waiting ...</i> <?php echo $value; ?></li>
   <?php } ?>
 </ul>
 </center>

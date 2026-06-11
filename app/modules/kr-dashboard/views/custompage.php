@@ -39,7 +39,9 @@ try {
   $AddtionalPageInfos = $AddtionalPageInfos[0];
 
 } catch (\Exception $e) {
-  die($e->getMessage());
+  krypto_log_exception('Custom page load failed', $e);
+  http_response_code(500);
+  die(krypto_generic_error_message());
 }
 
 

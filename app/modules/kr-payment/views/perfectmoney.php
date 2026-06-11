@@ -39,12 +39,11 @@ try {
   $PerfectMoney = new PerfectMoney($App);
   $DepositRef = $PerfectMoney->_createDeposit($User, $amount, $Balance, $_GET['cr']);
 
-  var_dump($DepositRef);
-
 } catch (Exception $e) {
+  krypto_log_exception('Perfect Money payment view failed', $e);
   die(json_encode([
     'error' => 1,
-    'msg' => $e->getMessage()
+    'msg' => krypto_generic_error_message()
   ]));
 } finally {
   ?>

@@ -9,6 +9,8 @@
 
 require "../../../../config/config.settings.php";
 
+krypto_require_cron_access();
+
 krypto_session_start();
 
 require_once "../../../../app/src/bootstrap_paths.php";

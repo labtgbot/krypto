@@ -36,14 +36,11 @@ try {
   $amount = floatval($_GET['m']);
   $Balance = new Balance($User, $App, 'real');
 
-
-
-  var_dump($DepositRef);
-
 } catch (Exception $e) {
+  krypto_log_exception('Paygol payment view failed', $e);
   die(json_encode([
     'error' => 1,
-    'msg' => $e->getMessage()
+    'msg' => krypto_generic_error_message()
   ]));
 } finally {
   ?>

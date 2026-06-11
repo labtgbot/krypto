@@ -65,7 +65,7 @@ class Chat extends MySQL {
                                   'type_msg_room_chat' => 'picture',
                                   'date_msg_room_chat' => (time() - (86400 * $delay))
                                 ]);
-    var_dump($r);
+    return count($r);
   }
 
   public function _createNewRoom($User){

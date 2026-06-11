@@ -30,27 +30,9 @@ $App = new App(true);
 $App->_checkDomain();
 $App->_loadModulesControllers();
 try {
-//echo '<pre>';
   // Check user is logged
   $User = new User();
 
-  //$BlockExplorer = new BlockExplorer($App, $User);
-  //$BlockExplorer->_checkDoneTransaction($BlockExplorer->_getAllTransaction());
-  // foreach ($BlockExplorer->_getDepositAddress() as $key => $addressExplorer) {
-  //   var_dump($addressExplorer->_getAddress());
-  //   var_dump($addressExplorer->_getLinkedBlockExplorer()->_getHistoryTransaction($addressExplorer->_getAddress()));
-  //   die();
-  // }
-
-  //$LitecoinExplorer = new LitecoinExplorer($App, $User);
-  //var_dump($LitecoinExplorer->_getTransactionInfos('684568e0d96bdadcf031ca6ae1149e463c30b11cdd42a8d055f8bc612cb3792c'));
-  // $BitcoinExplorer = new BitcoinExplorer($App, $User);
-  // var_dump($BitcoinExplorer->_getBlockHeight());
-  // var_dump($BitcoinExplorer->_getTransactionInfos("6c8f22c9251d3a407d63fa6591664812face25a022f7a922155bd3e42854a583"));
-
-  // //
-  // //
-  //die();
   if(!$User->_isLogged()){
     header('Location: '.APP_URL);
     exit;
@@ -77,7 +59,9 @@ try {
   $mobileDetected = new Mobile_Detect();
 
 } catch (Exception $e) {
-  die($e->getMessage());
+  krypto_log_exception('Dashboard bootstrap failed', $e);
+  http_response_code(500);
+  die(krypto_generic_error_message());
 }
 
 

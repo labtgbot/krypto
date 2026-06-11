@@ -1615,7 +1615,7 @@ class User extends MySQL {
     foreach (parent::querySqlRequest("SELECT * FROM user_krypto WHERE admin_user=:admin_user AND status_user=:status_user", ['admin_user' => 0, 'status_user' => 1]) as $key => $value) {
       $DistantUser = new User($value['id_user']);
       $Charges = new Charges($DistantUser, $App);
-      if($Charges->_isTrial() || $Charge->_activeAbo()){
+      if($Charges->_isTrial() || $Charges->_activeAbo()){
 
         $sendTitle = null;
         $type = 'trial';
@@ -1647,7 +1647,7 @@ class User extends MySQL {
             'USER_NAME' => $DistantUser->_getName()
           ]));
 
-          echo $DistantUser->_getEmail();
+          $UserList[] = $DistantUser->_getUserID();
 
         }
 

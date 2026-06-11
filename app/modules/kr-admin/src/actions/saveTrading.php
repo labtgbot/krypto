@@ -92,17 +92,6 @@ try {
     ]));
 
 
-    // var_dump(App::encrypt_decrypt('decrypt', 'YnVNd05pRzVTRUpLeFBIWjd6bm9hb05ER1laNUwwREdlMkJudEZVZ1h5MjcyQkdiVHRmc2xJM1RDbVdkOGdBRw=='));
-    // var_dump(App::encrypt_decrypt('decrypt', 'WllBL2NGQXdzK0JnWWJxV2NVZG83Zz09'));
-    // var_dump(App::encrypt_decrypt('decrypt', 'VnAwMVZRYlVhTDRHNUlsY2dGckNDNFFhTmk3QnNGSXJWQ1lheTRNMWVmNWs3V3k3aktZNVhjQTV6U0QzUnN1VGRaRzRxWHNDcGkwUWNkMitHRVVFdFZ0dTR2amc2cDJTVGoxTFBGeHdrUEszNHAxdFBqeXFHS285akxVSyttVmw='));
-
-    // // Return success message
-    // die(json_encode([
-    //   'error' => 0,
-    //   'msg' => 'Done',
-    //   'title' => 'Success'
-    // ]));
-
 } catch (\Exception $e) { // If throw exception, return error message
     die(json_encode([
     'error' => 1,

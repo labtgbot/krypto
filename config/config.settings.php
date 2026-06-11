@@ -23,6 +23,7 @@
       if(!defined('KRYPTO_DATA_API_KEY')) define('KRYPTO_DATA_API_KEY', krypto_env_config_value('KRYPTO_DATA_API_KEY', ''));
       if(!defined('KRYPTO_RSS2JSON_API_KEY')) define('KRYPTO_RSS2JSON_API_KEY', krypto_env_config_value('KRYPTO_RSS2JSON_API_KEY', ''));
       if(!defined('KRYPTO_ETHERSCAN_API_KEY')) define('KRYPTO_ETHERSCAN_API_KEY', krypto_env_config_value('KRYPTO_ETHERSCAN_API_KEY', ''));
+      if(!defined('KRYPTO_CRON_TOKEN')) define('KRYPTO_CRON_TOKEN', krypto_env_config_value('KRYPTO_CRON_TOKEN', ''));
     }
 
     // define('APP_URL', '');
@@ -41,6 +42,7 @@
     // define('KRYPTO_DATA_API_KEY', '');
     // define('KRYPTO_RSS2JSON_API_KEY', '');
     // define('KRYPTO_ETHERSCAN_API_KEY', '');
+    // define('KRYPTO_CRON_TOKEN', '');
 
     require_once __DIR__.'/../app/src/bootstrap_paths.php';
 ?>

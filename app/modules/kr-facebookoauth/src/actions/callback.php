@@ -36,11 +36,12 @@ try {
       // Redirect to dashboard
       header('Location: '.APP_URL.'/dashboard.php');
     } else {
-      var_dump($rspond);
+      error_log('Facebook OAuth callback returned a non-success response.');
+      header('Location: '.APP_URL.'/?rmsg='.base64_encode('Authentication failed.').'&rtime='.time().'&s=');
     }
 } catch (Exception $e) {
-  header('Location: '.APP_URL.'/?rmsg='.base64_encode($e->getMessage()).'&rtime='.time().'&s=');
-    var_dump($e->getMessage());
+  krypto_log_exception('Facebook OAuth callback failed', $e);
+  header('Location: '.APP_URL.'/?rmsg='.base64_encode('Authentication failed.').'&rtime='.time().'&s=');
 }
 
 ?>

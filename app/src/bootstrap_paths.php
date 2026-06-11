@@ -105,6 +105,73 @@ if(!function_exists('krypto_bool_env')){
   }
 }
 
+if(!function_exists('krypto_runtime_config_value')){
+  function krypto_runtime_config_value($key, $default = ''){
+    if(defined($key)) return (string) constant($key);
+    if(function_exists('krypto_env_config_value')) return (string) krypto_env_config_value($key, $default);
+    $value = getenv($key);
+    return ($value === false || $value === '' ? $default : (string) $value);
+  }
+}
+
+if(!function_exists('krypto_generic_error_message')){
+  function krypto_generic_error_message(){
+    return 'An internal error occurred. Please try again later.';
+  }
+}
+
+if(!function_exists('krypto_log_exception')){
+  function krypto_log_exception($context, $exception){
+    $message = (string) $context;
+    if($exception instanceof Throwable) $message .= ': '.$exception->getMessage();
+    error_log($message);
+  }
+}
+
+if(!function_exists('krypto_cron_token')){
+  function krypto_cron_token(){
+    return krypto_runtime_config_value('KRYPTO_CRON_TOKEN', '');
+  }
+}
+
+if(!function_exists('krypto_cron_query_parameter')){
+  function krypto_cron_query_parameter($url = ''){
+    $token = krypto_cron_token();
+    if($token === '') return '';
+    return (strpos((string) $url, '?') === false ? '?' : '&').'cron_token='.rawurlencode($token);
+  }
+}
+
+if(!function_exists('krypto_cron_url')){
+  function krypto_cron_url($path){
+    $url = rtrim((defined('APP_URL') ? APP_URL : ''), '/').'/'.ltrim((string) $path, '/');
+    return $url.krypto_cron_query_parameter($url);
+  }
+}
+
+if(!function_exists('krypto_require_cron_access')){
+  function krypto_require_cron_access(){
+    if(PHP_SAPI === 'cli') return true;
+
+    $configuredToken = krypto_cron_token();
+    $providedToken = '';
+    if(isset($_GET['cron_token'])) $providedToken = (string) $_GET['cron_token'];
+    elseif(isset($_SERVER['HTTP_X_KRYPTO_CRON_TOKEN'])) $providedToken = (string) $_SERVER['HTTP_X_KRYPTO_CRON_TOKEN'];
+
+    if($configuredToken !== '' && hash_equals($configuredToken, $providedToken)) return true;
+
+    if(!headers_sent()){
+      http_response_code(403);
+      header('Content-Type: application/json');
+    }
+
+    die(json_encode([
+      'error' => 1,
+      'msg' => 'Forbidden'
+    ]));
+  }
+}
+
 if(!function_exists('krypto_session_cookie_secure')){
   function krypto_session_cookie_secure(){
     $override = getenv('KRYPTO_SESSION_COOKIE_SECURE');
