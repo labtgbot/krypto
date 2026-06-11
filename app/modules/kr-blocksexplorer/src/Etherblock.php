@@ -23,6 +23,51 @@ class Etherblock extends MySQL {
     return ($value === false ? '' : (string) $value);
   }
 
+  private function _validateAddress($address){
+    if(!is_string($address) && !is_numeric($address)) throw new InvalidArgumentException('Invalid Ethereum address.');
+    $address = trim((string) $address);
+    if(preg_match('/\A0x[a-fA-F0-9]{40}\z/', $address) !== 1){
+      throw new InvalidArgumentException('Invalid Ethereum address.');
+    }
+    return $address;
+  }
+
+  private function _validateTransactionHash($tx){
+    if(!is_string($tx) && !is_numeric($tx)) throw new InvalidArgumentException('Invalid Ethereum transaction hash.');
+    $tx = trim((string) $tx);
+    if(preg_match('/\A0x[a-fA-F0-9]{64}\z/', $tx) !== 1){
+      throw new InvalidArgumentException('Invalid Ethereum transaction hash.');
+    }
+    return $tx;
+  }
+
+  private function _normalizeSymbol($symbol){
+    if(is_null($symbol)) return null;
+    if(!is_string($symbol) && !is_numeric($symbol)) throw new InvalidArgumentException('Invalid Ethereum symbol.');
+    $symbol = strtoupper(trim((string) $symbol));
+    if(preg_match('/\A[A-Z0-9]{2,32}\z/', $symbol) !== 1){
+      throw new InvalidArgumentException('Invalid Ethereum symbol.');
+    }
+    return $symbol;
+  }
+
+  private function _normalizeBlockTag($block){
+    if(is_int($block) || (is_string($block) && preg_match('/\A[0-9]+\z/', $block) === 1)){
+      $block = (int) $block;
+      if($block < 0) throw new InvalidArgumentException('Invalid Ethereum block.');
+      return '0x'.dechex($block);
+    }
+
+    if(is_string($block)){
+      $block = trim($block);
+      if(in_array($block, ['latest', 'earliest', 'pending'], true) || preg_match('/\A0x[a-fA-F0-9]+\z/', $block) === 1){
+        return $block;
+      }
+    }
+
+    throw new InvalidArgumentException('Invalid Ethereum block.');
+  }
+
   public function _call($args){
 
     $argsString = "?".http_build_query($args, '', '&');
@@ -51,6 +96,8 @@ class Etherblock extends MySQL {
   }
 
   public function _getHistoryTransaction($address = null, $symbol = null){
+    $address = $this->_validateAddress($address);
+    $symbol = $this->_normalizeSymbol($symbol);
     $transactionList = $this->_call([
       'module' => 'account',
       'action' => 'txlist',
@@ -81,6 +128,7 @@ class Etherblock extends MySQL {
 
   public function _getTransactionInfos($tx){
 
+    $tx = $this->_validateTransactionHash($tx);
     $transactionInfos = $this->_call([
       'module' => 'proxy',
       'action' => 'eth_getTransactionByHash',
@@ -95,6 +143,7 @@ class Etherblock extends MySQL {
 
   public function _getBlockInfos($block){
 
+    $block = $this->_normalizeBlockTag($block);
     $transactionInfos = $this->_call([
       'module' => 'proxy',
       'action' => 'eth_getBlockByNumber',
@@ -121,6 +170,13 @@ class Etherblock extends MySQL {
   }
 
   public function _getTransactionInfosSub($address, $block){
+
+    $address = $this->_validateAddress($address);
+    if(!is_int($block) && !(is_string($block) && preg_match('/\A[0-9]+\z/', $block) === 1)){
+      throw new InvalidArgumentException('Invalid Ethereum block.');
+    }
+    $block = (int) $block;
+    if($block < 0) throw new InvalidArgumentException('Invalid Ethereum block.');
 
     $transactionInfos = $this->_call([
       'module' => 'account',
