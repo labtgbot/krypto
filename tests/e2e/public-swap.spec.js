@@ -78,17 +78,33 @@ async function mockPublicSwapProvider(page) {
       }
 
       if (action === 'quote') {
+        const quote = {
+          ...fixture('estimated_amount_standard_success.json'),
+          quoteId: 'e2e-server-quote-1'
+        };
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
             error: 0,
-            quote: fixture('estimated_amount_standard_success.json')
+            quote
           })
         });
       }
 
       if (action === 'create') {
+        if (payload.quoteId !== 'e2e-server-quote-1') {
+          return route.fulfill({
+            status: 400,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: 2,
+              type: 'validation',
+              msg: 'Missing server quote id.'
+            })
+          });
+        }
+
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -182,6 +198,7 @@ test('public ChangeNOW swap completes validation, quote, create, and status with
 
   await page.getByRole('button', { name: 'Get quote' }).click();
   await expect(page.locator('.kr-public-quote-panel')).toContainText('0.052286 ETH / ETH');
+  await expect(page.locator('input[name="quoteId"]')).toHaveValue('e2e-server-quote-1');
   await expect(page.getByRole('button', { name: 'Create swap' })).toBeEnabled();
 
   await page.getByRole('button', { name: 'Create swap' }).click();
