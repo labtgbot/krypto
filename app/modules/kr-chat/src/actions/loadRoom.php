@@ -34,6 +34,7 @@ Krypto_Csrf::validateRequest();
 
 
     $ChatRoom = new ChatRoom(App::encrypt_decrypt('decrypt', $_GET['room']), $User);
+    $ChatRoom->_requireUserAccess($User);
 
 } catch (\Exception $e) {
     die(json_encode([

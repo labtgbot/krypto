@@ -141,6 +141,19 @@ class Banktransfert extends MySQL {
 
   }
 
+  private function _requireOwnedBankTransfert($id_banktransfert){
+    if(!is_numeric($id_banktransfert)) throw new Exception("Permission denied", 1);
+
+    $infosTransfert = $this->_getInfosBankTransfert($id_banktransfert);
+    if($infosTransfert['id_user'] != $this->_getUser()->_getUserID()) throw new Exception("Permission denied", 1);
+
+    return $infosTransfert;
+  }
+
+  public function _getOwnedInfosBankTransfert($id_banktransfert){
+    return $this->_requireOwnedBankTransfert($id_banktransfert);
+  }
+
   public function _validateBankTransfert($id_transfert, $date, $bankref, $amount, $currency, $bankaccount, $wallet_receive, $amount_wallet){
     $infosTransfert = $this->_getInfosBankTransfert($id_transfert);
 
@@ -221,6 +234,8 @@ class Banktransfert extends MySQL {
 
   public function _addProof($id_banktransfert, $file){
 
+    $this->_requireOwnedBankTransfert($id_banktransfert);
+
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof', 0777);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert), 0777);
 
@@ -289,10 +304,13 @@ class Banktransfert extends MySQL {
 
   public function _cancelBankTransfert($id_banktransfert){
 
+    $this->_requireOwnedBankTransfert($id_banktransfert);
     $this->_updateBankTransfertStatus($id_banktransfert, '3');
   }
 
   public function _assignBankAccount($id_banktransfert, $bank_account){
+
+    $this->_requireOwnedBankTransfert($id_banktransfert);
 
     $r = parent::execSqlRequest("UPDATE banktransfert_krypto SET bankaccount_banktransfert=:bankaccount_banktransfert WHERE id_banktransfert=:id_banktransfert",
                                 [

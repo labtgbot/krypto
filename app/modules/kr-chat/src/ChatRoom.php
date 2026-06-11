@@ -18,6 +18,81 @@ class ChatRoom extends MySQL {
 
   public function _getCurrentUser(){ return $this->CurrentUser; }
 
+  public function _userCanAccess($User){
+    if(is_null($User) || !method_exists($User, '_getUserID')) return false;
+
+    try {
+      $roomId = $this->_getRoomID();
+      $userId = $User->_getUserID();
+    } catch (Exception $e) {
+      return false;
+    }
+
+    if(is_null($roomId) || strlen((string) $roomId) == 0 || is_null($userId) || strlen((string) $userId) == 0) return false;
+
+    $r = parent::querySqlRequest("SELECT * FROM user_room_chat_krypto WHERE id_room_chat=:id_room_chat AND id_user=:id_user",
+                                [
+                                  'id_room_chat' => $roomId,
+                                  'id_user' => $userId
+                                ]);
+
+    return count($r) > 0;
+  }
+
+  public function _requireUserAccess($User){
+    if(!$this->_userCanAccess($User)) throw new Exception("Permission denied", 1);
+    return true;
+  }
+
+  private static function _stripApplicationPath($path){
+    $path = '/'.ltrim((string) $path, '/');
+    $prefixList = [];
+
+    $appUrlPath = parse_url(APP_URL, PHP_URL_PATH);
+    if(is_string($appUrlPath) && strlen($appUrlPath) > 0 && $appUrlPath != '/') $prefixList[] = rtrim($appUrlPath, '/');
+    if(defined('FILE_PATH') && strlen(FILE_PATH) > 0 && FILE_PATH != '/') $prefixList[] = rtrim(FILE_PATH, '/');
+
+    foreach ($prefixList as $prefix) {
+      if(strlen($prefix) > 0 && strpos($path, $prefix.'/') === 0) return substr($path, strlen($prefix));
+    }
+
+    return $path;
+  }
+
+  public static function _resolveAttachedFile($file_url){
+    $file_url = str_replace('{APP_URL}', APP_URL, (string) $file_url);
+    $filePath = parse_url($file_url, PHP_URL_PATH);
+    if($filePath === false || is_null($filePath) || strlen($filePath) == 0) $filePath = $file_url;
+
+    $filePath = self::_stripApplicationPath($filePath);
+    $filePath = '/'.ltrim($filePath, '/');
+    $publicChatPrefix = '/public/chat/';
+
+    if(strpos($filePath, $publicChatPrefix) !== 0) throw new Exception("Permission denied", 1);
+
+    $relativePath = substr($filePath, strlen($publicChatPrefix));
+    $pathParts = explode('/', $relativePath);
+    if(count($pathParts) != 2 || strlen($pathParts[0]) == 0 || strlen($pathParts[1]) == 0) throw new Exception("Permission denied", 1);
+
+    $roomPathPart = rawurldecode($pathParts[0]);
+    $roomId = App::encrypt_decrypt('decrypt', $roomPathPart);
+    if(is_null($roomId) || strlen((string) $roomId) == 0 || !is_numeric($roomId)) throw new Exception("Permission denied", 1);
+
+    $documentRoot = rtrim($_SERVER['DOCUMENT_ROOT'].FILE_PATH, '/');
+    $absoluteBasePath = realpath($documentRoot.'/public/chat');
+    $absoluteFilePath = realpath($documentRoot.$filePath);
+    if($absoluteBasePath === false || $absoluteFilePath === false || !is_file($absoluteFilePath)) throw new Exception("Permission denied", 1);
+
+    $basePrefix = rtrim($absoluteBasePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    if(strpos($absoluteFilePath, $basePrefix) !== 0) throw new Exception("Permission denied", 1);
+
+    return [
+      'path' => $absoluteFilePath,
+      'room_id' => $roomId,
+      'filename' => basename($absoluteFilePath)
+    ];
+  }
+
   public function _getListUser(){
 
     if(!is_null($this->ListUser)) return $this->ListUser;
@@ -139,6 +214,8 @@ class ChatRoom extends MySQL {
   }
 
   public function _sendMessage($User, $type, $value){
+
+    $this->_requireUserAccess($User);
 
     $controlKey = uniqid(true);
 

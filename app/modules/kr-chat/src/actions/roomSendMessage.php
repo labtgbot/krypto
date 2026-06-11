@@ -36,7 +36,8 @@ Krypto_Csrf::validateRequest();
     if(empty($_POST) || !isset($_POST['room_id']) || empty($_POST['room_id'])) throw new Exception("Permission denied", 1);
 
     $Chat = new Chat($User);
-    $Room = new ChatRoom(App::encrypt_decrypt('decrypt', $_POST['room_id']));
+    $Room = new ChatRoom(App::encrypt_decrypt('decrypt', $_POST['room_id']), $User);
+    $Room->_requireUserAccess($User);
     if(isset($_POST['room_msg'])){
       $msgData = $Room->_sendMessage($User, 'text', $_POST['room_msg']);
     }
