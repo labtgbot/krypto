@@ -236,21 +236,22 @@ class Banktransfert extends MySQL {
 
     $this->_requireOwnedBankTransfert($id_banktransfert);
 
+    $proofDirectory = App::encrypt_decrypt('encrypt', $id_banktransfert);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof', 0777);
-    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert), 0777);
+    if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.$proofDirectory)) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.$proofDirectory, 0777);
 
     App::_assertUploadedFileIsSafe($file, ['pdf', 'jpg', 'jpeg', 'png'], 'Bank transfer proof');
 
     $fileName = App::_getSafeUploadedFileName($file, uniqid());
 
-    move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert).'/'.$fileName);
+    move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/bank-proof/'.$proofDirectory.'/'.$fileName);
 
     $r = parent::execSqlRequest("INSERT INTO banktransfert_proof_krypto (id_banktransfert, id_user, url_banktransfert_proof, date_banktransfert_proof)
                                 VALUES (:id_banktransfert, :id_user, :url_banktransfert_proof, :date_banktransfert_proof)",
                                 [
                                   'id_banktransfert' => $id_banktransfert,
                                   'id_user' => $this->_getUser()->_getUserID(),
-                                  'url_banktransfert_proof' => '/public/bank-proof/'.App::encrypt_decrypt('encrypt', $id_banktransfert).'/'.$fileName,
+                                  'url_banktransfert_proof' => '/public/bank-proof/'.$proofDirectory.'/'.$fileName,
                                   'date_banktransfert_proof' => time()
                                 ]);
 
