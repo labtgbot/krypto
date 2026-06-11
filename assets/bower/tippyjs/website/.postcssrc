@@ -1,7 +1,0 @@
-{
-  "plugins": {
-    "postcss-import": {},
-    "postcss-pxtorem": {},
-    "postcss-cssnext": { "browsers": ["> 0.5%"], "warnForDuplicates": false }
-  }
-}

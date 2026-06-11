@@ -130,15 +130,14 @@ $retiredLockedPackages = array_diff($retiredRootPackages, [
 
 $retainedRootPackages = [
     'symfony/polyfill-mbstring',
-    'sonata-project/google-authenticator',
+    'robthree/twofactorauth',
     'phpmailer/phpmailer',
     'mobiledetect/mobiledetectlib',
     'liquid/liquid',
     'league/oauth2-google',
+    'league/oauth2-facebook',
     'league/oauth2-client',
     'google/recaptcha',
-    'facebook/graph-sdk',
-    'milqmedia/poeditor-api-client',
     'oceanapplications/currencylayer-php-client',
 ];
 

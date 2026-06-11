@@ -163,15 +163,15 @@ account_reauth_expect_exception(function () use ($user) {
 
 assert_account_reauth($user->_assertSensitiveChangeReauthenticated('current-password', null), 'Sensitive profile changes must accept the correct current password when 2FA is disabled.');
 
-$googleAuthenticator = new \Google\Authenticator\GoogleAuthenticator();
+$googleAuthenticator = new \RobThree\Auth\TwoFactorAuth('Krypto Test');
 do {
-  $inactiveSecret = $googleAuthenticator->generateSecret();
-  $olderActiveSecret = $googleAuthenticator->generateSecret();
-  $latestActiveSecret = $googleAuthenticator->generateSecret();
+  $inactiveSecret = $googleAuthenticator->createSecret();
+  $olderActiveSecret = $googleAuthenticator->createSecret();
+  $latestActiveSecret = $googleAuthenticator->createSecret();
   $latestCode = $googleAuthenticator->getCode($latestActiveSecret);
 } while (
-  $googleAuthenticator->checkCode($inactiveSecret, $latestCode) ||
-  $googleAuthenticator->checkCode($olderActiveSecret, $latestCode)
+  $googleAuthenticator->verifyCode($inactiveSecret, $latestCode) ||
+  $googleAuthenticator->verifyCode($olderActiveSecret, $latestCode)
 );
 
 $insertSecret = $pdo->prepare('INSERT INTO googletfs_krypto (

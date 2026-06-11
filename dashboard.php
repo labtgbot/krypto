@@ -105,8 +105,6 @@ try {
 
     <link rel="stylesheet" href="assets/bower/dropzone/dist/min/dropzone.min.css?v=<?php echo App::_getVersion(); ?>">
 
-    <link rel="stylesheet" href="assets/bower/jquery-palette-color-picker/src/palette-color-picker.css?v=<?php echo App::_getVersion(); ?>">
-
     <link href="assets/bower/air-datepicker/dist/css/datepicker.min.css?v=<?php echo App::_getVersion(); ?>" rel="stylesheet" type="text/css">
 
     <link rel="stylesheet" href="assets/css/style.css">
@@ -690,8 +688,6 @@ try {
   <script src="<?php echo APP_URL; ?>/assets/node_modules/babel-polyfill/browser.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
   <script src="<?php echo APP_URL; ?>/assets/bower/technicalindicators/dist/browser.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
-  <script src="<?php echo APP_URL; ?>/assets/bower/sly/sly.min.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
   <!-- Intro -->
@@ -709,8 +705,6 @@ try {
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/ion.rangeSlider/css/ion.rangeSlider.css?v=<?php echo App::_getVersion(); ?>" />
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/ion.rangeSlider/css/ion.rangeSlider.skinFlat.css?v=<?php echo App::_getVersion(); ?>" />
   <script src="<?php echo APP_URL; ?>/assets/bower/ion.rangeSlider/js/ion.rangeSlider.min.js?v=<?php echo App::_getVersion(); ?>"></script>
-
-  <script src="<?php echo APP_URL; ?>/assets/bower/jquery-palette-color-picker/src/palette-color-picker.min.js?v=<?php echo App::_getVersion(); ?>"></script>
 
   <!-- highlight -->
   <script src="<?php echo APP_URL; ?>/assets/bower/jsdiff/diff.min.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
@@ -740,11 +734,7 @@ try {
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/tippyjs/dist/tippy.css?v=<?php echo App::_getVersion(); ?>">
   <script src="<?php echo APP_URL; ?>/assets/bower/tippyjs/dist/tippy.min.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
-  <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/bower/zoombox/zoombox.css?v=<?php echo App::_getVersion(); ?>">
-  <script src="<?php echo APP_URL; ?>/assets/bower/zoombox/zoombox.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
-
-  <!-- PACE -->
-  <!-- <script data-pace-options='{ "ajax": false }' src="assets/bower/PACE/pace.js"></script> -->
+  <script src="<?php echo APP_URL; ?>/assets/js/zoombox-compat.js?v=<?php echo App::_getVersion(); ?>" charset="utf-8"></script>
 
 
   <!-- Modules -->

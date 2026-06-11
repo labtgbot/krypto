@@ -25,6 +25,12 @@ jobs:
           php-version: '8.3'
           coverage: none
 
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Audit Composer dependencies
+        run: composer audit --locked --abandoned=fail
+
       - name: Validate first-party PHP syntax
         run: php scripts/lint_php.php
 
@@ -55,6 +61,12 @@ jobs:
 
       - name: Install Node dependencies
         run: npm ci
+
+      - name: Audit Node dependencies
+        run: npm run audit:dependencies
+
+      - name: Build frontend assets
+        run: npm run build:assets
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

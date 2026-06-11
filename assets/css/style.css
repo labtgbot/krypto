@@ -1203,3 +1203,56 @@ section.kr-contact-zone > section > div:last-child > ul > li a {
   color:#fff !important;
   border-radius: 2px;
 }
+
+.kr-zoombox-open {
+  overflow: hidden;
+}
+
+.kr-zoombox-overlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  padding: 24px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 10000;
+}
+
+.kr-zoombox-dialog {
+  background: #fff;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.28);
+  max-height: 90vh;
+  max-width: 94vw;
+  overflow: auto;
+  position: relative;
+  width: 900px;
+}
+
+.kr-zoombox-close {
+  background: #111;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 24px;
+  height: 36px;
+  line-height: 32px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  z-index: 1;
+}
+
+.kr-zoombox-body {
+  padding: 20px;
+}
+
+.kr-zoombox-image {
+  display: block;
+  max-height: 84vh;
+  max-width: 88vw;
+}
