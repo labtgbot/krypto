@@ -451,6 +451,12 @@ class User extends MySQL {
     }
 
     // Set session
+    if(function_exists('krypto_session_regenerate_id')){
+      krypto_session_regenerate_id(true);
+    } else if(function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE && !headers_sent()){
+      session_regenerate_id(true);
+    }
+
     $_SESSION['kr_login'] = json_encode($r[0]);
 
     $this->_addVisit($r[0]['id_user']);

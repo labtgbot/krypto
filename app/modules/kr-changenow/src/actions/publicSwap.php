@@ -155,9 +155,9 @@ function changenow_public_unsupported_region_payload($decision, $Lang = null){
 
 if(defined('KRYPTO_PUBLIC_SWAP_HELPERS_ONLY') && KRYPTO_PUBLIC_SWAP_HELPERS_ONLY) return;
 
-session_start();
-
 require "../../../../../config/config.settings.php";
+
+krypto_session_start();
 
 require_once "../../../../../app/src/bootstrap_paths.php";
 

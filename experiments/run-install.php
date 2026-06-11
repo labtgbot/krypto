@@ -1,6 +1,8 @@
 <?php
 // Reproduce install end-to-end against the local MariaDB
-session_start();
+require_once __DIR__ . '/../app/src/bootstrap_paths.php';
+
+krypto_session_start();
 
 // Mock POST and SESSION as if user filled the install forms
 $_SESSION['languages'] = ['language_select' => 'en'];
