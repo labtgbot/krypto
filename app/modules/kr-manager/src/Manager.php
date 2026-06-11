@@ -126,15 +126,13 @@ class Manager extends MySQL {
 
   public function _sendProof($id_proof_asking, $User, $file){
 
-
-    //if($infosProofPayment['id_user'] != $User->_getUserID()) throw new Exception("Permission denied", 1);
-
     $infosProof = explode('-', $id_proof_asking);
     if(count($infosProof) != 2 || $infosProof[0] != "proof") throw new Exception("Permission denied", 1);
 
     $id_proof_asking = $infosProof[1];
 
     $infosProofPayment = $this->_getPaymentProofInfos($id_proof_asking);
+    if($infosProofPayment['id_user'] != $User->_getUserID()) throw new Exception("Permission denied", 1);
 
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof')) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof', 0777);
     if(!file_exists($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking))) mkdir($_SERVER['DOCUMENT_ROOT'].FILE_PATH.'/public/proof/'.App::encrypt_decrypt('encrypt', $id_proof_asking), 0777);

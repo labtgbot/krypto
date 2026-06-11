@@ -46,7 +46,7 @@ try {
   if(!empty($_GET) && isset($_GET['t'])){
     $BankTransfertID = explode('-', App::encrypt_decrypt('decrypt', $_GET['t']));
     if(count($BankTransfertID) != 2) throw new Exception("Permission denied", 1);
-    $BankTransfertItem = $BankTransfert->_getInfosBankTransfert($BankTransfertID[1]);
+    $BankTransfertItem = $BankTransfert->_getOwnedInfosBankTransfert($BankTransfertID[1]);
   }
   if(!empty($_GET) && isset($_GET['d'])){
     $BankTransfert->_removeProof($BankTransfertItem['id_banktransfert'], App::encrypt_decrypt('decrypt', $_GET['d']));

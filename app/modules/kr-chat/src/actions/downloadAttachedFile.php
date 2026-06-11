@@ -38,11 +38,15 @@ Krypto_Csrf::validateRequest();
     $file_url = App::encrypt_decrypt('decrypt', $_GET['p']);
     if(strlen($file_url) == 0) throw new Exception("Permission denied", 1);
 
-    $file_name = explode('-', basename($file_url));
+    $downloadFile = ChatRoom::_resolveAttachedFile($file_url);
+    $ChatRoom = new ChatRoom($downloadFile['room_id'], $User);
+    $ChatRoom->_requireUserAccess($User);
+
+    $file_name = explode('-', $downloadFile['filename']);
     header("Content-Transfer-Encoding: Binary");
-    header("Content-Length: ".filesize($file_url));
+    header("Content-Length: ".filesize($downloadFile['path']));
     header("Content-disposition: attachment; filename=\"" . join('-', array_slice($file_name, 1)) . "\"");
-    readfile($file_url);
+    readfile($downloadFile['path']);
 
 } catch (\Exception $e) {
   header('Location: '.APP_URL);

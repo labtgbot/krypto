@@ -45,6 +45,10 @@ try {
     }
 
     $UserFetched = new User($_POST['id_user']);
+    if (($UserFetched->_isAdmin() || $UserFetched->_isManager()) && !$User->_isAdmin()) {
+        throw new Exception("Error : Permission denied", 1);
+    }
+
     $UserFetched->_delete();
 
     // Return success message
