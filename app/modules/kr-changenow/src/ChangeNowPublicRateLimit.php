@@ -18,6 +18,8 @@ class ChangeNowPublicRateLimit {
 
     if($action == 'quote' || $action == 'validate') return 'quote';
     if($action == 'create') return 'transaction';
+    if($action == 'status') return 'status';
+    if($action == 'refund' || $action == 'continue') return 'support_action';
 
     return null;
   }

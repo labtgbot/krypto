@@ -116,6 +116,14 @@ try {
         'transaction' => [
           'limit' => (isset($_POST['kr-adm-changenow-transaction-limit']) ? $_POST['kr-adm-changenow-transaction-limit'] : 6),
           'window_seconds' => (isset($_POST['kr-adm-changenow-transaction-window']) ? $_POST['kr-adm-changenow-transaction-window'] : 60)
+        ],
+        'status' => [
+          'limit' => (isset($_POST['kr-adm-changenow-status-limit']) ? $_POST['kr-adm-changenow-status-limit'] : 30),
+          'window_seconds' => (isset($_POST['kr-adm-changenow-status-window']) ? $_POST['kr-adm-changenow-status-window'] : 60)
+        ],
+        'support_action' => [
+          'limit' => (isset($_POST['kr-adm-changenow-support-action-limit']) ? $_POST['kr-adm-changenow-support-action-limit'] : 3),
+          'window_seconds' => (isset($_POST['kr-adm-changenow-support-action-window']) ? $_POST['kr-adm-changenow-support-action-window'] : 300)
         ]
       ],
       (array_key_exists('kr-adm-chk-changenowdebuglogging', $_POST) && $_POST['kr-adm-chk-changenowdebuglogging'] == "on" ? 1 : 0)

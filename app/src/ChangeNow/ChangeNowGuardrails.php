@@ -22,6 +22,14 @@ class ChangeNowGuardrails {
       'transaction' => [
         'limit' => 6,
         'window_seconds' => 60
+      ],
+      'status' => [
+        'limit' => 30,
+        'window_seconds' => 60
+      ],
+      'support_action' => [
+        'limit' => 3,
+        'window_seconds' => 300
       ]
     ];
   }
