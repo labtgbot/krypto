@@ -538,6 +538,40 @@ $changeNowUnsupportedCountries = $App->_getChangeNowUnsupportedCountries();
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
       <div>
+        <label><?php echo $Lang->tr('ChangeNOW status rate limit'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-status-limit" value="<?php echo intval($changeNowRateLimits['status']['limit']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW status window seconds'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-status-window" value="<?php echo intval($changeNowRateLimits['status']['window_seconds']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW support action rate limit'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-support-action-limit" value="<?php echo intval($changeNowRateLimits['support_action']['limit']); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('ChangeNOW support action window seconds'); ?></label>
+      </div>
+      <div>
+        <input type="number" min="1" name="kr-adm-changenow-support-action-window" value="<?php echo intval($changeNowRateLimits['support_action']['window_seconds']); ?>">
+      </div>
+    </div>
+  </div>
+  <div class="kr-admin-line kr-admin-line-cls">
+    <div class="kr-admin-field">
+      <div>
         <label><?php echo $Lang->tr('ChangeNOW non-custodial warning'); ?></label>
       </div>
       <div>

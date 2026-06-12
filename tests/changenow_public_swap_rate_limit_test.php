@@ -76,6 +76,14 @@ class ChangeNowPublicRateLimitFakeApp {
       'transaction' => [
         'limit' => 2,
         'window_seconds' => 120
+      ],
+      'status' => [
+        'limit' => 3,
+        'window_seconds' => 30
+      ],
+      'support_action' => [
+        'limit' => 1,
+        'window_seconds' => 300
       ]
     ];
 
@@ -134,7 +142,24 @@ class ChangeNowPublicEmptyRegionFakeApp {
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('quote'), 'quote should use the quote bucket');
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('validate'), 'validate should share the quote bucket');
 assertSameValue('transaction', ChangeNowPublicRateLimit::bucketForAction('create'), 'create should use the transaction bucket');
-assertSameValue(null, ChangeNowPublicRateLimit::bucketForAction('status'), 'status should not consume the transaction bucket');
+assertSameValue('status', ChangeNowPublicRateLimit::bucketForAction('status'), 'status should use its own public lookup bucket');
+assertSameValue('support_action', ChangeNowPublicRateLimit::bucketForAction('refund'), 'refund should use the stricter public support-action bucket');
+assertSameValue('support_action', ChangeNowPublicRateLimit::bucketForAction('continue'), 'continue should use the stricter public support-action bucket');
+
+$legacyConfig = ChangeNowGuardrails::normalizeRateLimitConfig([
+  'quote' => [
+    'limit' => 30,
+    'window_seconds' => 60
+  ],
+  'transaction' => [
+    'limit' => 6,
+    'window_seconds' => 60
+  ]
+]);
+assertSameValue(30, $legacyConfig['status']['limit'], 'legacy rate-limit JSON should gain the default status limit');
+assertSameValue(60, $legacyConfig['status']['window_seconds'], 'legacy rate-limit JSON should gain the default status window');
+assertSameValue(3, $legacyConfig['support_action']['limit'], 'legacy rate-limit JSON should gain the stricter support-action limit');
+assertSameValue(300, $legacyConfig['support_action']['window_seconds'], 'legacy rate-limit JSON should gain the stricter support-action window');
 
 $untrustedServer = [
   'REMOTE_ADDR' => '203.0.113.10',
@@ -191,8 +216,46 @@ $statusDecision = changenow_public_rate_limit_decision($statusApp, 'status', [
 ], $statusSession, null, 100);
 
 assertSameValue(true, $statusDecision['allowed'], 'status should be allowed by the publicSwap rate-limit helper');
-assertSameValue(0, count($statusLimiter->calls), 'status should not consume any limiter bucket');
-assertSameValue(0, count($statusSession), 'status should not create a public swap rate-limit session key');
+assertSameValue('status', $statusLimiter->calls[0]['bucket'], 'status should check the public lookup bucket');
+assertSameValue(3, $statusLimiter->calls[0]['limit'], 'status should use admin status limit config');
+assertSameValue(30, $statusLimiter->calls[0]['window_seconds'], 'status should use admin status window config');
+assertTrueValue(strpos($statusLimiter->calls[0]['identity'], 'ip:') === 0, 'status rate-limit identity should not store a raw IP address');
+assertTrueValue(isset($statusSession['kr_changenow_session_key']), 'status should maintain a non-sensitive session key');
+
+$supportLimiter = new ChangeNowPublicRateLimitFakeLimiter([
+  [
+    'allowed' => false,
+    'limit' => 1,
+    'remaining' => 0,
+    'retry_after' => 240,
+    'reset_at' => 340,
+    'window_seconds' => 300
+  ]
+]);
+$supportApp = new ChangeNowPublicRateLimitFakeApp($supportLimiter);
+$supportSession = [];
+$refundDecision = changenow_public_rate_limit_decision($supportApp, 'refund', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], $supportSession, null, 100);
+
+assertSameValue(false, $refundDecision['allowed'], 'refund should be denied when the support-action bucket is exhausted');
+assertSameValue('support_action', $supportLimiter->calls[0]['bucket'], 'refund should check the support-action bucket');
+assertSameValue(1, $supportLimiter->calls[0]['limit'], 'refund should use the stricter support-action limit config');
+assertSameValue(300, $supportLimiter->calls[0]['window_seconds'], 'refund should use the stricter support-action window config');
+
+$supportPayload = changenow_public_rate_limited_payload($supportApp, $refundDecision);
+assertSameValue('rate_limited', $supportPayload['type'], 'rate-limited refund response should expose the requested type');
+assertSameValue(240, $supportPayload['retry_after'], 'rate-limited refund response should expose retry guidance');
+
+$continueLimiter = new ChangeNowPublicRateLimitFakeLimiter();
+$continueApp = new ChangeNowPublicRateLimitFakeApp($continueLimiter);
+$continueSession = [];
+changenow_public_rate_limit_decision($continueApp, 'continue', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], $continueSession, null, 100);
+
+assertSameValue('support_action', $continueLimiter->calls[0]['bucket'], 'continue should check the support-action bucket');
+assertTrueValue(isset($continueSession['kr_changenow_session_key']), 'continue should maintain a non-sensitive session key');
 
 $regionApp = new ChangeNowPublicRegionFakeApp();
 $regionDecision = changenow_public_region_decision($regionApp, 'create', [
