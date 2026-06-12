@@ -124,6 +124,7 @@ try {
       "paystack_payment_fees" => $_POST['kr-adm-paystackfees']
     ]);
 
+    $App->_savePerfectMoneySettings($_POST);
     $App->_saveChangeNowSettings($_POST);
 
     // Return success message

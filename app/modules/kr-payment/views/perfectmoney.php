@@ -32,12 +32,16 @@ try {
   $User = new User();
   if(!$User->_isLogged()) die('User not logged');
 
-  if(empty($_GET) || !isset($_GET['m']) && !isset($_GET['t'])) throw new Exception("Error : Wrong args", 1);
+  if(empty($_GET) || !isset($_GET['m']) || !isset($_GET['cr'])) throw new Exception("Error : Wrong args", 1);
   $amount = floatval($_GET['m']);
+  if($amount <= 0) throw new Exception("Error : Wrong amount", 1);
+  $currency = strtoupper((string) $_GET['cr']);
   $Balance = new Balance($User, $App, 'real');
 
   $PerfectMoney = new PerfectMoney($App);
-  $DepositRef = $PerfectMoney->_createDeposit($User, $amount, $Balance, $_GET['cr']);
+  $DepositRef = $PerfectMoney->_createDeposit($User, $amount, $Balance, $currency);
+  $statusUrl = rtrim(APP_URL, '/').'/app/modules/kr-payment/src/actions/deposit/processPerfectMoney.php';
+  $returnUrl = rtrim(APP_URL, '/').'/dashboard.php';
 
 } catch (Exception $e) {
   krypto_log_exception('Perfect Money payment view failed', $e);
@@ -45,23 +49,19 @@ try {
     'error' => 1,
     'msg' => krypto_generic_error_message()
   ]));
-} finally {
-  ?>
-
-  <?php
 }
 
 ?>
 <form action="https://perfectmoney.is/api/step1.asp" method="POST">
-<input type="hidden" name="PAYEE_ACCOUNT" value="<?php echo $App->_getPerfectMoneyPayeeAccount(); ?>">
-<input type="hidden" name="PAYEE_NAME" value="<?php echo $App->_getPerfectMoneyPayeeName(); ?>">
-<input type="hidden" name="PAYMENT_ID" value="<?php echo $DepositRef; ?>">
-<input type="hidden" name="PAYMENT_AMOUNT" value="<?php echo $amount; ?>">
-<input type="hidden" name="PAYMENT_UNITS" value="<?php echo $_GET['cr']; ?>">
-<input type="hidden" name="STATUS_URL" value="<?php echo APP_URL; ?>/app/modules/kr-payment/src/actions/deposit/processPerfectMoney.php">
-<input type="hidden" name="PAYMENT_URL" value="https://krypto.dev.ovrley.com/app/modules/kr-payment/src/actions/test.php">
+<input type="hidden" name="PAYEE_ACCOUNT" value="<?php echo htmlspecialchars((string) $App->_getPerfectMoneyPayeeAccount(), ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="PAYEE_NAME" value="<?php echo htmlspecialchars((string) $App->_getPerfectMoneyPayeeName(), ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="PAYMENT_ID" value="<?php echo htmlspecialchars((string) $DepositRef, ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="PAYMENT_AMOUNT" value="<?php echo htmlspecialchars(number_format($amount, 2, '.', ''), ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="PAYMENT_UNITS" value="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="STATUS_URL" value="<?php echo htmlspecialchars($statusUrl, ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="PAYMENT_URL" value="<?php echo htmlspecialchars($returnUrl, ENT_QUOTES, 'UTF-8'); ?>">
 <input type="hidden" name="PAYMENT_URL_METHOD" value="LINK">
-<input type="hidden" name="NOPAYMENT_URL" value="https://krypto.dev.ovrley.com/app/modules/kr-payment/src/actions/test.php">
+<input type="hidden" name="NOPAYMENT_URL" value="<?php echo htmlspecialchars($returnUrl, ENT_QUOTES, 'UTF-8'); ?>">
 <input type="hidden" name="NOPAYMENT_URL_METHOD" value="LINK">
 <input type="hidden" name="SUGGESTED_MEMO" value="">
 <input type="hidden" name="BAGGAGE_FIELDS" value="">
