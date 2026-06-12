@@ -10,12 +10,16 @@ function changenow_public_json($payload){
   die(json_encode($payload));
 }
 
-function changenow_public_error($errorCode, $message, $type = 'error'){
-  changenow_public_json([
+function changenow_public_error_payload($errorCode, $message, $type = 'error'){
+  return [
     'error' => $errorCode,
     'type' => $type,
     'msg' => $message
-  ]);
+  ];
+}
+
+function changenow_public_error($errorCode, $message, $type = 'error'){
+  changenow_public_json(changenow_public_error_payload($errorCode, $message, $type));
 }
 
 function changenow_public_action_from_request($post, $get){
@@ -153,6 +157,58 @@ function changenow_public_unsupported_region_payload($decision, $Lang = null){
   ];
 }
 
+function changenow_public_api_exception_payload($exception){
+  $errorCode = ($exception instanceof ChangeNowApiValidationException ? 2 : 1);
+  return changenow_public_error_payload($errorCode, $exception->_getUserMessage(), $exception->_getType());
+}
+
+function changenow_public_log_exception($App, $exception){
+  $context = [
+    'exception_class' => (is_object($exception) ? get_class($exception) : gettype($exception)),
+    'message' => ($exception instanceof Throwable ? $exception->getMessage() : ''),
+    'file' => ($exception instanceof Throwable ? $exception->getFile() : ''),
+    'line' => ($exception instanceof Throwable ? $exception->getLine() : null)
+  ];
+
+  if(is_object($App) && method_exists($App, '_getChangeNowLogger')){
+    try {
+      $Logger = $App->_getChangeNowLogger(true);
+      if(is_object($Logger) && method_exists($Logger, 'log')){
+        $Logger->log('ERROR', 'public_swap_failed', $context);
+        return;
+      }
+    } catch (Throwable $loggingError) {
+      // Fall back to the generic logger below.
+    }
+  }
+
+  if(class_exists('ChangeNowLogger')){
+    try {
+      $Logger = new ChangeNowLogger(true, false);
+      $Logger->log('ERROR', 'public_swap_failed', $context);
+      return;
+    } catch (Throwable $loggingError) {
+      // Fall back to the generic logger below.
+    }
+  }
+
+  if(function_exists('krypto_log_exception')){
+    krypto_log_exception('ChangeNOW public swap action failed', $exception);
+    return;
+  }
+
+  if($exception instanceof Throwable) {
+    error_log('ChangeNOW public swap action failed: '.$exception->getMessage());
+  } else {
+    error_log('ChangeNOW public swap action failed.');
+  }
+}
+
+function changenow_public_generic_exception_payload($App, $exception){
+  changenow_public_log_exception($App, $exception);
+  return changenow_public_error_payload(1, krypto_generic_error_message(), 'error');
+}
+
 if(defined('KRYPTO_PUBLIC_SWAP_HELPERS_ONLY') && KRYPTO_PUBLIC_SWAP_HELPERS_ONLY) return;
 
 require "../../../../../config/config.settings.php";
@@ -268,10 +324,9 @@ try {
 
   changenow_public_error(2, 'Unknown ChangeNOW public swap action.', 'validation');
 } catch (ChangeNowApiException $e) {
-  $errorCode = ($e instanceof ChangeNowApiValidationException ? 2 : 1);
-  changenow_public_error($errorCode, $e->_getUserMessage(), $e->_getType());
-} catch (Exception $e) {
-  changenow_public_error(1, $e->getMessage(), 'error');
+  changenow_public_json(changenow_public_api_exception_payload($e));
+} catch (Throwable $e) {
+  changenow_public_json(changenow_public_generic_exception_payload($App, $e));
 }
 
 ?>
