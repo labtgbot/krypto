@@ -4174,6 +4174,7 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (154, 'perfectmoney_payee_account', 'U17387600', 0),
 (155, 'perfectmoney_payee_name', 'OVRLEY', 0),
 (156, 'perfectmoney_enabled', '0', 0),
+(261, 'perfectmoney_alternate_passphrase', '', 1),
 (157, 'coingate_paymentconvertion', 'BTC', 0),
 (158, 'bankwithdraw_alert', 'Attention! The price of cryptocurrencies is volatile and can change a lot while transaction of cryptocurrencies is fulfilled. After your bank transfer reaches us, you will be able to commit to your purchase at any time, with the amount of cryptocurrencies you would receive recalculated every 60 seconds, but you will not be able to refund your payment*. Please note that the amount of cryptocurrencies that you paid for may have changed at the moment of fulfillment.\r\n\r\nExample: if you wanted to buy 1 BTC for 100 EUR and sent us 100 EUR bank transfer, but at the time when you commit to your purchase BTC price has risen to 200 EUR, you will only be able to get 0.5 BTC; if the price has dropped to 50 EUR, you will be able to get 2 BTC.\r\n\r\n* If you do not commit to your purchase in 2 weeks, your payment will be automatically refunded to the bank account from which you sent the payment, minus any fees we had to pay to send it back to you and minus our 1% fee.', 0),
 (159, 'bankwithdraw_allowed_cryptocurrencies', '[]', 0),
@@ -4715,7 +4716,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=262;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;

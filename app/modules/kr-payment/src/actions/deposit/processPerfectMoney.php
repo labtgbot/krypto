@@ -1,35 +1,43 @@
 <?php
+
 /**
- * Created by Sevio Solutions.
- * User: Denis DIMA
- * Product: perfectmoney-ipn
- * Date: 04.01.2017
- * Time: 17:38
- * All rights and copyrights are owned by Sevio Solutions®
+ * Process Perfect Money IPN callbacks.
+ *
+ * @package Krypto
  */
-define("PASSWORD_ACCOUNT", "Jupezoo2$");
-error_log(json_encode($_POST));
-if (!isset($_POST['PAYMENT_ID']) || !isset($_POST['PAYEE_ACCOUNT']) || !isset($_POST['PAYMENT_AMOUNT']) || !isset($_POST['PAYMENT_UNITS']) || !isset($_POST['PAYMENT_BATCH_NUM']) || !isset($_POST['PAYER_ACCOUNT']) || !isset($_POST['TIMESTAMPGMT'])) {
-  error_log('EMPTY POST');
-    die();
+
+require "../../../../../config/config.settings.php";
+
+krypto_session_start();
+
+require_once "../../../../../app/src/bootstrap_paths.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/vendor/autoload.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/MySQL/MySQL.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/App.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/AppModule.php";
+require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/User/User.php";
+
+$respondPerfectMoneyIpn = function($status, $httpStatus = 200) {
+  if(!headers_sent()){
+    http_response_code($httpStatus);
+    header('Content-Type: text/plain; charset=UTF-8');
+  }
+
+  die($status);
+};
+
+try {
+  if(!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Wrong request method', 1);
+  if(empty($_POST)) throw new Exception('Empty Perfect Money callback', 1);
+
+  $App = new App(true);
+  $App->_loadModulesControllers();
+
+  $PerfectMoney = new PerfectMoney($App);
+  $PerfectMoney->_checkPayment($_POST);
+
+  $respondPerfectMoneyIpn('OK');
+} catch (Throwable $e) {
+  krypto_log_exception('Perfect Money payment processing failed', $e);
+  $respondPerfectMoneyIpn('ERROR', 400);
 }
-$paymentID = $_POST['PAYMENT_ID'];
-$payeeAccount = $_POST['PAYEE_ACCOUNT'];
-$paymentAccount = $_POST['PAYMENT_AMOUNT'];
-$paymentUnits = $_POST['PAYMENT_UNITS'];
-$paymentBatchNum = $_POST['PAYMENT_BATCH_NUM'];
-$payerAccount = $_POST['PAYER_ACCOUNT'];
-$timestampPGMT = $_POST['TIMESTAMPGMT'];
-$v2Hash = $_POST['V2_HASH'];
-$baggageFields = $_POST['BAGGAGE_FIELDS'];
-$alternatePhraseHash = strtoupper(md5(PASSWORD_ACCOUNT));
-$hash = $paymentID . ':' . $payeeAccount . ':' . $paymentAccount . ':' . $paymentUnits . ':' . $paymentBatchNum . ':' . $payerAccount . ':' . $alternatePhraseHash . ':' . $timestampPGMT;
-$hash2 = strtoupper(md5($hash));
-if ($hash2 != $v2Hash){
-  error_log('hash différent : '.$hash2.' - '.$v2Hash);
-  die();
-}
-$method = "Uploaded funds";
-$completed = "Completed";
-$today = date('Y-m-d');
-$type = "Perfect Money";

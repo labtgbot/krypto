@@ -44,7 +44,7 @@ function addInternalChartOrder(container, symbol, name, picture, date, type, ord
   opt.series[1].markPoint.data.push({
       value: name,
       valueDim: orderid,
-      symbol: 'image://https://krypto.dev.ovrley.com/public/user/6090/15adb057c9704a-t%C3%A9l%C3%A9chargement.jpg',
+      symbol: (picture ? 'image://' + picture : 'circle'),
       symbolSize: [17, 17],
       coord: [indexDate, priceChart[indexDate][3]],
       y: '100%',

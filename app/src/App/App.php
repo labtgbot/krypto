@@ -365,6 +365,20 @@ class App extends MySQL {
   }
 
   /**
+   * Save Perfect Money admin settings from an admin panel POST payload.
+   * @param Array $post Posted admin settings
+   */
+  public function _savePerfectMoneySettings($post){
+    if(!class_exists('PerfectMoneySettings')) throw new Exception("Perfect Money settings helper is not loaded.", 1);
+
+    foreach (PerfectMoneySettings::_adminPostToSettings($post) as $key => $value) {
+      $this->_saveSettingsAttribute($key, $value, in_array($key, PerfectMoneySettings::_encryptedKeys(), true));
+    }
+
+    return true;
+  }
+
+  /**
    * Get sanitized ChangeNOW widget settings.
    * @return Array
    */
@@ -1238,6 +1252,11 @@ class App extends MySQL {
 
   public function _getPerfectMoneyPayeeName(){
     return $this->_getSettingsAttribute('perfectmoney_payee_name');
+  }
+
+  public function _getPerfectMoneyAlternatePassphrase(){
+    $value = $this->_getSettingsAttribute('perfectmoney_alternate_passphrase');
+    return (is_null($value) ? '' : $value);
   }
 
   //  Fees

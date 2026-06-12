@@ -548,7 +548,6 @@ $Admin = new Admin();
       </div>
     </div>
   </div>
-  <?php if(false): ?>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
       <div>
@@ -566,19 +565,26 @@ $Admin = new Admin();
         <label><?php echo $Lang->tr('Perfect Money Payee Account'); ?></label>
       </div>
       <div>
-        <input type="text" placeholder="<?php echo $Lang->tr('Your Perfect Money Payee Account'); ?>" name="kr-adm-perfectmoneypayeeaccount" value="<?php echo ($App->_getRaveflutterwaveTitle() != '' ? $App->_getRaveflutterwaveTitle() : $App->_getAppTitle()); ?>">
+        <input type="text" placeholder="<?php echo $Lang->tr('Your Perfect Money Payee Account'); ?>" name="kr-adm-perfectmoneypayeeaccount" value="<?php echo htmlspecialchars((string) $App->_getPerfectMoneyPayeeAccount(), ENT_QUOTES, 'UTF-8'); ?>">
       </div>
     </div>
     <div class="kr-admin-field">
       <div>
-        <label><?php echo $Lang->tr('Rave Flutterwave Payment Prefix'); ?></label>
+        <label><?php echo $Lang->tr('Perfect Money Payee Name'); ?></label>
       </div>
       <div>
-        <input type="text" placeholder="<?php echo $Lang->tr('Your Rave Flutterwave Payment prefix (ex : KRYP)'); ?>" name="kr-adm-raveflutterwaveprefix" value="<?php echo ($App->_getRaveflutterwavePrefix() != '' ? $App->_getRaveflutterwavePrefix() : ''); ?>">
+        <input type="text" placeholder="<?php echo $Lang->tr('Your Perfect Money Payee Name'); ?>" name="kr-adm-perfectmoneypayeename" value="<?php echo htmlspecialchars((string) $App->_getPerfectMoneyPayeeName(), ENT_QUOTES, 'UTF-8'); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
+        <label><?php echo $Lang->tr('Perfect Money Alternate Passphrase'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your Perfect Money Alternate Passphrase'); ?>" name="kr-adm-perfectmoneyalternatepassphrase" value="<?php echo ($App->_getPerfectMoneyAlternatePassphrase() != '' ? '*********************' : ''); ?>">
       </div>
     </div>
   </div>
-<?php endif; ?>
   <div class="kr-admin-line kr-admin-line-cls">
     <div class="kr-admin-field">
       <div>

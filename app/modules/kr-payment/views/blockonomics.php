@@ -138,7 +138,7 @@ try {
     <h2>Send Bitcoin directly to your wallet.</h2>
     <p>You can deposit as much bitcoin as you want. The system will automatically detect the amount sent.</p>
     <section class="kr-qrcode">
-      <img src="https://krypto.dev.ovrley.com/public/qrcode/<?php echo $AddressDeposit ?>.png" alt="">
+      <img src="<?php echo htmlspecialchars(rtrim(APP_URL, '/').'/public/qrcode/'.rawurlencode($AddressDeposit).'.png', ENT_QUOTES, 'UTF-8'); ?>" alt="">
     </section>
     <p>You can scan direclty the QRcode or write this address</p>
     <div class="kr-credit-cryptocc-addrinp">
