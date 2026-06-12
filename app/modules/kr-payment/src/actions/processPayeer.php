@@ -1,10 +1,7 @@
 <?php
 
-// j54cuY65zQJbSYYR
-// zbMFQHF5ufeX3QmyRKp
-
 /**
- * Process payment Fortumo
+ * Process payment Payeer
  *
  * @package Krypto
  * @author Ovrley <hello@ovrley.com>
@@ -21,77 +18,61 @@ require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/App.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/App/AppModule.php";
 require $_SERVER['DOCUMENT_ROOT'].FILE_PATH."/app/src/User/User.php";
 
+$requiredPayeerCallbackFields = [
+    'm_operation_id',
+    'm_operation_ps',
+    'm_operation_date',
+    'm_operation_pay_date',
+    'm_shop',
+    'm_orderid',
+    'm_amount',
+    'm_curr',
+    'm_desc',
+    'm_status',
+    'm_sign'
+];
+
+$respondPayeerCallback = function($status) {
+    $orderId = '';
+    if(isset($_POST['m_orderid']) && is_scalar($_POST['m_orderid'])) {
+        $orderId = trim((string) $_POST['m_orderid']);
+    }
+
+    if(!headers_sent()) {
+        header('Content-Type: text/plain; charset=UTF-8');
+    }
+
+    die($orderId === '' ? $status : $orderId.'|'.$status);
+};
+
 try {
 
-    // Load app modules
+    $payeerAllowedIps = array('185.71.65.92', '185.71.65.189', '149.202.17.210');
+    $remoteAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+    if(!in_array($remoteAddress, $payeerAllowedIps, true)) throw new Exception("Permission denied", 1);
+
+    if(!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Wrong request method", 1);
+    if(empty($_POST)) throw new Exception("Access denied", 1);
+
+    foreach($requiredPayeerCallbackFields as $field) {
+        if(!array_key_exists($field, $_POST) || !is_scalar($_POST[$field]) || trim((string) $_POST[$field]) === '') {
+            throw new Exception("Wrong arguments", 1);
+        }
+    }
+
+    if(!is_numeric($_POST['m_amount'])) throw new Exception("Wrong amount", 1);
+
+    // Load app modules after cheap provider callback validation.
     $App = new App(true);
     $App->_loadModulesControllers();
 
-
-
-    if (!in_array($_SERVER['REMOTE_ADDR'], array('185.71.65.92', '185.71.65.189', '149.202.17.210'))) throw new Exception("Permission denied", 1);
-
-    $_POST = json_decode('{"m_operation_id":"630437734",
-    "m_operation_ps":"2609",
-    "m_operation_date":"19.08.2018 21:52:46",
-    "m_operation_pay_date":"19.08.2018 21:53:01",
-    "m_shop":"630301017",
-    "m_orderid":"123456",
-    "m_amount":"0.00010000",
-    "m_curr":"BTC",
-    "m_desc":"VGVzdA==",
-    "m_status":"success",
-    "m_sign":"C2EC9DB00FFD51EC59F045FBEC03DDFB76C52F58DBC6CA1C6947FE5EBA366910",
-    "summa_out":"0.00009905",
-    "transfer_id":"630437865",
-    "client_account":"P1003253466",
-    "client_email":"hello@ovrley.com"}', true);
-
-    if(empty($_POST)) throw new Exception("Access denied", 1);
-
     $Payeer = new Payeer($App);
+    if(!array_key_exists((string) $_POST['m_curr'], $Payeer->_getListCurrencyAvailable())) throw new Exception("Wrong currency", 1);
+
     $Payeer->_checkPayment($_POST);
 
-    die();
-} catch (Exception $e) {
+    $respondPayeerCallback('success');
+} catch (Throwable $e) {
   krypto_log_exception('Payeer payment processing failed', $e);
-  error_log(json_encode([
-    'error' => 1,
-    'msg' => krypto_generic_error_message()
-  ]));
+  $respondPayeerCallback('error');
 }
-
-
-?>
-
-// GET
-{"m_operation_id":"630437734",
- "m_operation_ps":"2609",
- "m_operation_date":"19.08.2018 21:52:46",
- "m_operation_pay_date":"19.08.2018 21:53:01",
- "m_shop":"630301017",
- "m_orderid":"123456",
- "m_amount":"0.00010000",
- "m_curr":"BTC",
- "m_desc":"VGVzdA==",
- "m_status":"success",
- "m_sign":"C2EC9DB00FFD51EC59F045FBEC03DDFB76C52F58DBC6CA1C6947FE5EBA366910",
- "lang":"en"}
-
-
-// POST
-{"m_operation_id":"630437734",
-"m_operation_ps":"2609",
-"m_operation_date":"19.08.2018 21:52:46",
-"m_operation_pay_date":"19.08.2018 21:53:01",
-"m_shop":"630301017",
-"m_orderid":"123456",
-"m_amount":"0.00010000",
-"m_curr":"BTC",
-"m_desc":"VGVzdA==",
-"m_status":"success",
-"m_sign":"C2EC9DB00FFD51EC59F045FBEC03DDFB76C52F58DBC6CA1C6947FE5EBA366910",
-"summa_out":"0.00009905",
-"transfer_id":"630437865",
-"client_account":"P1003253466",
-"client_email":"hello@ovrley.com"}
