@@ -367,6 +367,40 @@ $expiredQuote = $marketData->_getQuote([
 assertSameValue(false, $expiredQuote['cached'], 'Expired cache should be refreshed');
 assertSameValue(2, $client->quoteCalls, 'Expired quote should call the provider again');
 
+$fixedQuote = $marketData->_getQuote([
+    'fromCurrency' => 'btc',
+    'fromNetwork' => 'btc',
+    'toCurrency' => 'eth',
+    'toNetwork' => 'eth',
+    'flow' => 'fixed-rate',
+    'fromAmount' => '0.01',
+    'useRateId' => 'true',
+]);
+$secondFixedQuote = $marketData->_getQuote([
+    'from_currency' => 'btc',
+    'from_network' => 'btc',
+    'to_currency' => 'eth',
+    'to_network' => 'eth',
+    'flow' => 'fixed-rate',
+    'from_amount' => '0.01',
+    'use_rate_id' => 'true',
+]);
+$fixedCacheKey = ChangeNowMarketData::_quoteCacheKey(ChangeNowMarketData::_normalizeQuoteRequest([
+    'fromCurrency' => 'btc',
+    'fromNetwork' => 'btc',
+    'toCurrency' => 'eth',
+    'toNetwork' => 'eth',
+    'flow' => 'fixed-rate',
+    'fromAmount' => '0.01',
+    'useRateId' => 'true',
+]));
+assertSameValue(false, $fixedQuote['cached'], 'First fixed-rate quote should be fetched from the provider');
+assertSameValue(false, $secondFixedQuote['cached'], 'Repeated fixed-rate quote should not come from cache');
+assertSameValue('rate-3', $fixedQuote['rateId'], 'First fixed-rate quote should expose a provider-issued rate ID');
+assertSameValue('rate-4', $secondFixedQuote['rateId'], 'Repeated fixed-rate quote should receive a fresh provider rate ID');
+assertSameValue(4, $client->quoteCalls, 'Fixed-rate quotes should call the provider for each request');
+assertTrueValue(!array_key_exists($fixedCacheKey, $repository->quoteCache), 'Fixed-rate quotes should not be stored in the quote cache');
+
 $standardOnlyMarketData = new ChangeNowMarketData($client, $repository, null, [
     'enabled_flows' => ['standard'],
 ]);
