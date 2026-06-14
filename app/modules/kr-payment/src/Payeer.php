@@ -110,7 +110,23 @@ class Payeer extends MySQL
       if($signature != $infos['m_sign']) throw new Exception("Error : Worng signature", 1);
       if($infos['m_status'] != "success") throw new Exception("Error : Payment not paid", 1);
 
-      $Balance = new Balance(null, $this->_getApp(), null);
+      $infosPayment = parent::querySqlRequest("SELECT * FROM deposit_history_krypto
+                                                WHERE ref_deposit_history=:ref_deposit_history
+                                                  AND payment_data_deposit_history=:payment_data_deposit_history
+                                                  AND payment_type_deposit_history=:payment_type_deposit_history
+                                                  AND payment_status_deposit_history=:payment_status_deposit_history
+                                                ORDER BY id_deposit_history DESC LIMIT 1",
+                                              [
+                                                'ref_deposit_history' => $infos['m_orderid'],
+                                                'payment_data_deposit_history' => $signature,
+                                                'payment_type_deposit_history' => 'payeer',
+                                                'payment_status_deposit_history' => '0'
+                                              ]);
+
+      if(count($infosPayment) == 0) throw new Exception("Error : Payment not found", 1);
+
+      $UserPayment = new User($infosPayment[0]['id_user']);
+      $Balance = new Balance($UserPayment, $this->_getApp(), null);
       $Balance->_changeDepositStatus($signature, '1');
 
 

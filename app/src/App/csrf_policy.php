@@ -59,7 +59,7 @@ return [
     ],
     'app/modules/kr-payment/src/actions/deposit/processCoinbaseCommerce.php' => [
       'reason' => 'Coinbase Commerce webhook cannot include a Krypto CSRF field.',
-      'validation' => 'Webhook signature is validated with the configured Coinbase Commerce shared secret.'
+      'validation' => 'Webhook signature is validated with the configured Coinbase Commerce webhook shared secret.'
     ],
     'app/modules/kr-payment/src/actions/deposit/processMollie.php' => [
       'reason' => 'Mollie deposit webhook cannot include a Krypto CSRF field.',
