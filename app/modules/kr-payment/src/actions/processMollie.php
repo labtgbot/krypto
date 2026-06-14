@@ -29,12 +29,12 @@ try {
     $Mollie = new Mollie($App);
     $paymentCheck = $Mollie->_checkPayment($_POST["id"]);
 
-    $statusPayment = 0;
-    if($paymentCheck) {
-      $statusPayment = 1;
-    } else {
+    if(!$paymentCheck) {
       error_log('Mollie payment : Order ('.$_POST['id'].') not valid');
+      return;
     }
+
+    $statusPayment = 1;
 
     $User = new User($paymentCheck['user_id']);
     $Charge = $User->_getCharge($App);

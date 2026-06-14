@@ -24,27 +24,15 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
+    if(empty($_POST) || !isset($_POST['id']) || empty($_POST['id'])) throw new Exception("Access denied", 1);
+
     $Mollie = new Mollie($App);
     $paymentCheck = $Mollie->_checkPayment($_POST["id"]);
 
-    $statusPayment = 0;
-    if($paymentCheck) {
-      $statusPayment = 1;
-    } else {
+    $result = $Mollie->_processDepositPayment($paymentCheck);
+    if($result['status'] == 'ignored') {
       error_log('Mollie payment : Order ('.$_POST['id'].') not valid');
     }
-
-    $User = new User($paymentCheck['user_id']);
-
-    $Balance = new Balance($User, $App, 'real');
-    error_log(json_encode($paymentCheck));
-    $Balance->_addDeposit($paymentCheck['amount'],
-                          'mollie',
-                          'Mollie deposit',
-                          $paymentCheck['currency'],
-                          json_encode($paymentCheck),
-                          $statusPayment);
-
 
 } catch (Exception $e) {
   error_log(json_encode([
