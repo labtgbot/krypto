@@ -97,11 +97,15 @@ class ChangeNowMarketData {
     $this->_assertMarketSelectionEnabled($request);
 
     $now = time();
-    $cacheKey = self::_quoteCacheKey($request);
-    $cached = $this->Repository->_getQuoteCache($cacheKey, $now);
-    if(is_array($cached)){
-      $cached['cached'] = true;
-      return $cached;
+    $cacheQuote = ($request['flow'] != 'fixed-rate');
+    $cacheKey = null;
+    if($cacheQuote){
+      $cacheKey = self::_quoteCacheKey($request);
+      $cached = $this->Repository->_getQuoteCache($cacheKey, $now);
+      if(is_array($cached)){
+        $cached['cached'] = true;
+        return $cached;
+      }
     }
 
     $range = $this->Client->_getRange($request);
@@ -125,7 +129,7 @@ class ChangeNowMarketData {
       $result['maxAmount'],
       $now
     );
-    $this->Repository->_saveQuoteCache($cacheKey, $request, $result, $now + $this->_getQuoteCacheTtl(), $now);
+    if($cacheQuote) $this->Repository->_saveQuoteCache($cacheKey, $request, $result, $now + $this->_getQuoteCacheTtl(), $now);
 
     $result['cached'] = false;
     return $result;
