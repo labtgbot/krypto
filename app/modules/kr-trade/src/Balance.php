@@ -227,11 +227,21 @@ class Balance extends MySQL {
   }
 
   public function _changeDepositStatus($datapayment, $new_status = 1){
-    $r = parent::execSqlRequest("UPDATE deposit_history_krypto SET payment_status_deposit_history=:payment_status_deposit_history WHERE payment_data_deposit_history LIKE :payment_data_deposit_history", [
-      'payment_data_deposit_history' => '%'.$datapayment.'%',
-      'payment_status_deposit_history' => $new_status
+    $req = self::getSqlConnexion()->prepare("UPDATE deposit_history_krypto
+                                             SET payment_status_deposit_history=:payment_status_deposit_history
+                                             WHERE id_user=:id_user
+                                               AND payment_data_deposit_history=:payment_data_deposit_history
+                                               AND payment_status_deposit_history=:pending_status");
+    $ok = $req->execute([
+      'id_user' => $this->_getUser()->_getUserID(),
+      'payment_data_deposit_history' => $datapayment,
+      'payment_status_deposit_history' => (string) $new_status,
+      'pending_status' => '0'
     ]);
-    if(!$r) throw new Exception("Error : Fail to change status deposit", 1);
+    $updatedRows = $req->rowCount();
+    $req->closeCursor();
+
+    if(!$ok || $updatedRows !== 1) throw new Exception("Error : Fail to change status deposit", 1);
     return true;
   }
 

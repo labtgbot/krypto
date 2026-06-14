@@ -607,6 +607,14 @@ $Admin = new Admin();
     </div>
     <div class="kr-admin-field">
       <div>
+        <label><?php echo $Lang->tr('Coinbase commerce Webhook shared secret'); ?></label>
+      </div>
+      <div>
+        <input type="text" placeholder="<?php echo $Lang->tr('Your Coinbase commerce Webhook shared secret'); ?>" name="kr-adm-coinbasecommercewebhooksecret" value="<?php echo ($App->_getCoinbaseCommerceWebhookSecret() != '' ? '*********************' : ''); ?>">
+      </div>
+    </div>
+    <div class="kr-admin-field">
+      <div>
         <label><?php echo $Lang->tr('Coinbase commerce Payment Title'); ?></label>
       </div>
       <div>

@@ -23,10 +23,12 @@ try {
     $App = new App(true);
     $App->_loadModulesControllers();
 
-    $payload = json_decode(file_get_contents('php://input'), true);
+    $rawBody = file_get_contents('php://input');
+    $payload = json_decode($rawBody, true);
+    $signature = (array_key_exists('HTTP_X_CC_WEBHOOK_SIGNATURE', $_SERVER) ? $_SERVER['HTTP_X_CC_WEBHOOK_SIGNATURE'] : null);
 
     $CoinbaseCommerce = new CoinbaseCommerce($App);
-    $CoinbaseCommerce->_parseWebhook($payload);
+    $CoinbaseCommerce->_parseWebhook($payload, $rawBody, $signature);
 
 
 } catch (Exception $e) {

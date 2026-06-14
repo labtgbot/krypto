@@ -4158,6 +4158,7 @@ INSERT INTO `settings_krypto` (`id_settings`, `key_settings`, `value_settings`, 
 (138, 'coinbasecommerce_enabled', '0', 0),
 (139, 'coinbasecommerce_apikey', '', 1),
 (140, 'coinbasecommerce_paymentitle', 'KRYPTO', 0),
+(262, 'coinbasecommerce_webhook_secret', '', 1),
 (141, 'show_balance_estimation_user_currency', '1', 0),
 (142, 'coinpayments_enabled', '0', 0),
 (143, 'coinpayments_publickey', '', 1),
@@ -4716,7 +4717,7 @@ ALTER TABLE `rssfeed_krypto`
   MODIFY `id_rssfeed` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 ALTER TABLE `settings_krypto`
-  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=262;
+  MODIFY `id_settings` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=263;
 
 ALTER TABLE `social_krypto`
   MODIFY `id_social` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;

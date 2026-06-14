@@ -90,6 +90,7 @@ try {
 
       "coinbasecommerce_enabled" => isset($_POST['kr-adm-chk-enablecoinbasecommerce']) && $_POST['kr-adm-chk-enablecoinbasecommerce'] == "on",
       "coinbasecommerce_apikey" => ($_POST['kr-adm-coinbasecommerceapikey'] != '*********************' ? App::_encryptSecret($_POST['kr-adm-coinbasecommerceapikey']) : $_POST['kr-adm-coinbasecommerceapikey']),
+      "coinbasecommerce_webhook_secret" => (!isset($_POST['kr-adm-coinbasecommercewebhooksecret']) || $_POST['kr-adm-coinbasecommercewebhooksecret'] == '*********************' ? '*********************' : App::_encryptSecret($_POST['kr-adm-coinbasecommercewebhooksecret'])),
       "coinbasecommerce_paymentitle" => $_POST['kr-adm-coinbasecommercepaymentitle'],
 
       "coinpayments_enabled" => isset($_POST['kr-adm-chk-enablecoinpayments']) && $_POST['kr-adm-chk-enablecoinpayments'] == "on",

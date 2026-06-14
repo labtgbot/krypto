@@ -838,6 +838,10 @@ class App extends MySQL {
 
   public function _coinbasecommerceEnabled(){ return $this->_getSettingsAttribute('coinbasecommerce_enabled') == 1; }
   public function _getCoinbaseCommerceAPIKey(){ return $this->_getSettingsAttribute('coinbasecommerce_apikey'); }
+  public function _getCoinbaseCommerceWebhookSecret(){
+    $value = $this->_getSettingsAttribute('coinbasecommerce_webhook_secret');
+    return (is_null($value) ? '' : $value);
+  }
   public function _getCoinbaseCommercePaymentTitle(){ return $this->_getSettingsAttribute('coinbasecommerce_paymentitle'); }
 
   public function _coinpaymentsEnabled(){ return $this->_getSettingsAttribute('coinpayments_enabled') == 1; }
