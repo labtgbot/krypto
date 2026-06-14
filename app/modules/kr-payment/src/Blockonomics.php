@@ -106,30 +106,60 @@ class Blockonomics extends MySQL {
   }
 
 
-  public function _calcAmountPayment($PaymentDetail){
+  public function _calcAmountPayment($PaymentDetail, $expectedAddress = null){
+    $expectedAddress = trim((string)$expectedAddress);
+    if($expectedAddress == '') throw new Exception("Error : Missing Blockonomics deposit address", 1);
+    if(!is_object($PaymentDetail) || !property_exists($PaymentDetail, 'vout') || !is_array($PaymentDetail->vout)) {
+      throw new Exception("Error : Invalid Blockonomics transaction details", 1);
+    }
+
     $amount = 0;
-    return $this->_convertSatoshiToStandard($PaymentDetail->vin[0]->value);
     foreach ($PaymentDetail->vout as $key => $value) {
+      if(!$this->_outputPaysAddress($value, $expectedAddress)) continue;
+      if(!is_object($value) || !property_exists($value, 'value') || !is_numeric($value->value)) continue;
       $amount += $value->value;
     }
-    return $amount;
+    if($amount <= 0) throw new Exception("Error : Blockonomics payment output does not match deposit address", 1);
+    return $this->_convertSatoshiToStandard($amount);
+  }
+
+  private function _outputPaysAddress($output, $expectedAddress){
+    if(!is_object($output)) return false;
+
+    if(property_exists($output, 'address') && $this->_addressMatches($output->address, $expectedAddress)) return true;
+    if(!property_exists($output, 'scriptPubKey') || !is_object($output->scriptPubKey)) return false;
+
+    $scriptPubKey = $output->scriptPubKey;
+    if(property_exists($scriptPubKey, 'address') && $this->_addressMatches($scriptPubKey->address, $expectedAddress)) return true;
+    if(property_exists($scriptPubKey, 'addresses') && $this->_addressMatches($scriptPubKey->addresses, $expectedAddress)) return true;
+
+    return false;
+  }
+
+  private function _addressMatches($candidate, $expectedAddress){
+    if(is_string($candidate)) return $candidate === $expectedAddress;
+    if(is_array($candidate)) return in_array($expectedAddress, $candidate, true);
+    if(is_object($candidate)) return in_array($expectedAddress, array_values(get_object_vars($candidate)), true);
+    return false;
   }
 
   public function _validPayment($txtid, $addr){
     $PaymentDetail = $this->_getTransactionDetails($txtid, $addr);
-    $User = $this->_getUserByAddress($PaymentDetail->vout[0]->address);
-    $this->_setTransaction($User, $txtid, $addr, $this->_statusStrToInt($PaymentDetail->status));
-    if($this->_statusStrToInt($PaymentDetail->status) == 2) {
+    $User = $this->_getUserByAddress($addr);
+    $status = $this->_statusStrToInt($PaymentDetail->status);
+    $amountPayment = $this->_calcAmountPayment($PaymentDetail, $addr);
+    $this->_setTransaction($User, $txtid, $addr, $status);
+    if($status == 2) {
 
 
 
-      $fees = $this->_calcAmountPayment($PaymentDetail) * ($this->_getApp()->_getFeesDeposit() / 100);
+      $fees = $amountPayment * ($this->_getApp()->_getFeesDeposit() / 100);
 
       $Balance = new Balance($User, $this->_getApp(), 'real');
 
       if($Balance->_depositAlreadyDone($txtid)) throw new Exception("Error : Process already done", 1);
 
-      $Balance->_addDeposit($this->_calcAmountPayment($PaymentDetail), 'blockonomics', 'Deposit '.$this->_calcAmountPayment($PaymentDetail).' BTC ('.number_format($fees, 8).' BTC Fees)', 'BTC', $txtid);
+      $Balance->_addDeposit($amountPayment, 'blockonomics', 'Deposit '.$amountPayment.' BTC ('.number_format($fees, 8).' BTC Fees)', 'BTC', $txtid);
 
     }
   }
