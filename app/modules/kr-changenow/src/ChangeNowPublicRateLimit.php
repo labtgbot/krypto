@@ -16,7 +16,7 @@ class ChangeNowPublicRateLimit {
   public static function bucketForAction($action){
     $action = strtolower(trim((string) $action));
 
-    if($action == 'quote' || $action == 'validate') return 'quote';
+    if($action == 'quote' || $action == 'validate' || $action == 'destinations') return 'quote';
     if($action == 'create') return 'transaction';
     if($action == 'status') return 'status';
     if($action == 'refund' || $action == 'continue') return 'support_action';
