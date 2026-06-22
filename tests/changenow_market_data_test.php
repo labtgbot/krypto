@@ -182,6 +182,11 @@ class ChangeNowMarketDataFakeRepository {
     public $quoteCache = [];
     public $syncEvents = [];
 
+    public function _replaceMarketData($assets, $pairs, $syncedAt = null, $flows = []) {
+        $this->_replaceAssets($assets, $syncedAt);
+        $this->_replacePairs($pairs, $syncedAt, $flows);
+    }
+
     public function _replaceAssets($assets, $syncedAt = null) {
         foreach ($this->assets as $key => $asset) {
             $this->assets[$key]['providerActive'] = false;
@@ -287,6 +292,31 @@ class ChangeNowMarketDataFakeRepository {
     public function _setPairAdminEnabled($fromCurrency, $fromNetwork, $toCurrency, $toNetwork, $flow, $enabled) {
         $key = $fromCurrency.':'.$fromNetwork.'>'.$toCurrency.':'.$toNetwork.':'.$flow;
         $this->pairs[$key]['adminEnabled'] = $enabled;
+    }
+}
+
+class ChangeNowMarketDataFailingAtomicRepository extends ChangeNowMarketDataFakeRepository {
+    public function _replaceAssets($assets, $syncedAt = null) {
+        foreach ($this->assets as $key => $asset) {
+            $this->assets[$key]['providerActive'] = false;
+        }
+
+        throw new Exception('Synthetic mid-market asset failure');
+    }
+
+    public function _replaceMarketData($assets, $pairs, $syncedAt = null, $flows = []) {
+        $assetSnapshot = $this->assets;
+        $pairSnapshot = $this->pairs;
+
+        try {
+            parent::_replaceAssets($assets, $syncedAt);
+            throw new Exception('Synthetic mid-market pair failure');
+            parent::_replacePairs($pairs, $syncedAt, $flows);
+        } catch (Exception $e) {
+            $this->assets = $assetSnapshot;
+            $this->pairs = $pairSnapshot;
+            throw $e;
+        }
     }
 }
 
@@ -400,6 +430,64 @@ assertSameValue('rate-3', $fixedQuote['rateId'], 'First fixed-rate quote should 
 assertSameValue('rate-4', $secondFixedQuote['rateId'], 'Repeated fixed-rate quote should receive a fresh provider rate ID');
 assertSameValue(4, $client->quoteCalls, 'Fixed-rate quotes should call the provider for each request');
 assertTrueValue(!array_key_exists($fixedCacheKey, $repository->quoteCache), 'Fixed-rate quotes should not be stored in the quote cache');
+
+$failingRepository = new ChangeNowMarketDataFailingAtomicRepository();
+$failingRepository->assets['btc:btc'] = [
+    'ticker' => 'btc',
+    'network' => 'btc',
+    'name' => 'Bitcoin',
+    'legacyTicker' => 'btc',
+    'image' => '',
+    'tokenContract' => '',
+    'buy' => true,
+    'sell' => true,
+    'isFiat' => false,
+    'isStable' => false,
+    'featured' => false,
+    'supportsFixedRate' => false,
+    'providerActive' => true,
+    'adminEnabled' => true,
+    'raw' => [],
+];
+$failingRepository->assets['eth:eth'] = [
+    'ticker' => 'eth',
+    'network' => 'eth',
+    'name' => 'Ethereum',
+    'legacyTicker' => 'eth',
+    'image' => '',
+    'tokenContract' => '',
+    'buy' => true,
+    'sell' => true,
+    'isFiat' => false,
+    'isStable' => false,
+    'featured' => false,
+    'supportsFixedRate' => false,
+    'providerActive' => true,
+    'adminEnabled' => true,
+    'raw' => [],
+];
+$failingRepository->pairs['btc:btc>eth:eth:standard'] = [
+    'fromCurrency' => 'btc',
+    'fromNetwork' => 'btc',
+    'toCurrency' => 'eth',
+    'toNetwork' => 'eth',
+    'flow' => 'standard',
+    'providerActive' => true,
+    'adminEnabled' => true,
+    'minAmount' => null,
+    'maxAmount' => null,
+    'raw' => [],
+];
+$failingMarketData = new ChangeNowMarketData($client, $failingRepository, null, [
+    'enabled_flows' => ['standard'],
+]);
+
+assertExceptionClass('Exception', function() use ($failingMarketData) {
+    $failingMarketData->_sync(['standard']);
+}, 'Failed market refresh should surface the provider or database failure');
+assertSameValue(true, $failingRepository->assets['btc:btc']['providerActive'], 'Failed market refresh should keep previously active source assets online');
+assertSameValue(true, $failingRepository->assets['eth:eth']['providerActive'], 'Failed market refresh should keep previously active destination assets online');
+assertSameValue(true, $failingRepository->pairs['btc:btc>eth:eth:standard']['providerActive'], 'Failed market refresh should keep previously active pairs online');
 
 $standardOnlyMarketData = new ChangeNowMarketData($client, $repository, null, [
     'enabled_flows' => ['standard'],
