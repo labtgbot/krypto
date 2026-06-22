@@ -141,6 +141,7 @@ class ChangeNowPublicEmptyRegionFakeApp {
 
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('quote'), 'quote should use the quote bucket');
 assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('validate'), 'validate should share the quote bucket');
+assertSameValue('quote', ChangeNowPublicRateLimit::bucketForAction('destinations'), 'destinations should share the read-only quote bucket');
 assertSameValue('transaction', ChangeNowPublicRateLimit::bucketForAction('create'), 'create should use the transaction bucket');
 assertSameValue('status', ChangeNowPublicRateLimit::bucketForAction('status'), 'status should use its own public lookup bucket');
 assertSameValue('support_action', ChangeNowPublicRateLimit::bucketForAction('refund'), 'refund should use the stricter public support-action bucket');
@@ -190,6 +191,20 @@ assertSameValue(1, $limitedLimiter->calls[0]['limit'], 'publicSwap action helper
 assertSameValue(60, $limitedLimiter->calls[0]['window_seconds'], 'publicSwap action helper should use admin quote window config');
 assertTrueValue(strpos($limitedLimiter->calls[0]['identity'], 'ip:') === 0, 'rate-limit identity should not store a raw IP address');
 assertTrueValue(isset($session['kr_changenow_session_key']), 'limited public actions should maintain a non-sensitive session key');
+
+$destinationsLimiter = new ChangeNowPublicRateLimitFakeLimiter();
+$destinationsApp = new ChangeNowPublicRateLimitFakeApp($destinationsLimiter);
+$destinationsSession = [];
+$destinationsDecision = changenow_public_rate_limit_decision($destinationsApp, 'destinations', [
+  'REMOTE_ADDR' => '198.51.100.7'
+], $destinationsSession, null, 100);
+
+assertSameValue(true, $destinationsDecision['allowed'], 'destinations should be allowed by the publicSwap rate-limit helper');
+assertSameValue('quote', $destinationsLimiter->calls[0]['bucket'], 'destinations should check the read-only quote bucket');
+assertSameValue(1, $destinationsLimiter->calls[0]['limit'], 'destinations should use admin quote limit config');
+assertSameValue(60, $destinationsLimiter->calls[0]['window_seconds'], 'destinations should use admin quote window config');
+assertTrueValue(strpos($destinationsLimiter->calls[0]['identity'], 'ip:') === 0, 'destinations rate-limit identity should not store a raw IP address');
+assertTrueValue(isset($destinationsSession['kr_changenow_session_key']), 'destinations should maintain a non-sensitive session key');
 
 $payload = changenow_public_rate_limited_payload($limitedApp, $decision);
 assertSameValue(1, $payload['error'], 'rate-limited public response should be an error');
