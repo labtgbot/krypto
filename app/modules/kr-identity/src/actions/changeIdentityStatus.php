@@ -32,11 +32,7 @@ Krypto_Csrf::validateRequest();
         throw new Exception("User is not logged", 1);
     }
 
-    if (!$User->_isAdmin()) {
-        throw new Exception("Permission denied", 1);
-    }
-
-    if (!$User->_isManager()) {
+    if (!$User->_isAdmin() && !$User->_isManager()) {
         throw new Exception("Permission denied", 1);
     }
 
