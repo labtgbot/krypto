@@ -415,9 +415,7 @@ class CryptoCoin extends MySQL {
     if(is_null($histoPrice)) return [];
     // Sort histo by time
     usort($histoPrice, function($a, $b){
-                        if($a['time'] == $b['time']) return -1;
-                        if($a['time'] < $b['time']) return 0;
-                        return 1;
+                        return $a['time'] <=> $b['time'];
                       });
 
     $res = [];
