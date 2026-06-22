@@ -153,11 +153,13 @@ $listBlockFolio = $BlockFolio->_getBlockfolioItem();
           $BalanceList = $Balance->_getBalanceListResum();
           $holdingSize = 0;
           if(array_key_exists($Coin->_getSymbol(), $BalanceList)) $holdingSize = $BalanceList[$Coin->_getSymbol()];
-          $holdingSize = $App->_formatNumber($holdingSize, $DecimalShown);
+          $holdingSize = floatval($holdingSize);
           $profitTotal = $Holding->_getProfit($Coin->_getSymbol(), $Coin->_getPrice() * $holdingSize);
+          $holdingSizeDisplay = $App->_formatNumber($holdingSize, $DecimalShown);
         } else {
           $holdingSize = $Holding->_getHoldingSize($Coin->_getSymbol());
           $profitTotal = $Holding->_getProfit($Coin->_getSymbol(), $Coin->_getPrice() * $holdingSize);
+          $holdingSizeDisplay = $holdingSize;
         }
         ?>
         <section class="kr-port-holding" kr-holding-cur="<?php echo $CryptoApi->_getCurrencySymbol(); ?>" kr-holding-size="<?php echo $holdingSize; ?>" kr-holding-buy-value="<?php echo $Holding->_getHoldingBuyValue($Coin->_getSymbol()); ?>">
@@ -173,7 +175,7 @@ $listBlockFolio = $BlockFolio->_getBlockfolioItem();
             <ul>
               <li>
                 <label><?php echo $Lang->tr('Holding'); ?></label>
-                <span class="kr-mono"><?php echo $holdingSize; ?> <?php echo $Coin->_getSymbol(); ?></span>
+                <span class="kr-mono"><?php echo $holdingSizeDisplay; ?> <?php echo $Coin->_getSymbol(); ?></span>
               </li>
               <li>
                 <label><?php echo $Lang->tr('Market Value');  ?></label>
