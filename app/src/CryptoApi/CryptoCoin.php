@@ -355,13 +355,14 @@ class CryptoCoin extends MySQL {
 
     $currentMinute = new DateTime('now');
     $currentMinute->setTime(date('G'), date('i'), 0);
+    $histoType = $type.'/'.$this->_getMarket();
 
     $getHistoCache = parent::querySqlRequest("SELECT * FROM histo_krypto WHERE coin_histo=:coin_histo AND currency_histo=:currency_histo AND type_histo=:type_histo
                                               AND last_update_histo=:last_update_histo",
                                               [
                                                 'coin_histo' => $this->_getSymbol(),
                                                 'currency_histo' => $this->_getApi()->_getCurrency(),
-                                                'type_histo' => $type.'/'.$this->_getMarket(),
+                                                'type_histo' => $histoType,
                                                 'last_update_histo' => $currentMinute->getTimestamp()
                                               ]);
     //error_log(count($getHistoCache) . ' -> '.$this->_getSymbol().' -> '.$currentMinute->getTimestamp().' -> '.$this->_getApi()->_getCurrency().' -> '.$type);
@@ -379,7 +380,7 @@ class CryptoCoin extends MySQL {
                                                 [
                                                   'coin_histo' => $this->_getSymbol(),
                                                   'currency_histo' => $this->_getApi()->_getCurrency(),
-                                                  'type_histo' => $type
+                                                  'type_histo' => $histoType
                                                 ]);
 
       if(count($updateCache) == 0){
@@ -388,7 +389,7 @@ class CryptoCoin extends MySQL {
                                             [
                                               'coin_histo' => $this->_getSymbol(),
                                               'currency_histo' => $this->_getApi()->_getCurrency(),
-                                              'type_histo' => $type.'/'.$this->_getMarket(),
+                                              'type_histo' => $histoType,
                                               'last_update_histo' => $currentMinute->getTimestamp(),
                                               'data_histo' => json_encode($histoPrice)
                                             ]);
@@ -398,7 +399,7 @@ class CryptoCoin extends MySQL {
                                             [
                                               'data_histo' => json_encode($histoPrice),
                                               'last_update_histo' => $currentMinute->getTimestamp(),
-                                              'type_histo' => $type.'/'.$this->_getMarket(),
+                                              'type_histo' => $histoType,
                                               'coin_histo' => $this->_getSymbol(),
                                               'currency_histo' => $this->_getApi()->_getCurrency()
                                             ]);
