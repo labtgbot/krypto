@@ -161,11 +161,14 @@ class ChangeNowPublicSwapFlow {
       throw new ChangeNowApiValidationException('The fixed-rate quote expired. Request a new quote before creating the swap.', 'Fixed-rate create request requires a rateId.');
     }
 
-    $validation = $this->Client->_validateAddress($normalized['toCurrency'], $normalized['destinationAddress'], $normalized['toNetwork']);
-    if(!is_array($validation) || !array_key_exists('result', $validation) || $validation['result'] !== true){
-      $message = (is_array($validation) && array_key_exists('message', $validation) && $validation['message'] != '' ? $validation['message'] : 'ChangeNOW rejected the destination address.');
-      throw new ChangeNowApiValidationException('Destination address is not valid.', 'ChangeNOW address validation failed: '.$message);
-    }
+    $this->_assertAddressValid(
+      $normalized['toCurrency'],
+      $normalized['destinationAddress'],
+      $normalized['toNetwork'],
+      'Destination address is not valid.',
+      'ChangeNOW address validation failed',
+      'ChangeNOW rejected the destination address.'
+    );
 
     $referralAttribution = $this->_referralAttributionForRequest($request, $userId);
     if(count($referralAttribution) > 0) $normalized['referralAttribution'] = $referralAttribution;
@@ -261,6 +264,7 @@ class ChangeNowPublicSwapFlow {
     if($refundAddress == ''){
       throw new ChangeNowApiValidationException('Refund address is required.', 'ChangeNOW refund action requires a refund address.');
     }
+    $this->_assertRefundAddressValid($record, $refundAddress);
 
     $refundExtraId = trim((string) $refundExtraId);
     if($refundExtraId == '') $refundExtraId = trim((string) $this->_value($record, ['refundExtraId'], ''));
@@ -337,6 +341,7 @@ class ChangeNowPublicSwapFlow {
     if($refundAddress == ''){
       throw new ChangeNowApiValidationException('Refund address is required.', 'ChangeNOW support refund action requires a refund address.');
     }
+    $this->_assertRefundAddressValid($record, $refundAddress);
 
     $refundExtraId = trim((string) $refundExtraId);
     if($refundExtraId == '') $refundExtraId = trim((string) $this->_value($record, ['refundExtraId'], ''));
@@ -448,6 +453,33 @@ class ChangeNowPublicSwapFlow {
       }
     }
     return $status;
+  }
+
+  private function _assertRefundAddressValid($record, $refundAddress){
+    $refundCurrency = $this->_normalizeCode($this->_value($record, ['fromCurrency'], ''));
+    $refundNetwork = $this->_normalizeCode($this->_value($record, ['fromNetwork'], ''));
+    if($refundCurrency == ''){
+      throw new ChangeNowApiValidationException('Refund address cannot be validated for this transaction.', 'ChangeNOW refund action cannot determine refund currency.');
+    }
+
+    return $this->_assertAddressValid(
+      $refundCurrency,
+      $refundAddress,
+      ($refundNetwork == '' ? null : $refundNetwork),
+      'Refund address is not valid.',
+      'ChangeNOW refund address validation failed',
+      'ChangeNOW rejected the refund address.'
+    );
+  }
+
+  private function _assertAddressValid($currency, $address, $network, $userMessage, $internalPrefix, $defaultValidationMessage = 'ChangeNOW rejected the address.'){
+    $validation = $this->Client->_validateAddress($currency, $address, $network);
+    if(!is_array($validation) || !array_key_exists('result', $validation) || $validation['result'] !== true){
+      $message = (is_array($validation) && array_key_exists('message', $validation) && $validation['message'] != '' ? $validation['message'] : $defaultValidationMessage);
+      throw new ChangeNowApiValidationException($userMessage, $internalPrefix.': '.$message);
+    }
+
+    return true;
   }
 
   private function _assertActionActorAllowed($record, $actorUserId, $actorType){

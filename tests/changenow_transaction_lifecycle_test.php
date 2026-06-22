@@ -48,6 +48,8 @@ class ChangeNowLifecycleFakeClient {
     public $statusCalls = [];
     public $refundCalls = [];
     public $continueCalls = [];
+    public $validated = [];
+    public $addressResult = true;
 
     public function _getSwapStatus($transactionId) {
         $this->statusCalls[] = $transactionId;
@@ -76,6 +78,14 @@ class ChangeNowLifecycleFakeClient {
             'id' => $transactionId,
             'action' => 'refund',
             'result' => true,
+        ];
+    }
+
+    public function _validateAddress($currency, $address, $network = null) {
+        $this->validated[] = [$currency, $address, $network];
+        return [
+            'result' => $this->addressResult,
+            'message' => ($this->addressResult ? '' : 'refund address is not valid'),
         ];
     }
 
@@ -224,10 +234,28 @@ assertLifecycleException('ChangeNowApiNotFoundException', function() use ($flow)
     $flow->_requestRefund('missing-token', 'refund-address', '', null, 'anonymous');
 }, 'Unknown lookup token should not authorize refund actions');
 
+$client->addressResult = false;
+$invalidPublicRefundException = assertLifecycleException('ChangeNowApiValidationException', function() use ($flow) {
+    $flow->_requestRefund('token-anon', 'bad-refund-address', '', null, 'anonymous');
+}, 'Invalid public refund address should stop before provider refund submission');
+assertLifecycleSame('Refund address is not valid.', $invalidPublicRefundException->_getUserMessage(), 'Invalid public refund address should be reported safely');
+assertLifecycleSame([['btc', 'bad-refund-address', 'btc']], $client->validated, 'Public refund validation should use the source currency and network');
+assertLifecycleSame(0, count($client->refundCalls), 'Invalid public refund address should not call provider refund endpoint');
+$client->addressResult = true;
+
 $refund = $flow->_requestRefund('token-anon', 'refund-destination', 'memo-1', null, 'anonymous');
 assertLifecycleSame('refund', $refund['lastAction']['action'], 'Available refund action should call provider refund endpoint');
 assertLifecycleSame(['tx-anon', 'refund-destination', 'memo-1'], $client->refundCalls[0], 'Refund should pass provider id and refund address to ChangeNOW');
 assertLifecycleSame('refund_requested', $repository->events['tx-anon'][0]['eventType'], 'Refund action should be audited');
+
+$client->addressResult = false;
+$invalidSupportRefundException = assertLifecycleException('ChangeNowApiValidationException', function() use ($flow) {
+    $flow->_requestRefundByProviderId('tx-anon', 'bad-support-refund-address', '', 7, 'support');
+}, 'Invalid support refund address should stop before provider refund submission');
+assertLifecycleSame('Refund address is not valid.', $invalidSupportRefundException->_getUserMessage(), 'Invalid support refund address should be reported safely');
+assertLifecycleSame(['btc', 'bad-support-refund-address', 'btc'], $client->validated[2], 'Support refund validation should use the source currency and network');
+assertLifecycleSame(1, count($client->refundCalls), 'Invalid support refund address should not call provider refund endpoint');
+$client->addressResult = true;
 
 $continued = $flow->_continueSwap('token-anon', null, 'anonymous');
 assertLifecycleSame('continue', $continued['lastAction']['action'], 'Available continue action should call provider continue endpoint');
