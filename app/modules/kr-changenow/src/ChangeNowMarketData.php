@@ -60,8 +60,12 @@ class ChangeNowMarketData {
       }
 
       $syncedAt = time();
-      $this->Repository->_replaceAssets($assets, $syncedAt);
-      $this->Repository->_replacePairs($pairs, $syncedAt, $flows);
+      if(method_exists($this->Repository, '_replaceMarketData')){
+        $this->Repository->_replaceMarketData($assets, $pairs, $syncedAt, $flows);
+      } else {
+        $this->Repository->_replaceAssets($assets, $syncedAt);
+        $this->Repository->_replacePairs($pairs, $syncedAt, $flows);
+      }
       $this->Repository->_recordSyncFinish(self::SYNC_KEY_MARKET_DATA, 'success', '', count($assets), count($pairs), time());
 
       return [

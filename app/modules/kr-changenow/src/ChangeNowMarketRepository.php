@@ -24,28 +24,35 @@ class ChangeNowMarketRepository extends MySQL {
     return true;
   }
 
+  public function _replaceMarketData($assets, $pairs, $syncedAt = null, $flows = []){
+    $this->_ensureSchema();
+    $syncedAt = (is_null($syncedAt) ? time() : $syncedAt);
+
+    return $this->_runInTransaction(function() use ($assets, $pairs, $syncedAt, $flows) {
+      $this->_replaceAssetsRows($assets, $syncedAt);
+      $this->_replacePairsRows($pairs, $syncedAt, $flows);
+      return true;
+    });
+  }
+
   public function _replaceAssets($assets, $syncedAt = null){
     $this->_ensureSchema();
     $syncedAt = (is_null($syncedAt) ? time() : $syncedAt);
-    parent::execSqlRequest("UPDATE changenow_assets_krypto SET provider_active_changenow_asset=0");
 
-    foreach ($assets as $asset) {
-      $this->_upsertAsset($asset, $syncedAt);
-    }
-
-    return true;
+    return $this->_runInTransaction(function() use ($assets, $syncedAt) {
+      $this->_replaceAssetsRows($assets, $syncedAt);
+      return true;
+    });
   }
 
   public function _replacePairs($pairs, $syncedAt = null, $flows = []){
     $this->_ensureSchema();
     $syncedAt = (is_null($syncedAt) ? time() : $syncedAt);
-    parent::execSqlRequest("UPDATE changenow_pairs_krypto SET provider_active_changenow_pair=0");
 
-    foreach ($pairs as $pair) {
-      $this->_upsertPair($pair, $syncedAt);
-    }
-
-    return true;
+    return $this->_runInTransaction(function() use ($pairs, $syncedAt, $flows) {
+      $this->_replacePairsRows($pairs, $syncedAt, $flows);
+      return true;
+    });
   }
 
   public function _recordSyncStart($syncKey, $startedAt){
@@ -285,7 +292,7 @@ class ChangeNowMarketRepository extends MySQL {
   }
 
   private function _upsertAsset($asset, $syncedAt){
-    return parent::execSqlRequest("INSERT INTO changenow_assets_krypto
+    return $this->_execSqlOrFail("INSERT INTO changenow_assets_krypto
                                   (ticker_changenow_asset, network_changenow_asset, legacy_ticker_changenow_asset, name_changenow_asset,
                                    image_changenow_asset, token_contract_changenow_asset, buy_changenow_asset, sell_changenow_asset,
                                    fiat_changenow_asset, stable_changenow_asset, featured_changenow_asset, fixed_rate_changenow_asset,
@@ -338,11 +345,12 @@ class ChangeNowMarketRepository extends MySQL {
                                     'raw_asset_update' => json_encode($asset['raw']),
                                     'synced_at_update' => $syncedAt,
                                     'updated_at_update' => time()
-                                  ]);
+                                  ],
+                                  'upserting ChangeNOW asset '.$asset['ticker'].':'.$asset['network']);
   }
 
   private function _upsertPair($pair, $syncedAt){
-    return parent::execSqlRequest("INSERT INTO changenow_pairs_krypto
+    return $this->_execSqlOrFail("INSERT INTO changenow_pairs_krypto
                                   (from_currency_changenow_pair, from_network_changenow_pair, to_currency_changenow_pair,
                                    to_network_changenow_pair, flow_changenow_pair, provider_active_changenow_pair,
                                    admin_enabled_changenow_pair, min_amount_changenow_pair, max_amount_changenow_pair,
@@ -368,7 +376,73 @@ class ChangeNowMarketRepository extends MySQL {
                                     'raw_pair_update' => json_encode($pair['raw']),
                                     'synced_at_update' => $syncedAt,
                                     'updated_at_update' => time()
-                                  ]);
+                                  ],
+                                  'upserting ChangeNOW pair '.$pair['fromCurrency'].':'.$pair['fromNetwork'].'>'.$pair['toCurrency'].':'.$pair['toNetwork'].':'.$pair['flow']);
+  }
+
+  private function _replaceAssetsRows($assets, $syncedAt){
+    $this->_execSqlOrFail("UPDATE changenow_assets_krypto SET provider_active_changenow_asset=0", [], 'deactivating ChangeNOW assets');
+
+    foreach ($assets as $asset) {
+      $this->_upsertAsset($asset, $syncedAt);
+    }
+  }
+
+  private function _replacePairsRows($pairs, $syncedAt, $flows = []){
+    $this->_execSqlOrFail("UPDATE changenow_pairs_krypto SET provider_active_changenow_pair=0", [], 'deactivating ChangeNOW pairs');
+
+    foreach ($pairs as $pair) {
+      $this->_upsertPair($pair, $syncedAt);
+    }
+  }
+
+  private function _runInTransaction($callback){
+    $pdo = parent::getSqlConnexion();
+    $ownsTransaction = !$pdo->inTransaction();
+
+    if($ownsTransaction && !$pdo->beginTransaction()){
+      throw new Exception('Unable to start ChangeNOW market data transaction.');
+    }
+
+    try {
+      $result = $callback();
+
+      if($ownsTransaction && !$pdo->commit()){
+        throw new Exception('Unable to commit ChangeNOW market data transaction.');
+      }
+
+      return $result;
+    } catch (Throwable $e) {
+      if($ownsTransaction && $pdo->inTransaction()){
+        $pdo->rollBack();
+      }
+      throw $e;
+    }
+  }
+
+  private function _execSqlOrFail($query, $def = [], $operation = 'executing ChangeNOW market data SQL'){
+    $req = parent::getSqlConnexion()->prepare($query);
+    if($req === false){
+      throw new Exception('ChangeNOW market data sync failed while '.$operation.': unable to prepare SQL statement.');
+    }
+
+    $status = $req->execute($def);
+    if(!$status){
+      $errorInfo = $req->errorInfo();
+      $req->closeCursor();
+      throw new Exception('ChangeNOW market data sync failed while '.$operation.$this->_formatSqlError($errorInfo));
+    }
+
+    $req->closeCursor();
+    return true;
+  }
+
+  private function _formatSqlError($errorInfo){
+    if(!is_array($errorInfo) || count($errorInfo) < 3 || trim((string) $errorInfo[2]) == ''){
+      return '.';
+    }
+
+    return ': '.$errorInfo[2];
   }
 
   private function _mapAssetRows($rows){
