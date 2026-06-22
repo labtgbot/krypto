@@ -2095,15 +2095,33 @@ class App extends MySQL {
     return strlen(substr(strrchr($num, "."), 1));
   }
 
-  public function _checkReferalSource(){
+  public function _checkReferalSource($source = null){
     if(!$this->_referalEnabled()) return false;
-    if(!empty($_GET) && isset($_GET['ref']) && !empty($_GET['ref'])){
-      $code = htmlspecialchars($_GET['ref']);
+
+    $code = $this->_referalCodeFromSource($source);
+    if($code == '') $code = $this->_referalCodeFromSource($_GET);
+
+    if($code != ''){
       $r = parent::querySqlRequest("SELECT * FROM referal_krypto WHERE code_referal=:code_referal", ['code_referal' => $code]);
       if(count($r) > 0){
         $_SESSION['referal_source_krypto'] = $code;
+        return true;
       }
     }
+
+    return false;
+  }
+
+  private function _referalCodeFromSource($source){
+    if(!is_array($source) || empty($source)) return '';
+
+    foreach (['ref', 'referal', 'referral', 'referralCode', 'referral_code', 'code_referal'] as $key) {
+      if(isset($source[$key]) && trim((string) $source[$key]) != ''){
+        return htmlspecialchars(trim((string) $source[$key]));
+      }
+    }
+
+    return '';
   }
 
   public function _cleanCache(){
